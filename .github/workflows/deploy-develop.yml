@@ -43,7 +43,6 @@ jobs:
           : "${SSH_USER:?Missing SSH_USER secret}"
           : "${SSH_PRIVATE_KEY:?Missing SSH_PRIVATE_KEY secret}"
           : "${APP_DIR:?Missing APP_DIR secret}"
-          : "${PRODUCTION_ENV:?Missing PRODUCTION_ENV secret}"
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
@@ -62,8 +61,13 @@ jobs:
         run: |
           set -euo pipefail
           : "${SSH_PORT:=22}"
-          printf '%s\n' "$PRODUCTION_ENV" | ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
-            "cat > '$APP_DIR/.env' && chmod 600 '$APP_DIR/.env'"
+          if [ -n "${PRODUCTION_ENV:-}" ]; then
+            printf '%s\n' "$PRODUCTION_ENV" | ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
+              "cat > '$APP_DIR/.env' && chmod 600 '$APP_DIR/.env'"
+          else
+            ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
+              "test -f '$APP_DIR/.env' && chmod 600 '$APP_DIR/.env'"
+          fi
 
       - name: Deploy
         run: |
