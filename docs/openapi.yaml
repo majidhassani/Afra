@@ -1,0 +1,444 @@
+openapi: 3.0.3
+info:
+  title: AgentVerse Mission Engine API
+  version: 1.0.0
+  description: Authenticated Go backend for AI-native map missions, wallet-guarded LLM actions, profiles, and legacy CaseMind compatibility.
+servers:
+  - url: http://localhost:8080
+security:
+  - bearerAuth: []
+tags:
+  - name: Health
+  - name: Auth
+  - name: Profile
+  - name: Wallet
+  - name: Missions
+  - name: Map
+  - name: Characters
+  - name: Clues
+  - name: Guidance
+  - name: Time
+  - name: Journal
+  - name: Legacy Cases
+paths:
+  /health:
+    get:
+      tags: [Health]
+      security: []
+      responses:
+        "200": { description: OK }
+  /ready:
+    get:
+      tags: [Health]
+      security: []
+      responses:
+        "200": { description: Dependencies are ready }
+        "503": { description: A dependency is down }
+  /api/v1/auth/register:
+    post:
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RegisterRequest" }
+      responses:
+        "201": { description: Registered }
+        "400": { description: Invalid input }
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200": { description: Logged in }
+        "401": { description: Invalid credentials }
+  /api/v1/auth/refresh:
+    post:
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token: { type: string }
+      responses:
+        "200": { description: Token refreshed }
+  /api/v1/auth/logout:
+    post:
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token: { type: string }
+      responses:
+        "200": { description: Logged out }
+  /api/v1/me:
+    get:
+      tags: [Auth]
+      responses:
+        "200": { description: Current user }
+  /api/v1/profile:
+    get:
+      tags: [Profile]
+      responses:
+        "200": { description: Player profile }
+    put:
+      tags: [Profile]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [display_name]
+              properties:
+                display_name: { type: string, maxLength: 60 }
+      responses:
+        "200": { description: Updated profile }
+  /api/v1/profile/stats:
+    get:
+      tags: [Profile]
+      responses:
+        "200": { description: Player statistics }
+  /api/v1/profile/history:
+    get:
+      tags: [Profile]
+      responses:
+        "200": { description: Mission history }
+  /api/v1/profile/badges:
+    get:
+      tags: [Profile]
+      responses:
+        "200": { description: Player badges }
+  /api/v1/wallet:
+    get:
+      tags: [Wallet]
+      responses:
+        "200": { description: Wallet balance }
+  /api/v1/wallet/transactions:
+    get:
+      tags: [Wallet]
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, default: 50, maximum: 200 }
+      responses:
+        "200": { description: Wallet transactions }
+  /api/v1/wallet/pricing:
+    get:
+      tags: [Wallet]
+      responses:
+        "200": { description: Server-side pricing rules }
+  /api/v1/wallet/rewarded-ad/claim:
+    post:
+      tags: [Wallet]
+      responses:
+        "200": { description: Reward credited }
+        "409": { description: Daily ad limit reached }
+  /api/v1/wallet/purchase/verify:
+    post:
+      tags: [Wallet]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [platform, product_id, receipt]
+              properties:
+                platform: { type: string, enum: [ios, android] }
+                product_id: { type: string, enum: [coins_small, coins_medium, coins_large] }
+                receipt: { type: string }
+      responses:
+        "200": { description: Purchase credited }
+        "409": { description: Receipt already used }
+  /api/v1/missions:
+    post:
+      tags: [Missions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateMissionRequest" }
+      responses:
+        "202": { description: Mission accepted for generation }
+        "409": { description: Insufficient wallet balance }
+    get:
+      tags: [Missions]
+      responses:
+        "200": { description: User missions }
+  /api/v1/missions/{missionID}:
+    get:
+      tags: [Missions]
+      parameters: [ { $ref: "#/components/parameters/MissionID" } ]
+      responses:
+        "200": { description: Mission dashboard }
+        "404": { description: Not found or not owned }
+  /api/v1/missions/{missionID}/archive:
+    post:
+      tags: [Missions]
+      parameters: [ { $ref: "#/components/parameters/MissionID" } ]
+      responses:
+        "200": { description: Mission archived }
+  /api/v1/missions/{missionID}/events:
+    get:
+      tags: [Missions]
+      parameters:
+        - { $ref: "#/components/parameters/MissionID" }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 100, maximum: 200 }
+      responses:
+        "200": { description: Mission event log }
+  /api/v1/missions/{missionID}/stream:
+    get:
+      tags: [Missions]
+      parameters: [ { $ref: "#/components/parameters/MissionID" } ]
+      responses:
+        "200": { description: Server-sent mission events }
+  /api/v1/missions/{missionID}/map:
+    get:
+      tags: [Map]
+      parameters: [ { $ref: "#/components/parameters/MissionID" } ]
+      responses:
+        "200": { description: Google Maps-compatible markers }
+  /api/v1/missions/{missionID}/locations/{locationID}:
+    get:
+      tags: [Map]
+      parameters: [ { $ref: "#/components/parameters/MissionID" }, { $ref: "#/components/parameters/LocationID" } ]
+      responses:
+        "200": { description: Location bottom-sheet detail }
+        "404": { description: Hidden or missing location }
+  /api/v1/missions/{missionID}/locations/{locationID}/actions:
+    post:
+      tags: [Map]
+      parameters: [ { $ref: "#/components/parameters/MissionID" }, { $ref: "#/components/parameters/LocationID" } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action: { type: string, example: inspect_area }
+      responses:
+        "200": { description: Action result and discovered clues }
+  /api/v1/missions/{missionID}/locations/{locationID}/ask-ai:
+    post:
+      tags: [Guidance]
+      parameters: [ { $ref: "#/components/parameters/MissionID" }, { $ref: "#/components/parameters/LocationID" } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message: { type: string }
+      responses:
+        "200": { description: Location-scoped AI guidance }
+  /api/v1/missions/{missionID}/characters:
+    get:
+      tags: [Characters]
+      parameters: [ { $ref: "#/components/parameters/MissionID" } ]
+      responses:
+        "200": { description: Public NPC list }
+  /api/v1/missions/{missionID}/characters/{characterID}:
+    get:
+      tags: [Characters]
+      parameters: [ { $ref: "#/components/parameters/MissionID" }, { $ref: "#/components/parameters/CharacterID" } ]
+      responses:
+        "200": { description: Public NPC detail and transcript }
+  /api/v1/missions/{missionID}/characters/{characterID}/chat:
+    post:
+      tags: [Characters]
+      parameters: [ { $ref: "#/components/parameters/MissionID" }, { $ref: "#/components/parameters/CharacterID" } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message: { type: string }
+                location_id: { type: string, format: uuid }
+      responses:
+        "200": { description: NPC reply, state deltas, and cost }
+  /api/v1/missions/{missionID}/clues:
+    get:
+      tags: [Clues]
+      parameters: [ { $ref: "#/components/parameters/MissionID" } ]
+      responses:
+        "200": { description: Discovered clues only }
+  /api/v1/missions/{missionID}/clues/{clueID}:
+    get:
+      tags: [Clues]
+      parameters: [ { $ref: "#/components/parameters/MissionID" }, { $ref: "#/components/parameters/ClueID" } ]
+      responses:
+        "200": { description: Public clue detail }
+  /api/v1/missions/{missionID}/clues/{clueID}/inspect:
+    post:
+      tags: [Clues]
+      parameters: [ { $ref: "#/components/parameters/MissionID" }, { $ref: "#/components/parameters/ClueID" } ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                question: { type: string }
+      responses:
+        "200": { description: Paid clue inspection }
+  /api/v1/missions/{missionID}/clues/{clueID}/explain:
+    post:
+      tags: [Clues]
+      parameters: [ { $ref: "#/components/parameters/MissionID" }, { $ref: "#/components/parameters/ClueID" } ]
+      responses:
+        "200": { description: Paid clue explanation using public data only }
+  /api/v1/missions/{missionID}/guidance:
+    post:
+      tags: [Guidance]
+      parameters: [ { $ref: "#/components/parameters/MissionID" } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GuidanceRequest" }
+      responses:
+        "200": { description: Paid hint response }
+  /api/v1/missions/{missionID}/time:
+    get:
+      tags: [Time]
+      parameters: [ { $ref: "#/components/parameters/MissionID" } ]
+      responses:
+        "200": { description: Mission clock and public state }
+  /api/v1/missions/{missionID}/time/advance:
+    post:
+      tags: [Time]
+      parameters: [ { $ref: "#/components/parameters/MissionID" } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, unit]
+              properties:
+                amount: { type: integer, minimum: 1 }
+                unit: { type: string, enum: [minutes, hours, days] }
+      responses:
+        "200": { description: Time advanced with public consequences }
+  /api/v1/missions/{missionID}/journal:
+    get:
+      tags: [Journal]
+      parameters: [ { $ref: "#/components/parameters/MissionID" } ]
+      responses:
+        "200": { description: Journal notes }
+    post:
+      tags: [Journal]
+      parameters: [ { $ref: "#/components/parameters/MissionID" } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/JournalNoteRequest" }
+      responses:
+        "201": { description: Journal note created }
+  /api/v1/missions/{missionID}/journal/{noteID}:
+    put:
+      tags: [Journal]
+      parameters: [ { $ref: "#/components/parameters/MissionID" }, { $ref: "#/components/parameters/NoteID" } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/JournalNoteRequest" }
+      responses:
+        "200": { description: Journal note updated }
+    delete:
+      tags: [Journal]
+      parameters: [ { $ref: "#/components/parameters/MissionID" }, { $ref: "#/components/parameters/NoteID" } ]
+      responses:
+        "204": { description: Journal note deleted }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    MissionID: { in: path, name: missionID, required: true, schema: { type: string, format: uuid } }
+    LocationID: { in: path, name: locationID, required: true, schema: { type: string, format: uuid } }
+    CharacterID: { in: path, name: characterID, required: true, schema: { type: string, format: uuid } }
+    ClueID: { in: path, name: clueID, required: true, schema: { type: string, format: uuid } }
+    NoteID: { in: path, name: noteID, required: true, schema: { type: string, format: uuid } }
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [email, password, display_name]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8, maxLength: 72 }
+        display_name: { type: string, maxLength: 60 }
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+    CreateMissionRequest:
+      type: object
+      required: [type, difficulty]
+      properties:
+        type:
+          type: string
+          enum: [detective, wildlife_rescue, disaster_response, exploration, survival, diplomacy, medical_mystery]
+        difficulty:
+          type: string
+          enum: [easy, medium, hard, expert]
+        region: { type: string, example: Tehran }
+        language: { type: string, enum: [en, fa], default: en }
+    GuidanceRequest:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string, maxLength: 2000 }
+        context:
+          type: object
+          properties:
+            screen: { type: string, example: map }
+            location_id: { type: string, format: uuid, nullable: true }
+            selected_clue_id: { type: string, format: uuid, nullable: true }
+    JournalNoteRequest:
+      type: object
+      required: [content]
+      properties:
+        title: { type: string, maxLength: 200 }
+        content: { type: string, maxLength: 10000 }
+    ErrorEnvelope:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code: { type: string }
+            message: { type: string }

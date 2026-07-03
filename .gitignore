@@ -1,0 +1,5 @@
+.env
+*.out
+/bin/
+.DS_Store
+.claude/
