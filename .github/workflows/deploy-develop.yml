@@ -24,101 +24,46 @@ jobs:
         run: go test ./...
 
   deploy:
-    name: Deploy to Ubuntu
-    runs-on: ubuntu-latest
+    name: Deploy on self-hosted Ubuntu
+    runs-on: [self-hosted, Linux, X64]
     needs: test
     environment: develop
-
     env:
-      SSH_HOST: ${{ secrets.SSH_HOST }}
-      SSH_USER: ${{ secrets.SSH_USER }}
-      SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
-      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-      APP_DIR: ${{ secrets.APP_DIR }}
+      APP_ENV_FILE: ${{ secrets.APP_ENV_FILE }}
       PRODUCTION_ENV: ${{ secrets.PRODUCTION_ENV }}
-
     steps:
-      - name: Prepare SSH
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check runner tools
         run: |
           set -euo pipefail
+          docker --version
+          docker compose version
+          git --version
 
-          : "${SSH_HOST:?Missing SSH_HOST secret}"
-          : "${SSH_USER:?Missing SSH_USER secret}"
-          : "${SSH_PRIVATE_KEY:?Missing SSH_PRIVATE_KEY secret}"
-          : "${APP_DIR:?Missing APP_DIR secret}"
-
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-
-          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-
-          ssh-keyscan -p "$SSH_PORT" "$SSH_HOST" >> ~/.ssh/known_hosts
-
-      - name: Check SSH connection
+      - name: Prepare environment file
         run: |
           set -euo pipefail
-
-          ssh -i ~/.ssh/deploy_key \
-            -p "$SSH_PORT" \
-            -o StrictHostKeyChecking=yes \
-            "$SSH_USER@$SSH_HOST" \
-            "echo 'SSH connected successfully'"
-
-      - name: Prepare remote directory
-        run: |
-          set -euo pipefail
-
-          ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
-            "mkdir -p '$APP_DIR'"
-
-      - name: Upload environment file
-        run: |
-          set -euo pipefail
+          ENV_FILE="${APP_ENV_FILE:-/opt/afra/.env}"
+          mkdir -p "$(dirname "$ENV_FILE")"
 
           if [ -n "${PRODUCTION_ENV:-}" ]; then
-            printf '%s\n' "$PRODUCTION_ENV" | ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
-              "cat > '$APP_DIR/.env' && chmod 600 '$APP_DIR/.env'"
+            printf '%s\n' "$PRODUCTION_ENV" > "$ENV_FILE"
           else
-            ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
-              "touch '$APP_DIR/.env' && chmod 600 '$APP_DIR/.env'"
+            test -f "$ENV_FILE"
           fi
+
+          chmod 600 "$ENV_FILE"
+          echo "ENV_FILE=$ENV_FILE" >> "$GITHUB_ENV"
 
       - name: Deploy
         run: |
           set -euo pipefail
-
-          ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "APP_DIR='$APP_DIR' bash -s" <<'REMOTE'
-          set -euo pipefail
-
-          if ! command -v git >/dev/null 2>&1; then
-            sudo apt-get update
-            sudo apt-get install -y git
-          fi
-
-          if ! command -v docker >/dev/null 2>&1; then
-            echo "Docker is not installed on server"
-            exit 1
-          fi
-
-          if [ ! -d "$APP_DIR/.git" ]; then
-            rm -rf "$APP_DIR"
-            git clone --branch develop https://github.com/majidhassani/Afra.git "$APP_DIR"
-          fi
-
-          cd "$APP_DIR"
-
-          git fetch origin develop
-          git checkout develop
-          git reset --hard origin/develop
-
-          docker compose up --build -d
+          docker compose --env-file "$ENV_FILE" -p afra up --build -d
           docker image prune -f
-          docker compose ps
+          docker compose --env-file "$ENV_FILE" -p afra ps
 
-          set -a
-          [ -f .env ] && . ./.env
-          set +a
-
-          curl -fsS "http://localhost:${HTTP_PORT:-8080}/health"
-          REMOTE
+          PORT="$(grep -E '^HTTP_PORT=' "$ENV_FILE" | tail -1 | cut -d= -f2- || true)"
+          PORT="${PORT:-8080}"
+          curl -fsS "http://localhost:${PORT}/health"

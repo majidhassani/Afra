@@ -1,7 +1,11 @@
-# Deploy AgentVerse to Ubuntu with GitHub Actions
+# Deploy AgentVerse to Ubuntu with GitHub Actions Self-Hosted Runner
 
 This project deploys cleanly with Docker Compose. The `develop` branch is wired
 to `.github/workflows/deploy-develop.yml`.
+
+The current workflow uses a GitHub Actions self-hosted runner on the Ubuntu
+server. It does not SSH into the server. The deploy job runs directly on a
+Linux x64 self-hosted runner.
 
 ## 1. Prepare the Ubuntu server
 
@@ -26,7 +30,7 @@ sudo usermod -aG docker "$USER"
 
 Log out and back in after adding the user to the `docker` group.
 
-Create an app directory:
+Create the server environment directory:
 
 ```bash
 sudo mkdir -p /opt/afra
@@ -41,40 +45,15 @@ sudo ufw allow 8080/tcp
 sudo ufw enable
 ```
 
-## 2. Create a deploy SSH key
+## 2. Put the production environment on the server
 
-On your local machine:
-
-```bash
-ssh-keygen -t ed25519 -C "github-actions-afra" -f ~/.ssh/afra_deploy
-```
-
-Add the public key to the Ubuntu server:
+Create:
 
 ```bash
-ssh-copy-id -i ~/.ssh/afra_deploy.pub USER@SERVER_IP
+nano /opt/afra/.env
 ```
 
-The private key content goes into GitHub Secrets as `SSH_PRIVATE_KEY`.
-
-## 3. Add GitHub secrets
-
-In GitHub:
-
-`Settings -> Secrets and variables -> Actions -> New repository secret`
-
-Required secrets:
-
-```text
-SSH_HOST=your.server.ip
-SSH_USER=ubuntu
-SSH_PORT=22
-APP_DIR=/opt/afra
-SSH_PRIVATE_KEY=<contents of ~/.ssh/afra_deploy>
-PRODUCTION_ENV=<full .env content for the server>
-```
-
-Recommended `PRODUCTION_ENV` starter:
+Recommended starter:
 
 ```env
 APP_ENV=production
@@ -89,9 +68,9 @@ POSTGRES_PASSWORD=replace-with-a-strong-db-password
 POSTGRES_DB=casemind
 AUTO_MIGRATE=true
 
-LLM_PROVIDER=glm
-LLM_BASE_URL=https://your-openai-compatible-endpoint/v1
-LLM_API_KEY=replace-with-your-key
+LLM_PROVIDER=mock
+LLM_BASE_URL=
+LLM_API_KEY=
 LLM_MODEL=glm-5.2
 LLM_TIMEOUT_SECONDS=120
 LLM_MAX_TOKENS=4096
@@ -101,37 +80,107 @@ RATE_LIMIT_AUTH_PER_MINUTE=20
 RATE_LIMIT_AGENT_PER_MINUTE=30
 ```
 
-For a free deterministic smoke deployment, use:
+Lock it down:
 
-```env
-LLM_PROVIDER=mock
-LLM_BASE_URL=
-LLM_API_KEY=
+```bash
+chmod 600 /opt/afra/.env
 ```
 
-## 4. Push and deploy
+For GLM later, switch:
+
+```env
+LLM_PROVIDER=glm
+LLM_BASE_URL=https://your-openai-compatible-endpoint/v1
+LLM_API_KEY=replace-with-your-key
+```
+
+## 3. Install the GitHub Actions self-hosted runner
+
+In GitHub:
+
+```text
+Repository -> Settings -> Actions -> Runners -> New self-hosted runner
+```
+
+Choose Linux x64 and follow GitHub's commands on the server.
+
+Important:
+
+- The runner name can be `majid`.
+- `runs-on` matches labels, not the runner name. The workflow uses the default
+  labels `self-hosted`, `Linux`, and `X64`.
+- Run it as a service so it survives reboot.
+- Do not place the runner directory inside the git repository.
+
+If you already created it inside the repository, it is ignored by git via:
+
+```text
+actions-runner/
+```
+
+After configuring the runner, install it as a service from inside the runner
+directory:
+
+```bash
+sudo ./svc.sh install
+sudo ./svc.sh start
+sudo ./svc.sh status
+```
+
+The runner must appear as online in:
+
+```text
+Settings -> Actions -> Runners
+```
+
+## 4. Optional GitHub secret
+
+No SSH secrets are required with the self-hosted runner.
+
+Optional secret:
+
+```text
+APP_ENV_FILE=/opt/afra/.env
+```
+
+If omitted, the workflow uses `/opt/afra/.env`.
+
+Optional secret:
+
+```text
+PRODUCTION_ENV=<full env file content>
+```
+
+If set, the workflow writes this secret into the env file on each deploy.
+If omitted, it uses the existing server-side `/opt/afra/.env`.
+
+## 5. Push and deploy
 
 Push to `develop`:
 
 ```bash
-git push -u origin develop
+git push origin develop
+```
+
+Or manually run:
+
+```text
+Actions -> Deploy develop -> Run workflow
 ```
 
 GitHub Actions will:
 
 1. Run `go test ./...`
-2. SSH into the Ubuntu server
-3. Clone or update `/opt/afra`
-4. Write `.env` from `PRODUCTION_ENV`
-5. Run `docker compose up --build -d`
-6. Check `/health`
+2. Run deploy on the self-hosted Linux x64 runner
+3. Use `/opt/afra/.env`
+4. Run `docker compose --env-file /opt/afra/.env -p afra up --build -d`
+5. Check `/health`
 
-## 5. Useful server commands
+## 6. Useful server commands
 
 ```bash
-cd /opt/afra
-docker compose ps
-docker compose logs -f api
+docker compose -p afra ps
+docker compose -p afra logs -f api
 curl http://localhost:8080/health
 curl http://localhost:8080/ready
 ```
