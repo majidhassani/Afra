@@ -17,7 +17,11 @@ Configuration (`.env` / `.env.local`, see `.env.example`):
 VITE_API_BASE_URL=http://localhost:8080   # Go backend
 VITE_ENABLE_MOCKS=false                   # true = fully offline mock backend
 VITE_DEFAULT_LANGUAGE=en                  # en | fa
+VITE_APP_VERSION=dev
 ```
+
+For Docker production, leave `VITE_API_BASE_URL` empty so nginx serves the app
+and proxies `/api` to the backend container.
 
 With `VITE_ENABLE_MOCKS=true` the app runs without any backend: an in-memory
 adapter (`src/shared/api/mock/`) mirrors the API envelope, seeds a playable

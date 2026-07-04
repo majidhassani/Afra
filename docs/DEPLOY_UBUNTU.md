@@ -37,11 +37,12 @@ sudo mkdir -p /opt/afra
 sudo chown -R "$USER:$USER" /opt/afra
 ```
 
-Open the API port if you expose it directly:
+Open the API and web ports if you expose them directly:
 
 ```bash
 sudo ufw allow OpenSSH
 sudo ufw allow 8080/tcp
+sudo ufw allow 3000/tcp
 sudo ufw enable
 ```
 
@@ -58,6 +59,14 @@ Recommended starter:
 ```env
 APP_ENV=production
 HTTP_PORT=8080
+WEB_PORT=3000
+
+# Leave this empty in Docker production so the web container proxies /api to
+# the backend service. Set it only when the browser must call another API URL.
+VITE_API_BASE_URL=
+VITE_ENABLE_MOCKS=false
+VITE_DEFAULT_LANGUAGE=fa
+VITE_APP_VERSION=production
 
 JWT_SECRET=replace-with-a-long-random-secret
 JWT_ACCESS_TTL=15m
@@ -143,7 +152,9 @@ Optional secret:
 APP_ENV_FILE=/opt/afra/.env
 ```
 
-If omitted, the workflow uses `/opt/afra/.env`.
+If omitted, the workflow uses `/opt/afra/.env`. If that file is missing but
+`.env` exists in the runner checkout workspace, the workflow falls back to that
+workspace file.
 
 Optional secret:
 
@@ -174,19 +185,34 @@ GitHub Actions will:
 2. Run deploy on the self-hosted Linux x64 runner
 3. Use `/opt/afra/.env`
 4. Run `docker compose --env-file /opt/afra/.env -p afra up --build -d`
-5. Check `/health`
+5. Check API `/health`
+6. Check web `/health`
 
 ## 6. Useful server commands
 
 ```bash
 docker compose -p afra ps
 docker compose -p afra logs -f api
+docker compose -p afra logs -f web
 curl http://localhost:8080/health
 curl http://localhost:8080/ready
+curl http://localhost:3000/health
 ```
 
 Swagger will be available at:
 
 ```text
 http://SERVER_IP:8080/swagger
+```
+
+The web app will be available at:
+
+```text
+http://SERVER_IP:3000
+```
+
+From the web app, API calls go through:
+
+```text
+http://SERVER_IP:3000/api/v1/...
 ```

@@ -1,6 +1,10 @@
 .git
 .claude
 .env
+actions-runner
 bin
 *.out
 .DS_Store
+web/node_modules
+web/dist
+web/*.tsbuildinfo

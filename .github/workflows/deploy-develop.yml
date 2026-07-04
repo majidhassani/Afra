@@ -51,7 +51,14 @@ jobs:
           if [ -n "${PRODUCTION_ENV:-}" ]; then
             printf '%s\n' "$PRODUCTION_ENV" > "$ENV_FILE"
           else
-            test -f "$ENV_FILE"
+            if [ ! -f "$ENV_FILE" ] && [ -f "$GITHUB_WORKSPACE/.env" ]; then
+              ENV_FILE="$GITHUB_WORKSPACE/.env"
+            fi
+
+            if [ ! -f "$ENV_FILE" ]; then
+              echo "::error::No env file found. Create /opt/afra/.env on the self-hosted runner server, set APP_ENV_FILE to its real path, or add PRODUCTION_ENV."
+              exit 1
+            fi
           fi
 
           chmod 600 "$ENV_FILE"
@@ -67,3 +74,7 @@ jobs:
           PORT="$(grep -E '^HTTP_PORT=' "$ENV_FILE" | tail -1 | cut -d= -f2- || true)"
           PORT="${PORT:-8080}"
           curl -fsS "http://localhost:${PORT}/health"
+
+          WEB_PORT="$(grep -E '^WEB_PORT=' "$ENV_FILE" | tail -1 | cut -d= -f2- || true)"
+          WEB_PORT="${WEB_PORT:-3000}"
+          curl -fsS "http://localhost:${WEB_PORT}/health"
