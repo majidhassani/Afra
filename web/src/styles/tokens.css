@@ -1,0 +1,56 @@
+/* AgentVerse design tokens — postmodern minimal mission console. */
+:root {
+  /* Surfaces */
+  --bg-base: #0d0e10;
+  --bg-panel: #15171a;
+  --bg-elevated: #1e2126;
+  --bg-hover: #23262c;
+
+  /* Text */
+  --text-primary: #f5f3ee;
+  --text-secondary: #b8b3a8;
+  --text-faint: #7d7a72;
+
+  /* Borders */
+  --border-subtle: #2c3036;
+  --border-strong: #3d424a;
+
+  /* Accents */
+  --accent-ai: #7dd3c7;
+  --accent-ai-dim: rgba(125, 211, 199, 0.12);
+  --accent-mission: #9bbf6a;
+  --accent-mission-dim: rgba(155, 191, 106, 0.12);
+  --accent-wallet: #e3b35f;
+  --accent-wallet-dim: rgba(227, 179, 95, 0.12);
+  --accent-danger: #e56b6f;
+  --accent-danger-dim: rgba(229, 107, 111, 0.12);
+  --accent-rare: #a89bff;
+  --accent-rare-dim: rgba(168, 155, 255, 0.12);
+
+  /* Typography */
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-fa: "Vazirmatn", "Inter", system-ui, sans-serif;
+
+  /* Geometry */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --shadow-panel: 0 8px 28px rgba(0, 0, 0, 0.45);
+
+  /* Layout */
+  --sidenav-width: 216px;
+  --topbar-height: 52px;
+
+  /* Motion */
+  --ease: cubic-bezier(0.3, 0.7, 0.3, 1);
+  --dur: 160ms;
+}
+
+[dir="rtl"] {
+  --font-sans: var(--font-fa);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur: 0ms;
+  }
+}
