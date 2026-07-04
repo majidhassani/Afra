@@ -68,6 +68,10 @@ VITE_ENABLE_MOCKS=false
 VITE_DEFAULT_LANGUAGE=fa
 VITE_APP_VERSION=production
 
+# Useful when proxy.golang.org returns 403 or is blocked from the server.
+GOPROXY=https://goproxy.cn,direct
+GOSUMDB=sum.golang.google.cn
+
 JWT_SECRET=replace-with-a-long-random-secret
 JWT_ACCESS_TTL=15m
 JWT_REFRESH_TTL=720h
