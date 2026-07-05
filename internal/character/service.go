@@ -13,6 +13,7 @@ import (
 	"casemind/internal/agent/runtime"
 	"casemind/internal/clue"
 	"casemind/internal/interaction"
+	"casemind/internal/llm"
 	"casemind/internal/missionevent"
 	"casemind/internal/wallet"
 	"casemind/pkg/validator"
@@ -101,19 +102,19 @@ func (s *Service) Get(ctx context.Context, userID, missionID, characterID uuid.U
 
 // ChatResult is the player-safe outcome of one dialogue exchange.
 type ChatResult struct {
-	Message          string            `json:"message"`
-	Emotion          string            `json:"emotion"`
-	Mood             string            `json:"mood"`
-	TrustLevel       int               `json:"trust_level"`
-	TrustDelta       int               `json:"trust_delta"`
-	StressDelta      int               `json:"stress_delta"`
-	UnlockedClues    []clue.PublicClue `json:"unlocked_clues"`
-	NewFacts         []string          `json:"new_facts"`
-	Cost             wallet.Cost       `json:"cost"`
+	Message       string            `json:"message"`
+	Emotion       string            `json:"emotion"`
+	Mood          string            `json:"mood"`
+	TrustLevel    int               `json:"trust_level"`
+	TrustDelta    int               `json:"trust_delta"`
+	StressDelta   int               `json:"stress_delta"`
+	UnlockedClues []clue.PublicClue `json:"unlocked_clues"`
+	NewFacts      []string          `json:"new_facts"`
+	Cost          wallet.Cost       `json:"cost"`
 }
 
 // Chat runs one paid dialogue exchange with an NPC through the DialogueAgent.
-func (s *Service) Chat(ctx context.Context, userID, missionID, characterID uuid.UUID, message string, locationID *uuid.UUID) (*ChatResult, error) {
+func (s *Service) Chat(ctx context.Context, userID, missionID, characterID uuid.UUID, message string, attachments []llm.Image, locationID *uuid.UUID) (*ChatResult, error) {
 	if err := validator.New().
 		Required("message", message).MaxLen("message", message, 2000).
 		Err(); err != nil {
@@ -166,6 +167,7 @@ func (s *Service) Chat(ctx context.Context, userID, missionID, characterID uuid.
 		UndiscoveredClueTitles: undiscovered,
 		RecentMessages:         toTurns(recent),
 		PlayerMessage:          message,
+		Images:                 attachments,
 		InjectionDetected:      len(injection) > 0,
 	}
 

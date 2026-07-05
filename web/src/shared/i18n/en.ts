@@ -312,6 +312,20 @@ export const en = {
   "diag.on": "On",
   "diag.off": "Off",
   "diag.check": "Run checks",
+
+  // Image attachments (vision)
+  "images.attach": "Attach images",
+  "images.error.type": "Only PNG, JPEG and WEBP images are supported.",
+  "images.error.size": "Each image must be smaller than 4 MB.",
+  "images.error.count": "You can attach at most 4 images.",
+
+  // Avatar generator
+  "avatar.title": "Avatar generator",
+  "avatar.style": "Style",
+  "avatar.gender": "Gender",
+  "avatar.ageGroup": "Age group",
+  "avatar.generate": "Generate avatar",
+  "avatar.generating": "Generating…",
 } as const;
 
 export type TranslationKey = keyof typeof en;

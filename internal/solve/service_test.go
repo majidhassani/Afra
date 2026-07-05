@@ -48,8 +48,14 @@ func (g *fakeGateway) SolveInfo(_ context.Context, userID, _ uuid.UUID) (string,
 	}
 	return g.status, "medium", "A gallery owner was found dead.", nil
 }
-func (g *fakeGateway) MarkSolved(_ context.Context, _ uuid.UUID) error { g.status = "solved"; return nil }
-func (g *fakeGateway) MarkFailed(_ context.Context, _ uuid.UUID) error { g.status = "failed"; return nil }
+func (g *fakeGateway) MarkSolved(_ context.Context, _ uuid.UUID) error {
+	g.status = "solved"
+	return nil
+}
+func (g *fakeGateway) MarkFailed(_ context.Context, _ uuid.UUID) error {
+	g.status = "failed"
+	return nil
+}
 func (g *fakeGateway) EnsureOwned(_ context.Context, userID, _ uuid.UUID) error {
 	if userID != g.owner {
 		return apperrors.NotFound("case_not_found", "case not found")
@@ -72,7 +78,9 @@ func (d *fakeDetectives) ApplyCaseResult(_ context.Context, _ uuid.UUID, solved 
 	return nil
 }
 
-type fakeSuspects struct{ byID map[uuid.UUID]*suspect.Suspect }
+type fakeSuspects struct {
+	byID map[uuid.UUID]*suspect.Suspect
+}
 
 func (r *fakeSuspects) Create(_ context.Context, _ *suspect.Suspect) error { return nil }
 func (r *fakeSuspects) ListByCase(_ context.Context, _ uuid.UUID) ([]suspect.Suspect, error) {

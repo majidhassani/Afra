@@ -19,15 +19,15 @@ const (
 )
 
 type Input struct {
-	CaseSummary        string   `json:"case_summary"`
-	AccusedName        string   `json:"accused_name"`
-	AccusedMotive      string   `json:"accused_motive"`
-	Reasoning          string   `json:"reasoning"`
-	AccusationCorrect  bool     `json:"accusation_correct"`
-	RealMotive         string   `json:"real_motive"`
-	DiscoveredFacts    []string `json:"discovered_facts"`
-	AttemptNumber      int      `json:"attempt_number"`
-	AttemptsRemaining  int      `json:"attempts_remaining"`
+	CaseSummary       string   `json:"case_summary"`
+	AccusedName       string   `json:"accused_name"`
+	AccusedMotive     string   `json:"accused_motive"`
+	Reasoning         string   `json:"reasoning"`
+	AccusationCorrect bool     `json:"accusation_correct"`
+	RealMotive        string   `json:"real_motive"`
+	DiscoveredFacts   []string `json:"discovered_facts"`
+	AttemptNumber     int      `json:"attempt_number"`
+	AttemptsRemaining int      `json:"attempts_remaining"`
 }
 
 type Output struct {

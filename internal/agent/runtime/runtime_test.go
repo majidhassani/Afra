@@ -21,6 +21,8 @@ type scriptedLLM struct {
 
 func (s *scriptedLLM) Name() string { return "scripted" }
 
+func (s *scriptedLLM) Ping(_ context.Context) error { return nil }
+
 func (s *scriptedLLM) Chat(_ context.Context, req llm.Request) (*llm.Response, error) {
 	s.lastReq = req
 	if s.calls >= len(s.responses) {
@@ -145,10 +147,10 @@ func TestDetectInjection(t *testing.T) {
 
 func TestExtractJSON(t *testing.T) {
 	cases := map[string]string{
-		"```json\n{\"a\":1}\n```":         `{"a":1}`,
-		"Here is the result: {\"a\":1}":   `{"a":1}`,
-		`{"a":{"b":"}"}}`:                 `{"a":{"b":"}"}}`,
-		`{"a":1} trailing prose`:          `{"a":1}`,
+		"```json\n{\"a\":1}\n```":       `{"a":1}`,
+		"Here is the result: {\"a\":1}": `{"a":1}`,
+		`{"a":{"b":"}"}}`:               `{"a":{"b":"}"}}`,
+		`{"a":1} trailing prose`:        `{"a":1}`,
 	}
 	for in, want := range cases {
 		if got := ExtractJSON(in); got != want {

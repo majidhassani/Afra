@@ -46,9 +46,22 @@ type Input struct {
 	DiscoveredFacts        []string `json:"discovered_facts"`
 	UndiscoveredClueTitles []string `json:"undiscovered_clue_titles"`
 	RecentMessages         []Turn   `json:"recent_messages"`
-	PlayerMessage          string   `json:"player_message"`
+	PlayerMessage          string   `json:"-"` // sent once in the user turn, not duplicated in context JSON
 	InjectionDetected      bool     `json:"injection_detected"`
+	// Images the player attached (vision). Excluded from the context JSON
+	// and the audit log; attached directly to the LLM user message.
+	Images []llm.Image `json:"-"`
+	// ImageCount is serialized instead so audit records stay small.
+	ImageCount int `json:"image_count,omitempty"`
 }
+
+// historyLimits keep the prompt small: only the most recent turns are sent,
+// and each turn is truncated. Older context lives in mission facts already.
+const (
+	maxHistoryTurns  = 10
+	maxTurnChars     = 300
+	maxImagesPerTurn = 4
+)
 
 type Output struct {
 	Reply            string   `json:"reply"`
@@ -84,6 +97,11 @@ func (a *Agent) Prompt(task runtime.Task) ([]llm.Message, error) {
 	if !ok {
 		return nil, fmt.Errorf("dialogueagent: unexpected input type %T", task.Input)
 	}
+	in.RecentMessages = trimHistory(in.RecentMessages)
+	if len(in.Images) > maxImagesPerTurn {
+		in.Images = in.Images[:maxImagesPerTurn]
+	}
+	in.ImageCount = len(in.Images)
 	system := fmt.Sprintf(`TASK_TYPE: %s
 %s
 
@@ -109,10 +127,30 @@ Respond with ONLY one JSON object:
 	if err != nil {
 		return nil, err
 	}
+	userContent := "CONFIDENTIAL CONTEXT:\n" + string(ctxJSON) + "\n\nPLAYER SAYS: " + in.PlayerMessage
+	if len(in.Images) > 0 {
+		userContent += "\n(The player is showing you the attached image(s); react to them in character.)"
+	}
 	return []llm.Message{
 		{Role: llm.RoleSystem, Content: system},
-		{Role: llm.RoleUser, Content: "CONFIDENTIAL CONTEXT:\n" + string(ctxJSON) + "\n\nPLAYER SAYS: " + in.PlayerMessage},
+		{Role: llm.RoleUser, Content: userContent, Images: in.Images},
 	}, nil
+}
+
+// trimHistory keeps only the last turns and truncates long contents so the
+// per-request payload stays small.
+func trimHistory(turns []Turn) []Turn {
+	if len(turns) > maxHistoryTurns {
+		turns = turns[len(turns)-maxHistoryTurns:]
+	}
+	out := make([]Turn, len(turns))
+	for i, t := range turns {
+		if len(t.Content) > maxTurnChars {
+			t.Content = t.Content[:maxTurnChars] + "…"
+		}
+		out[i] = t
+	}
+	return out
 }
 
 func (a *Agent) Parse(raw []byte) (any, error) {

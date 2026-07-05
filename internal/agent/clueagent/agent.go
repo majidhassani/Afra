@@ -14,10 +14,10 @@ import (
 )
 
 const (
-	Name            = "clue"
-	TaskGenerate    = "clue_generation"
-	TaskInspect     = "clue_inspection"
-	TaskExplain     = "clue_explanation"
+	Name         = "clue"
+	TaskGenerate = "clue_generation"
+	TaskInspect  = "clue_inspection"
+	TaskExplain  = "clue_explanation"
 )
 
 // --- generation ---

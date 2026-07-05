@@ -18,6 +18,9 @@ func New() *Provider { return &Provider{} }
 
 func (p *Provider) Name() string { return "mock" }
 
+// Ping always succeeds: the mock needs no connectivity.
+func (p *Provider) Ping(_ context.Context) error { return nil }
+
 func (p *Provider) Chat(_ context.Context, req llm.Request) (*llm.Response, error) {
 	all := strings.Builder{}
 	for _, m := range req.Messages {

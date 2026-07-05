@@ -179,9 +179,11 @@ func (r *Runtime) ExecuteMeta(ctx context.Context, agent Agent, task Task) (any,
 			return out, &Meta{Model: model, Usage: usage}, nil
 		}
 		lastErr = parseErr
-		// Repair prompt: feed the invalid output back and demand valid JSON.
+		// Repair prompt: feed the invalid output back (truncated — the model
+		// only needs to see what was wrong, not pay for the full echo) and
+		// demand valid JSON.
 		messages = append(messages,
-			llm.Message{Role: llm.RoleAssistant, Content: resp.Content},
+			llm.Message{Role: llm.RoleAssistant, Content: truncate(resp.Content, 1500)},
 			llm.Message{Role: llm.RoleUser, Content: fmt.Sprintf(
 				"Your previous output was invalid: %v. Respond again with ONLY a valid JSON object matching the required schema. No prose, no markdown fences.", parseErr)},
 		)

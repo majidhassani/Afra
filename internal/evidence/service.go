@@ -86,11 +86,11 @@ func (s *Service) Get(ctx context.Context, userID, caseID, evidenceID uuid.UUID)
 
 // InspectionResult is the player-safe outcome of one inspection.
 type InspectionResult struct {
-	Analysis          string          `json:"analysis"`
-	NewFacts          []string        `json:"new_facts"`
-	Evidence          PublicEvidence  `json:"evidence"`
-	RevealedLocations []uuid.UUID     `json:"revealed_location_ids"`
-	RevealedTimeline  int             `json:"revealed_timeline_events"`
+	Analysis          string         `json:"analysis"`
+	NewFacts          []string       `json:"new_facts"`
+	Evidence          PublicEvidence `json:"evidence"`
+	RevealedLocations []uuid.UUID    `json:"revealed_location_ids"`
+	RevealedTimeline  int            `json:"revealed_timeline_events"`
 }
 
 // Inspect implements the evidence inspection flow: EvidenceAgent analyzes

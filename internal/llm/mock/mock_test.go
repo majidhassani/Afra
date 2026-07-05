@@ -16,7 +16,7 @@ import (
 )
 
 // TestMockSatisfiesEveryAgentSchema: every agent must be able to parse the
-// mock provider's canned output, so the whole game works without GLM.
+// mock provider's canned output, so the whole game works without a real model.
 func TestMockSatisfiesEveryAgentSchema(t *testing.T) {
 	provider := New()
 

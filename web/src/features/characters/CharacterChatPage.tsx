@@ -7,12 +7,19 @@ import { charactersApi, walletApi } from "@/shared/api/endpoints";
 import { errorKey } from "@/shared/api/client";
 import { ErrorState, SkeletonRows } from "@/shared/ui/states";
 import { AvatarPlaceholder, CostBadge, Meter } from "@/shared/ui/badges";
-import type { ChatResult } from "@/shared/types/api";
+import {
+  AttachmentStrip,
+  ImageAttachButton,
+  useImageAttachments,
+  useImageDrop,
+} from "@/shared/ui/imageUpload";
+import type { ChatResult, ImagePayload } from "@/shared/types/api";
 
 interface ThreadEntry {
   id: string;
   sender: "player" | "npc";
   content: string;
+  imagePreviews?: string[];
   result?: ChatResult;
 }
 
@@ -26,6 +33,14 @@ export function CharacterChatPage() {
   const [draft, setDraft] = useState("");
   const [thread, setThread] = useState<ThreadEntry[]>([]);
   const threadRef = useRef<HTMLDivElement>(null);
+  const {
+    attachments,
+    addFiles,
+    remove: removeAttachment,
+    clear: clearAttachments,
+    error: attachError,
+  } = useImageAttachments();
+  const { dragging, dropProps } = useImageDrop((files) => void addFiles(files));
 
   const detail = useQuery({
     queryKey: ["mission", missionId, "character", characterId],
@@ -58,14 +73,20 @@ export function CharacterChatPage() {
   }, [thread.length]);
 
   const send = useMutation({
-    mutationFn: (message: string) =>
-      charactersApi.chat(missionId!, characterId!, message),
-    onMutate: (message) => {
+    mutationFn: ({ message, images }: { message: string; images: ImagePayload[] }) =>
+      charactersApi.chat(missionId!, characterId!, message, images),
+    onMutate: ({ message }) => {
       setThread((prev) => [
         ...prev,
-        { id: `local-${Date.now()}`, sender: "player", content: message },
+        {
+          id: `local-${Date.now()}`,
+          sender: "player",
+          content: message,
+          imagePreviews: attachments.map((a) => a.previewUrl),
+        },
       ]);
       setDraft("");
+      clearAttachments();
     },
     onSuccess: (result) => {
       setThread((prev) => [
@@ -87,7 +108,9 @@ export function CharacterChatPage() {
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
     const message = draft.trim();
-    if (message && !send.isPending) send.mutate(message);
+    if (message && !send.isPending) {
+      send.mutate({ message, images: attachments.map((a) => a.payload) });
+    }
   };
 
   if (detail.isPending) {
@@ -153,6 +176,23 @@ export function CharacterChatPage() {
         )}
         {thread.map((entry) => (
           <div key={entry.id} className={`bubble ${entry.sender}`}>
+            {entry.imagePreviews && entry.imagePreviews.length > 0 && (
+              <span className="row" style={{ flexWrap: "wrap", gap: 6 }}>
+                {entry.imagePreviews.map((src) => (
+                  <img
+                    key={src}
+                    src={src}
+                    alt=""
+                    style={{
+                      width: 96,
+                      height: 96,
+                      objectFit: "cover",
+                      borderRadius: 8,
+                    }}
+                  />
+                ))}
+              </span>
+            )}
             {entry.content}
             {entry.result && (
               <span className="meta row" style={{ flexWrap: "wrap", gap: 6 }}>
@@ -201,29 +241,40 @@ export function CharacterChatPage() {
         )}
       </div>
 
-      <form className="chat-composer" onSubmit={onSubmit}>
-        <textarea
-          className="textarea"
-          value={draft}
-          placeholder={t("chars.chat.placeholder", { name: character.name })}
-          aria-label={t("chars.chat.placeholder", { name: character.name })}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              onSubmit(e);
-            }
-          }}
+      <div
+        {...dropProps}
+        style={dragging ? { outline: "2px dashed var(--accent, #888)", borderRadius: 8 } : undefined}
+      >
+        <AttachmentStrip
+          attachments={attachments}
+          onRemove={removeAttachment}
+          error={attachError}
         />
-        <button
-          className="btn btn-primary"
-          type="submit"
-          disabled={send.isPending || !draft.trim()}
-          aria-label={t("common.send")}
-        >
-          <SendHorizonal size={15} className="rtl-flip" aria-hidden />
-        </button>
-      </form>
+        <form className="chat-composer" onSubmit={onSubmit}>
+          <ImageAttachButton onFiles={(f) => void addFiles(f)} disabled={send.isPending} />
+          <textarea
+            className="textarea"
+            value={draft}
+            placeholder={t("chars.chat.placeholder", { name: character.name })}
+            aria-label={t("chars.chat.placeholder", { name: character.name })}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                onSubmit(e);
+              }
+            }}
+          />
+          <button
+            className="btn btn-primary"
+            type="submit"
+            disabled={send.isPending || !draft.trim()}
+            aria-label={t("common.send")}
+          >
+            <SendHorizonal size={15} className="rtl-flip" aria-hidden />
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

@@ -8,6 +8,7 @@ import (
 
 	"casemind/internal/httpx"
 	apperrors "casemind/pkg/errors"
+	"casemind/pkg/images"
 	"casemind/pkg/response"
 )
 
@@ -58,6 +59,9 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 type chatRequest struct {
 	Message    string     `json:"message"`
 	LocationID *uuid.UUID `json:"location_id,omitempty"`
+	// Images optionally attaches photos the player shows to the character
+	// (vision). Validated for MIME, size and dimensions before use.
+	Images []images.Payload `json:"images,omitempty"`
 }
 
 func (h *Handler) Chat(w http.ResponseWriter, r *http.Request) {
@@ -78,7 +82,12 @@ func (h *Handler) Chat(w http.ResponseWriter, r *http.Request) {
 		response.Err(w, apperrors.Invalid("invalid_body", "invalid JSON body"))
 		return
 	}
-	result, err := h.svc.Chat(r.Context(), userID, missionID, characterID, req.Message, req.LocationID)
+	attachments, err := images.DecodeAndValidate(req.Images)
+	if err != nil {
+		response.Err(w, err)
+		return
+	}
+	result, err := h.svc.Chat(r.Context(), userID, missionID, characterID, req.Message, attachments, req.LocationID)
 	if err != nil {
 		response.Err(w, err)
 		return

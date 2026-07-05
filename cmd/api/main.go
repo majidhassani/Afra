@@ -32,6 +32,7 @@ import (
 	timelineagent "casemind/internal/agent/timeline"
 	"casemind/internal/agent/worldagent"
 	"casemind/internal/auth"
+	"casemind/internal/avatar"
 	cases "casemind/internal/case"
 	"casemind/internal/casebible"
 	"casemind/internal/character"
@@ -46,8 +47,8 @@ import (
 	"casemind/internal/interaction"
 	"casemind/internal/journal"
 	"casemind/internal/llm"
-	"casemind/internal/llm/glm"
 	llmmock "casemind/internal/llm/mock"
+	"casemind/internal/llm/openaicompat"
 	"casemind/internal/location"
 	"casemind/internal/memory"
 	"casemind/internal/mission"
@@ -139,15 +140,42 @@ func main() {
 		}
 	}
 
-	// LLM runtime.
+	// LLM runtime. Any non-mock provider uses the OpenAI-compatible client;
+	// config.Load has already validated the provider settings.
 	var llmClient llm.Client
-	switch cfg.LLM.Provider {
-	case "glm":
-		llmClient = glm.New(cfg.LLM)
-	default:
+	if cfg.LLM.IsMock() {
 		llmClient = llmmock.New()
+	} else {
+		llmClient = openaicompat.New(cfg.LLM, log)
 	}
+
+	// Fail-fast startup check: verify the model actually answers before the
+	// server accepts traffic. A silent fallback to canned data is worse than
+	// a refused deploy.
+	probeCtx, probeCancel := context.WithTimeout(ctx, 60*time.Second)
+	if err := llmClient.Ping(probeCtx); err != nil {
+		probeCancel()
+		log.Error("llm startup check failed — refusing to start",
+			"provider", llmClient.Name(), "error", err)
+		os.Exit(1)
+	}
+	probeCancel()
 	log.Info("llm provider ready", "provider", llmClient.Name())
+
+	// Avatar generation: uses the image API when configured, otherwise the
+	// built-in procedural generator (always available).
+	var imageAPI llm.ImageGenerator
+	if cfg.Image.Enabled() {
+		imageAPI = openaicompat.NewImageGen(openaicompat.ImageGenConfig{
+			Provider: cfg.Image.Provider,
+			BaseURL:  cfg.Image.BaseURL,
+			APIKey:   cfg.Image.APIKey,
+			Model:    cfg.Image.Model,
+			Timeout:  cfg.Image.Timeout,
+		}, log)
+		log.Info("image API configured", "provider", imageAPI.Name())
+	}
+	avatarService := avatar.NewService(imageAPI, log)
 
 	// Agent runtime + orchestrator with all eight agents.
 	rt := runtime.New(llmClient, runtime.NewPGRunRepository(pool), log)
@@ -249,6 +277,7 @@ func main() {
 	// HTTP layer.
 	handlers := httpserver.Handlers{
 		Auth:       auth.NewHandler(authService),
+		Avatar:     avatar.NewHandler(avatarService),
 		Detective:  detective.NewHandler(detectiveService),
 		Profile:    playerprofile.NewHandler(playerProfileService),
 		Wallet:     wallet.NewHandler(walletService),

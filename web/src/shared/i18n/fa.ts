@@ -314,4 +314,18 @@ export const fa: Record<TranslationKey, string> = {
   "diag.on": "روشن",
   "diag.off": "خاموش",
   "diag.check": "اجرای بررسی‌ها",
+
+  // Image attachments (vision)
+  "images.attach": "پیوست تصویر",
+  "images.error.type": "فقط تصاویر PNG، JPEG و WEBP پشتیبانی می‌شوند.",
+  "images.error.size": "حجم هر تصویر باید کمتر از ۴ مگابایت باشد.",
+  "images.error.count": "حداکثر ۴ تصویر می‌توانید پیوست کنید.",
+
+  // Avatar generator
+  "avatar.title": "سازنده آواتار",
+  "avatar.style": "سبک",
+  "avatar.gender": "جنسیت",
+  "avatar.ageGroup": "گروه سنی",
+  "avatar.generate": "ساخت آواتار",
+  "avatar.generating": "در حال ساخت…",
 };

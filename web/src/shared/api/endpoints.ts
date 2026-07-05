@@ -3,7 +3,11 @@ import { env } from "@/shared/config/env";
 import type {
   ActionResult,
   AuthResponse,
+  AvatarOptions,
+  AvatarSpec,
   ChatResult,
+  GeneratedAvatar,
+  ImagePayload,
   CharacterDetail,
   ClueExplainResult,
   ClueInspectResult,
@@ -153,15 +157,29 @@ export const charactersApi = {
     missionId: string,
     characterId: string,
     message: string,
+    images?: ImagePayload[],
     locationId?: string,
   ) =>
     apiRequest<ChatResult>(
       `${V1}/missions/${missionId}/characters/${characterId}/chat`,
       {
         method: "POST",
-        body: { message, ...(locationId ? { location_id: locationId } : {}) },
+        body: {
+          message,
+          ...(images && images.length > 0 ? { images } : {}),
+          ...(locationId ? { location_id: locationId } : {}),
+        },
       },
     ),
+};
+
+export const avatarApi = {
+  options: () => apiRequest<AvatarOptions>(`${V1}/avatars/options`),
+  generate: (spec: AvatarSpec) =>
+    apiRequest<{ avatar: GeneratedAvatar }>(`${V1}/avatars/generate`, {
+      method: "POST",
+      body: spec,
+    }).then((r) => r.avatar),
 };
 
 export const cluesApi = {

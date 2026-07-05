@@ -10,6 +10,7 @@ import (
 	goredis "github.com/redis/go-redis/v9"
 
 	"casemind/internal/auth"
+	"casemind/internal/avatar"
 	cases "casemind/internal/case"
 	"casemind/internal/character"
 	"casemind/internal/clue"
@@ -34,6 +35,7 @@ import (
 // Handlers aggregates every module handler for routing.
 type Handlers struct {
 	Auth       *auth.Handler
+	Avatar     *avatar.Handler
 	Detective  *detective.Handler
 	Profile    *playerprofile.Handler
 	Wallet     *wallet.Handler
@@ -112,6 +114,10 @@ func NewRouter(
 	mux.Handle("POST /api/v1/auth/refresh", public(h.Auth.Refresh, authLimit))
 	mux.Handle("POST /api/v1/auth/logout", public(h.Auth.Logout, authLimit))
 	mux.Handle("GET /api/v1/me", protected(h.Auth.Me))
+
+	// Avatars.
+	mux.Handle("GET /api/v1/avatars/options", protected(h.Avatar.Options))
+	mux.Handle("POST /api/v1/avatars/generate", protected(h.Avatar.Generate, agentLimit))
 
 	// Detective.
 	mux.Handle("GET /api/v1/detective/profile", protected(h.Detective.Profile))

@@ -339,3 +339,31 @@ export interface CreateMissionRequest {
   region?: string;
   language?: Language;
 }
+
+/** Base64 image attachment sent to vision-capable endpoints. */
+export interface ImagePayload {
+  data: string; // base64, no data: prefix
+  mime: string; // image/png | image/jpeg | image/webp
+}
+
+export interface AvatarOptions {
+  styles: string[];
+  genders: string[];
+  age_groups: string[];
+}
+
+export interface AvatarSpec {
+  style?: string;
+  gender?: string;
+  age_group?: string;
+  ethnicity?: string;
+  seed?: string;
+  size?: number;
+}
+
+export interface GeneratedAvatar {
+  png_base64: string;
+  mime: string;
+  provider: string;
+  style: string;
+}

@@ -94,10 +94,10 @@ func (s *Service) Get(ctx context.Context, userID, missionID uuid.UUID) (*TimeIn
 
 // AdvanceResult is the player-safe outcome of advancing mission time.
 type AdvanceResult struct {
-	NewTime string           `json:"new_time"`
-	Summary string           `json:"summary"`
+	NewTime string            `json:"new_time"`
+	Summary string            `json:"summary"`
 	Events  []timeagent.Event `json:"events"`
-	Cost    wallet.Cost      `json:"cost"`
+	Cost    wallet.Cost       `json:"cost"`
 }
 
 // Advance runs the paid time-advance flow: WalletGuard -> TimeAgent ->
