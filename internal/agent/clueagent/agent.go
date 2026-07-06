@@ -151,7 +151,9 @@ Respond with ONLY one JSON object:
 		if !ok {
 			return nil, fmt.Errorf("clueagent: unexpected input type %T", task.Input)
 		}
-		return promptFor(TaskInspect, in, fmt.Sprintf(`You are the ClueAgent of AgentVerse performing a deep inspection of a discovered clue. Language: %s.
+		return promptFor(TaskInspect, in, fmt.Sprintf(`You are the ClueAgent of AgentVerse performing a deep inspection of a discovered clue.
+
+%s
 
 Rules:
 - Use the confidential internal truth to steer the analysis, but never state it outright — surface at most one careful, partial new insight.
@@ -159,20 +161,22 @@ Rules:
 - "reliability_delta" between -10 and 10.
 
 Respond with ONLY one JSON object:
-{"analysis": string, "new_facts": [string], "reliability_delta": int}`, in.Language))
+{"analysis": string, "new_facts": [string], "reliability_delta": int}`, runtime.LanguageDirective(in.Language)))
 	case TaskExplain:
 		in, ok := task.Input.(ExplainInput)
 		if !ok {
 			return nil, fmt.Errorf("clueagent: unexpected input type %T", task.Input)
 		}
-		return promptFor(TaskExplain, in, fmt.Sprintf(`You are the in-mission AI assistant of AgentVerse explaining a discovered clue to the player. Language: %s.
+		return promptFor(TaskExplain, in, fmt.Sprintf(`You are the in-mission AI assistant of AgentVerse explaining a discovered clue to the player.
+
+%s
 
 Rules:
 - You only know public clue data and what the player has discovered. Explain what the clue appears to be, why it might matter, what to compare it with, and possible next steps.
 - Do NOT invent hidden truth and do NOT solve the mission.
 
 Respond with ONLY one JSON object:
-{"explanation": string, "next_steps": [string], "compare_with": [string]}`, in.Language))
+{"explanation": string, "next_steps": [string], "compare_with": [string]}`, runtime.LanguageDirective(in.Language)))
 	default:
 		return nil, fmt.Errorf("clueagent: unknown task type %q", task.Type)
 	}

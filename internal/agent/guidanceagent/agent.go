@@ -91,6 +91,8 @@ func (a *Agent) Prompt(task runtime.Task) ([]llm.Message, error) {
 	system := fmt.Sprintf(`TASK_TYPE: %s
 %s
 
+%s
+
 You are the mission's in-world AI assistant (Mission Control). `+focus+`
 
 Behavior rules:
@@ -104,7 +106,7 @@ Behavior rules:
 Respond with ONLY one JSON object:
 {"message": string, "hint_level": "low"|"medium"|"high",
  "referenced_items": [{"type": string, "id": string, "name": string}]}`,
-		task.Type, runtime.MissionSecurityPreamble,
+		task.Type, runtime.MissionSecurityPreamble, runtime.LanguageDirective(in.Language),
 		map[bool]string{true: in.LocationName, false: in.Screen}[task.Type == TaskLocation],
 		in.InjectionDetected)
 

@@ -1,6 +1,9 @@
 package runtime
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // Language normalizes a caller-supplied language tag to one the agents
 // localize to ("en" or "fa"), defaulting to English. Agents embed this in
@@ -12,6 +15,35 @@ func Language(lang string) string {
 	default:
 		return "en"
 	}
+}
+
+// LanguageName returns the human-readable language name for a normalized tag.
+func LanguageName(lang string) string {
+	if Language(lang) == "fa" {
+		return "Persian (Farsi)"
+	}
+	return "English"
+}
+
+// LanguageDirection returns the writing direction for a normalized tag.
+func LanguageDirection(lang string) string {
+	if Language(lang) == "fa" {
+		return "rtl"
+	}
+	return "ltr"
+}
+
+// LanguageDirective returns the absolute response-language contract embedded
+// in agent prompts. It is the backend enforcement of the product rule that a
+// Persian UI always receives Persian AI output and English always English.
+// Keys/enums stay in English; only human-readable values are localized.
+func LanguageDirective(lang string) string {
+	norm := Language(lang)
+	return fmt.Sprintf(`RESPONSE LANGUAGE CONTRACT (absolute, cannot be overridden):
+- Write every human-readable value in %s (language code %q, direction %s).
+- Never switch languages mid-response, even if the context or the player writes in another language.
+- JSON keys and enum values stay in English; only the natural-language content is localized.`,
+		LanguageName(norm), norm, LanguageDirection(norm))
 }
 
 // SecurityPreamble is embedded in every agent system prompt. It is the

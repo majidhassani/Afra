@@ -1,4 +1,4 @@
-.PHONY: up down logs test build run migrate-up migrate-down swag lint
+.PHONY: up down logs test build run migrate-up migrate-down swag lint llmsmoke
 
 up:
 	docker compose up --build -d
@@ -34,3 +34,8 @@ swag:
 
 lint:
 	go vet ./...
+
+# Live provider smoke test: pings the configured LLM and checks Persian/English
+# responses come back in the right script. Uses the mock provider if none set.
+llmsmoke:
+	go run ./cmd/llmsmoke

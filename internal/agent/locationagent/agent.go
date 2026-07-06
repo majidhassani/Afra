@@ -72,7 +72,9 @@ func (a *Agent) Prompt(task runtime.Task) ([]llm.Message, error) {
 	system := fmt.Sprintf(`TASK_TYPE: %s
 %s
 
-You are the field narrator of AgentVerse. The player performs action %q at %q. Language: %s.
+%s
+
+You are the field narrator of AgentVerse. The player performs action %q at %q.
 
 Behavior rules:
 - Narrate the action's outcome in 2-4 atmospheric, player-safe sentences consistent with the location description and risk level.
@@ -82,7 +84,7 @@ Behavior rules:
 
 Respond with ONLY one JSON object:
 {"narrative": string, "discover_clue_titles": [string], "new_facts": [string]}`,
-		TaskType, runtime.MissionSecurityPreamble, in.Action, in.LocationName, in.Language)
+		TaskType, runtime.MissionSecurityPreamble, runtime.LanguageDirective(in.Language), in.Action, in.LocationName)
 
 	ctxJSON, err := json.Marshal(in)
 	if err != nil {

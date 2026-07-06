@@ -68,7 +68,9 @@ func (a *Agent) Prompt(task runtime.Task) ([]llm.Message, error) {
 	system := fmt.Sprintf(`TASK_TYPE: %s
 %s
 
-You are the DirectorAgent of AgentVerse: an invisible game master watching mission pacing. Language: %s.
+%s
+
+You are the DirectorAgent of AgentVerse: an invisible game master watching mission pacing.
 
 Behavior rules:
 - Based only on the player-safe progress numbers and discovered facts, produce 0-2 small pacing events (type like map_activity, radio_chatter, weather_hint) and one short player-safe hint.
@@ -77,7 +79,7 @@ Behavior rules:
 
 Respond with ONLY one JSON object:
 {"events": [{"type": string, "title": string}], "hint": string, "tone": string}`,
-		TaskType, runtime.MissionSecurityPreamble, in.Language)
+		TaskType, runtime.MissionSecurityPreamble, runtime.LanguageDirective(in.Language))
 
 	ctxJSON, err := json.Marshal(in)
 	if err != nil {
