@@ -19,6 +19,7 @@ import {
   Navigation,
   Coins,
   Trophy,
+  Sparkles,
   AlertTriangle,
 } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
@@ -30,7 +31,6 @@ import {
   GameButton,
   RiskMeter,
   ObjectiveProgress,
-  HudStat,
   LoadingScreen,
   WalletBalance,
 } from "@/shared/ui/game";
@@ -178,88 +178,140 @@ export function MissionDashboardPage() {
 
   return (
     <div className="page">
-      <header className="page-header">
-        <div>
-          <h1>{mission.title}</h1>
-          <div className="row subtitle" style={{ flexWrap: "wrap" }}>
-            <span>{t(`type.${mission.type}` as TranslationKey)}</span>
-            <DifficultyBadge difficulty={mission.difficulty} />
-            <MissionStatusBadge status={mission.status} />
-            {mission.region && (
-              <span className="row faint">
-                <MapPin size={12} aria-hidden />
-                {mission.region}
-              </span>
-            )}
-            <span className="chip mono-num">
-              <Clock3 size={12} aria-hidden />
-              {mission.current_time}
+      {/* ---- Cinematic Mission Command Center (environment-themed HUD) ---- */}
+      <section className="cmd-hero frame" aria-label={mission.title}>
+        <span className="frame-brackets" aria-hidden />
+
+        {/* Top resource strip */}
+        <div className="cmd-topbar">
+          <span className="cmd-res coin">
+            <Coins size={14} className="r-ico" aria-hidden />
+            <WalletBalance balance={data.wallet_balance} />
+          </span>
+          <span className="cmd-res">
+            <Clock3 size={14} className="r-ico" aria-hidden />
+            <span className="mono-num">{mission.current_time}</span>
+          </span>
+          <DifficultyBadge difficulty={mission.difficulty} />
+          <MissionStatusBadge status={mission.status} />
+          <span className="cmd-res-spacer" />
+          {mission.region && (
+            <span className="cmd-region">
+              <MapPin size={14} aria-hidden />
+              {mission.region}
             </span>
-          </div>
+          )}
         </div>
-        <div className="row" style={{ flexWrap: "wrap", gap: 8 }}>
-          <Link to={`/app/missions/${mission.id}/map`}>
-            <GameButton variant="primary">
-              <Map size={15} aria-hidden />
-              {t("hud.openMap")}
-            </GameButton>
+
+        {/* Center: mission briefing panel + tactical rail */}
+        <div className="cmd-body">
+          <div className="cmd-mission">
+            <div className="cmd-eyebrow">
+              {t(`type.${mission.type}` as TranslationKey)}
+            </div>
+            <h1 className="cmd-title">{mission.title}</h1>
+            <div className="cmd-objective" style={{ unicodeBidi: "plaintext" }}>
+              {primaryObjective ? primaryObjective.title : t("hud.noObjective")}
+            </div>
+
+            <div className="cmd-meters">
+              <div className="cmd-meter">
+                <div className="m-label">
+                  <span>{t("hud.progress")}</span>
+                  <span className="mono-num">{progress}%</span>
+                </div>
+                <ObjectiveProgress value={progress} />
+              </div>
+              <div className="cmd-meter">
+                <div className="m-label">
+                  <span>{t("hud.risk")}</span>
+                  <span
+                    className="mono-num"
+                    style={{
+                      color:
+                        riskBand === "high"
+                          ? "var(--accent-danger)"
+                          : riskBand === "med"
+                            ? "var(--accent-wallet)"
+                            : "var(--accent-mission)",
+                    }}
+                  >
+                    {riskLabel} · {risk}
+                  </span>
+                </div>
+                <RiskMeter value={risk} />
+              </div>
+            </div>
+
+            <div className={`cmd-timer${riskBand === "high" ? " danger" : ""}`}>
+              <Clock3 size={15} aria-hidden />
+              {data.time_remaining || mission.current_time}
+            </div>
+          </div>
+
+          {/* Tactical rail — quick jump to the mission surfaces */}
+          <nav className="cmd-rail" aria-label={t("nav.mission")}>
+            <Link to={`/app/missions/${mission.id}/map`} title={t("nav.map")}>
+              <Map size={19} aria-hidden />
+            </Link>
+            <Link
+              to={`/app/missions/${mission.id}/characters`}
+              title={t("nav.characters")}
+            >
+              <Users size={19} aria-hidden />
+              {characters.length > 0 && (
+                <span className="rail-badge">{characters.length}</span>
+              )}
+            </Link>
+            <Link
+              to={`/app/missions/${mission.id}/clues`}
+              title={t("nav.clues")}
+            >
+              <Search size={19} aria-hidden />
+              {clues.length > 0 && (
+                <span className="rail-badge">{clues.length}</span>
+              )}
+            </Link>
+            <Link
+              to={`/app/missions/${mission.id}/ai`}
+              title={t("nav.ai")}
+            >
+              <Sparkles size={19} aria-hidden />
+            </Link>
+            <Link
+              to={`/app/missions/${mission.id}/timeline`}
+              title={t("nav.timeline")}
+            >
+              <Radio size={19} aria-hidden />
+            </Link>
+          </nav>
+        </div>
+
+        {/* Bottom action bar */}
+        <div className="cmd-actions">
+          <Link to={`/app/missions/${mission.id}/map`} className="cmd-action primary">
+            <Map size={16} aria-hidden />
+            {t("hud.openMap")}
+          </Link>
+          <Link to={`/app/missions/${mission.id}/ai`} className="cmd-action">
+            <Sparkles size={16} aria-hidden />
+            {t("guidance.title")}
+          </Link>
+          <Link to={`/app/missions/${mission.id}/time`} className="cmd-action">
+            <Clock3 size={16} aria-hidden />
+            {t("time.title")}
           </Link>
           <button
-            className="btn btn-ghost"
+            className="cmd-action"
             onClick={() => archive.mutate()}
             disabled={archive.isPending}
             title={t("missions.archive")}
           >
-            <Archive size={15} aria-hidden />
+            <Archive size={16} aria-hidden />
             {t("missions.archive")}
           </button>
         </div>
-      </header>
-
-      {/* Command-center HUD */}
-      <div className="hud" style={{ marginBottom: 14 }}>
-        <HudStat label={t("hud.objective")}>
-          <div style={{ fontSize: 14, fontWeight: 600 }}>
-            {primaryObjective ? primaryObjective.title : t("hud.noObjective")}
-          </div>
-        </HudStat>
-        <HudStat label={t("hud.progress")}>
-          <div className="stack" style={{ gap: 6 }}>
-            <span className="mono-num">{progress}%</span>
-            <ObjectiveProgress value={progress} />
-          </div>
-        </HudStat>
-        <HudStat label={t("hud.risk")}>
-          <div className="stack" style={{ gap: 6 }}>
-            <span
-              className="mono-num"
-              style={{
-                color:
-                  riskBand === "high"
-                    ? "var(--accent-danger)"
-                    : riskBand === "med"
-                      ? "var(--accent-wallet)"
-                      : "var(--accent-mission)",
-              }}
-            >
-              {riskLabel} · {risk}
-            </span>
-            <RiskMeter value={risk} />
-          </div>
-        </HudStat>
-        <HudStat label={t("hud.timeRemaining")}>
-          <span className="mono-num row" style={{ gap: 6 }}>
-            <Clock3 size={14} aria-hidden />
-            {data.time_remaining || mission.current_time}
-          </span>
-        </HudStat>
-        <HudStat label={t("dash.walletBalance")}>
-          <span className="row" style={{ gap: 6 }}>
-            <Coins size={14} aria-hidden />
-            <WalletBalance balance={data.wallet_balance} />
-          </span>
-        </HudStat>
-      </div>
+      </section>
 
       {/* Recommended next move — what to do and why it matters */}
       {recommendedAction ? (

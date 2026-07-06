@@ -1,4 +1,5 @@
 import { NavLink, Outlet, useMatch, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
   Rocket,
@@ -18,7 +19,8 @@ import {
 } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
 import { useAuthStore, getRefreshToken } from "@/features/auth/authStore";
-import { authApi } from "@/shared/api/endpoints";
+import { authApi, missionsApi } from "@/shared/api/endpoints";
+import { useEnvironmentTheme, environmentFor } from "@/shared/theme/environment";
 import { LanguageSwitcher } from "@/shared/ui/LanguageSwitcher";
 import { WalletChip, HealthIndicator } from "@/shared/ui/badges";
 import { useKeyboardInset } from "@/shared/ui/useKeyboardInset";
@@ -35,6 +37,18 @@ export function AppShell() {
     missionMatch?.params.missionId === "new"
       ? undefined
       : missionMatch?.params.missionId;
+
+  // Tint the whole shell (backdrop + accents) to the active mission's
+  // environment, so every mission sub-page shares the biome look. Reuses the
+  // cached dashboard query so it costs no extra request.
+  const missionEnv = useQuery({
+    queryKey: ["mission", missionId],
+    queryFn: () => missionsApi.dashboard(missionId!),
+    enabled: !!missionId,
+  });
+  useEnvironmentTheme(
+    missionId && missionEnv.data ? environmentFor(missionEnv.data.mission) : null,
+  );
 
   const logout = async () => {
     const refreshToken = getRefreshToken();
@@ -122,6 +136,9 @@ export function AppShell() {
 
   return (
     <div className="shell">
+      {/* Environment-tinted cinematic backdrop + ambient layer (via [data-env]). */}
+      <div className="env-backdrop" aria-hidden />
+      <div className="env-atmosphere" aria-hidden />
       <nav className="sidenav" aria-label="Main">
         <div className="sidenav-brand">{t("common.appName")}</div>
         {mainNav.map((item) => (

@@ -1,0 +1,542 @@
+/* ============================================================
+   AgentVerse — CINEMATIC OVERHAUL LAYER (v2)
+   Loaded after game.css. Turns the command center into a
+   full-bleed, environment-themed, in-world game HUD:
+   framed glass panels, corner brackets, resource strip,
+   tactical rail, and a biome-tinted backdrop.
+   ============================================================ */
+
+:root {
+  /* Default (neutral) environment accent — overridden per [data-env]. */
+  --env-accent: #7dd3c7;
+  --env-accent-2: #9bbf6a;
+  --env-glow: 0 0 26px -6px rgba(125, 211, 199, 0.5);
+  --env-scrim: rgba(9, 11, 15, 0.72);
+  --env-wash:
+    radial-gradient(1200px 700px at 12% -6%, rgba(125, 211, 199, 0.1), transparent 60%),
+    radial-gradient(1000px 620px at 90% 2%, rgba(168, 155, 255, 0.08), transparent 55%);
+}
+
+/* ---- Environment palettes (six biomes: world theming) ---- */
+:root[data-env="forest"] {
+  --env-accent: #8fc46b;
+  --env-accent-2: #d9b45a;
+  --env-glow: 0 0 28px -6px rgba(143, 196, 107, 0.55);
+  --env-scrim: rgba(8, 14, 10, 0.74);
+  --env-wash:
+    radial-gradient(1300px 760px at 15% -8%, rgba(143, 196, 107, 0.16), transparent 60%),
+    radial-gradient(1000px 640px at 88% 4%, rgba(80, 120, 70, 0.14), transparent 58%),
+    radial-gradient(900px 700px at 60% 112%, rgba(30, 52, 28, 0.5), transparent 60%);
+}
+:root[data-env="desert"] {
+  --env-accent: #e0b15a;
+  --env-accent-2: #d97a4a;
+  --env-glow: 0 0 28px -6px rgba(224, 177, 90, 0.55);
+  --env-scrim: rgba(18, 12, 8, 0.72);
+  --env-wash:
+    radial-gradient(1300px 760px at 15% -8%, rgba(224, 177, 90, 0.18), transparent 60%),
+    radial-gradient(1000px 640px at 88% 4%, rgba(217, 122, 74, 0.12), transparent 58%),
+    radial-gradient(900px 700px at 60% 112%, rgba(66, 44, 24, 0.5), transparent 60%);
+}
+:root[data-env="city"] {
+  --env-accent: #6ec5e6;
+  --env-accent-2: #e0a24a;
+  --env-glow: 0 0 26px -6px rgba(110, 197, 230, 0.55);
+  --env-scrim: rgba(9, 12, 18, 0.78);
+  --env-wash:
+    radial-gradient(1300px 760px at 15% -8%, rgba(110, 197, 230, 0.16), transparent 60%),
+    radial-gradient(1000px 640px at 88% 4%, rgba(224, 162, 74, 0.12), transparent 58%),
+    radial-gradient(900px 700px at 60% 112%, rgba(16, 22, 34, 0.6), transparent 60%);
+}
+:root[data-env="snow"] {
+  --env-accent: #a8d4e6;
+  --env-accent-2: #cfe6f2;
+  --env-glow: 0 0 28px -6px rgba(168, 212, 230, 0.6);
+  --env-scrim: rgba(14, 18, 24, 0.7);
+  --env-wash:
+    radial-gradient(1300px 760px at 15% -8%, rgba(200, 226, 240, 0.18), transparent 60%),
+    radial-gradient(1000px 640px at 88% 4%, rgba(150, 190, 214, 0.14), transparent 58%),
+    radial-gradient(900px 700px at 60% 112%, rgba(30, 44, 58, 0.5), transparent 60%);
+}
+:root[data-env="horror"] {
+  --env-accent: #e05664;
+  --env-accent-2: #a83b46;
+  --env-glow: 0 0 30px -6px rgba(224, 86, 100, 0.6);
+  --env-scrim: rgba(6, 6, 8, 0.86);
+  --env-wash:
+    radial-gradient(1300px 760px at 15% -8%, rgba(224, 86, 100, 0.14), transparent 58%),
+    radial-gradient(1000px 640px at 88% 4%, rgba(60, 20, 24, 0.3), transparent 55%),
+    radial-gradient(900px 760px at 60% 112%, rgba(0, 0, 0, 0.75), transparent 62%);
+}
+:root[data-env="space"] {
+  --env-accent: #a89bff;
+  --env-accent-2: #6ec5e6;
+  --env-glow: 0 0 30px -6px rgba(168, 155, 255, 0.6);
+  --env-scrim: rgba(8, 8, 18, 0.8);
+  --env-wash:
+    radial-gradient(1300px 760px at 15% -8%, rgba(168, 155, 255, 0.16), transparent 60%),
+    radial-gradient(1000px 640px at 88% 4%, rgba(110, 197, 230, 0.14), transparent 58%),
+    radial-gradient(900px 760px at 60% 112%, rgba(12, 12, 30, 0.62), transparent 60%);
+}
+
+/* ---- Environment backdrop: full-bleed biome wash behind everything ---- */
+.env-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--env-wash), var(--bg-base);
+  opacity: 0;
+  transition: opacity 600ms var(--av-ease-out, ease), background 600ms var(--av-ease-out, ease);
+}
+:root[data-env] .env-backdrop {
+  opacity: 1;
+}
+/* Cinematic vignette + faint film grain for depth. */
+.env-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 50% 0%, transparent 55%, rgba(0, 0, 0, 0.55) 100%),
+    radial-gradient(100% 100% at 50% 120%, transparent 60%, rgba(0, 0, 0, 0.5) 100%);
+}
+
+/* Biome ambient layer: drifting particles / fog / stars per environment. */
+.env-atmosphere {
+  position: fixed;
+  inset: -10%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 800ms var(--av-ease-out, ease);
+}
+:root[data-env] .env-atmosphere {
+  opacity: 1;
+}
+/* SNOW / SPACE: fine points drifting downward (snow) or twinkling (stars). */
+:root[data-env="snow"] .env-atmosphere,
+:root[data-env="space"] .env-atmosphere {
+  background-image:
+    radial-gradient(1.6px 1.6px at 20% 30%, rgba(255, 255, 255, 0.55), transparent),
+    radial-gradient(1.4px 1.4px at 70% 20%, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(1.8px 1.8px at 40% 70%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1.2px 1.2px at 85% 60%, rgba(255, 255, 255, 0.35), transparent),
+    radial-gradient(1.5px 1.5px at 55% 45%, rgba(255, 255, 255, 0.45), transparent);
+  background-size: 320px 320px;
+  animation: env-drift 26s linear infinite;
+}
+:root[data-env="space"] .env-atmosphere {
+  animation: env-twinkle 6s ease-in-out infinite;
+}
+/* FOREST / DESERT: soft moving fog/dust bands. */
+:root[data-env="forest"] .env-atmosphere,
+:root[data-env="desert"] .env-atmosphere {
+  background-image:
+    radial-gradient(60% 40% at 30% 40%, color-mix(in srgb, var(--env-accent) 10%, transparent), transparent 70%),
+    radial-gradient(50% 35% at 75% 65%, color-mix(in srgb, var(--env-accent) 8%, transparent), transparent 70%);
+  animation: env-fog 32s ease-in-out infinite alternate;
+}
+/* HORROR: slow red breathing vignette. */
+:root[data-env="horror"] .env-atmosphere {
+  background: radial-gradient(120% 90% at 50% 50%, transparent 62%, rgba(224, 86, 100, 0.14) 100%);
+  animation: env-breathe 5s ease-in-out infinite;
+}
+/* CITY: faint scan drift. */
+:root[data-env="city"] .env-atmosphere {
+  background: repeating-linear-gradient(0deg, rgba(110, 197, 230, 0.04) 0 1px, transparent 1px 4px);
+  animation: env-scan 8s linear infinite;
+}
+@keyframes env-drift {
+  from { background-position: 0 0; }
+  to { background-position: 0 320px; }
+}
+@keyframes env-twinkle {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+@keyframes env-fog {
+  from { transform: translateX(-3%); }
+  to { transform: translateX(3%); }
+}
+@keyframes env-breathe {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+@keyframes env-scan {
+  from { background-position: 0 0; }
+  to { background-position: 0 40px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .env-atmosphere { animation: none !important; }
+}
+/* Keep app content above the backdrop + atmosphere layers. */
+.shell > *:not(.env-backdrop):not(.env-atmosphere) {
+  position: relative;
+  z-index: 1;
+}
+.shell .main {
+  background: transparent;
+}
+:root[data-env] .topbar,
+:root[data-env] .sidenav {
+  background: color-mix(in srgb, var(--bg-panel) 78%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+/* ============================================================
+   FRAMED IN-WORLD PANELS (05 FRAME & PANEL STYLE)
+   Corner-bracket tactical frame reusable on any panel/card.
+   ============================================================ */
+.frame {
+  position: relative;
+  border: 1px solid var(--glass-border);
+  background:
+    linear-gradient(180deg, rgba(20, 24, 32, 0.66), rgba(12, 15, 20, 0.82));
+  backdrop-filter: blur(8px);
+}
+.frame::before,
+.frame::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--env-accent);
+  opacity: 0.85;
+  pointer-events: none;
+}
+/* top-inline-start + bottom-inline-end brackets */
+.frame::before {
+  top: -1px;
+  inset-inline-start: -1px;
+  border-inline-end: none;
+  border-bottom: none;
+}
+.frame::after {
+  bottom: -1px;
+  inset-inline-end: -1px;
+  border-inline-start: none;
+  border-top: none;
+}
+/* A second pair of brackets for the opposite corners. */
+.frame > .frame-brackets::before,
+.frame > .frame-brackets::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--env-accent);
+  opacity: 0.55;
+  pointer-events: none;
+}
+.frame > .frame-brackets::before {
+  top: -1px;
+  inset-inline-end: -1px;
+  border-inline-start: none;
+  border-bottom: none;
+}
+.frame > .frame-brackets::after {
+  bottom: -1px;
+  inset-inline-start: -1px;
+  border-inline-end: none;
+  border-top: none;
+}
+
+/* ============================================================
+   MISSION COMMAND CENTER — cinematic HUD (03 AFTER)
+   ============================================================ */
+.cmd-hero {
+  position: relative;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  min-height: 340px;
+  margin-bottom: 16px;
+  border: 1px solid var(--glass-border);
+  background:
+    linear-gradient(180deg, transparent 30%, var(--env-scrim) 92%),
+    var(--env-wash),
+    linear-gradient(140deg, #10141b, #0a0d12);
+  box-shadow: var(--shadow-float);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 14px;
+}
+/* Subtle animated scan sheen across the hero. */
+.cmd-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 42%, rgba(255, 255, 255, 0.04) 50%, transparent 58%);
+  transform: translateX(-30%);
+  animation: cmd-sheen 9s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes cmd-sheen {
+  0%, 70% { transform: translateX(-40%); opacity: 0; }
+  80% { opacity: 1; }
+  100% { transform: translateX(40%); opacity: 0; }
+}
+
+/* ---- Top resource strip (coins / region / clock) ---- */
+.cmd-topbar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  z-index: 2;
+}
+.cmd-res {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--bg-elevated) 72%, transparent);
+  backdrop-filter: blur(8px);
+}
+.cmd-res.coin { color: var(--accent-wallet); }
+.cmd-res.env { color: var(--env-accent); }
+.cmd-res .r-ico { opacity: 0.9; }
+/* Flatten the standalone coin pill when nested inside a resource chip. */
+.cmd-res .coin-balance {
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 700;
+  color: inherit;
+}
+.cmd-res .coin-balance .coin-dot {
+  display: none;
+}
+.cmd-res-spacer { flex: 1; }
+.cmd-region {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--env-accent);
+  border: 1px solid color-mix(in srgb, var(--env-accent) 40%, transparent);
+  background: color-mix(in srgb, var(--env-accent) 12%, transparent);
+}
+
+/* ---- Center: mission panel + tactical rail ---- */
+.cmd-body {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  flex: 1;
+}
+.cmd-mission {
+  max-width: 460px;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+}
+.cmd-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--env-accent);
+  margin-bottom: 4px;
+}
+.cmd-title {
+  font-size: clamp(20px, 3vw, 28px);
+  font-weight: 700;
+  line-height: 1.15;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.6);
+}
+.cmd-objective {
+  color: var(--text-secondary);
+  margin-top: 6px;
+  font-size: 13.5px;
+}
+.cmd-meters {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.cmd-meter {
+  min-width: 120px;
+}
+.cmd-meter .m-label {
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+.cmd-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  color: var(--text-primary);
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--bg-base) 55%, transparent);
+}
+.cmd-timer.danger {
+  color: var(--accent-danger);
+  border-color: color-mix(in srgb, var(--accent-danger) 45%, transparent);
+}
+
+/* ---- Right tactical rail (07 icon rail) ---- */
+.cmd-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cmd-rail a {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  color: var(--text-secondary);
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--bg-elevated) 70%, transparent);
+  backdrop-filter: blur(8px);
+  transition: transform 140ms var(--ease), border-color 140ms var(--ease), color 140ms var(--ease);
+}
+.cmd-rail a:hover {
+  transform: translateY(-2px);
+  color: var(--env-accent);
+  border-color: var(--env-accent);
+  box-shadow: var(--env-glow);
+}
+.cmd-rail a .rail-badge {
+  position: absolute;
+  top: -4px;
+  inset-inline-end: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0a0d12;
+  background: var(--env-accent);
+}
+
+/* ---- Bottom action bar (03 AFTER buttons) ---- */
+.cmd-actions {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.cmd-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--text-primary);
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--bg-elevated) 74%, transparent);
+  backdrop-filter: blur(8px);
+  transition: transform 140ms var(--ease), border-color 140ms var(--ease), box-shadow 140ms var(--ease);
+}
+.cmd-action:hover {
+  transform: translateY(-1px);
+  border-color: var(--env-accent);
+  box-shadow: var(--env-glow);
+}
+.cmd-action.primary {
+  color: #0a0d12;
+  font-weight: 700;
+  border-color: transparent;
+  background: linear-gradient(180deg, var(--env-accent), color-mix(in srgb, var(--env-accent) 78%, #000));
+}
+
+/* Progress fill picks up the environment accent inside the hero. */
+.cmd-hero .obj-progress > span {
+  background: linear-gradient(90deg, var(--env-accent), var(--env-accent-2)) !important;
+}
+
+/* ============================================================
+   Environment accent inheritance — while a mission is open, the
+   shared game components pick up the biome accent so the whole
+   surface (map, characters, clues, AI) reads as one world.
+   ============================================================ */
+:root[data-env] .tac-card::before {
+  border-color: var(--env-accent);
+}
+:root[data-env] .char-card:hover,
+:root[data-env] .type-tile:hover,
+:root[data-env] .item-row:hover {
+  border-color: color-mix(in srgb, var(--env-accent) 60%, transparent);
+}
+:root[data-env] .game-btn-primary {
+  background: linear-gradient(180deg, var(--env-accent), color-mix(in srgb, var(--env-accent) 78%, #000));
+  color: #0a0d12;
+  border-color: transparent;
+}
+:root[data-env] .reco-banner,
+:root[data-env] .next-action-card {
+  border-color: color-mix(in srgb, var(--env-accent) 40%, transparent);
+}
+:root[data-env] .marker-pin.recommended .marker-dot {
+  border-color: var(--env-accent);
+  color: var(--env-accent);
+}
+/* Panels lift slightly with the biome tint. */
+:root[data-env] .panel {
+  border-color: color-mix(in srgb, var(--env-accent) 14%, var(--border-subtle));
+}
+
+@media (max-width: 720px) {
+  .cmd-hero {
+    min-height: 300px;
+  }
+  .cmd-body {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .cmd-rail {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .cmd-mission {
+    max-width: none;
+    padding: 12px 0 0;
+    background: transparent !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cmd-hero::before,
+  .env-backdrop {
+    animation: none;
+    transition: none;
+  }
+}
