@@ -19,6 +19,7 @@ import { EmptyState, ErrorState, SkeletonRows } from "@/shared/ui/states";
 import { MissionRow } from "./MissionCard";
 import { MissionStatusBadge } from "@/shared/ui/badges";
 import { GameButton, WalletBalance } from "@/shared/ui/game";
+import { useEnvironmentTheme, environmentFor } from "@/shared/theme/environment";
 import type { MissionType } from "@/shared/types/api";
 import type { TranslationKey } from "@/shared/i18n/en";
 
@@ -43,6 +44,9 @@ export function DashboardPage() {
   );
   const recent = (missions.data ?? []).slice(0, 5);
   const agentName = profile.data?.display_name ?? "";
+
+  // The lobby wears the biome of the active operation.
+  useEnvironmentTheme(active ? environmentFor(active) : null);
 
   return (
     <div className="page stack" style={{ gap: 18 }}>

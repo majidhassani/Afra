@@ -514,6 +514,47 @@
   border-color: color-mix(in srgb, var(--env-accent) 14%, var(--border-subtle));
 }
 
+/* ---- Mission Hub lobby: biome-lit hero + deploy tiles ---- */
+:root[data-env] .hub-hero {
+  border-color: color-mix(in srgb, var(--env-accent) 32%, transparent);
+  background:
+    radial-gradient(760px 340px at 100% 0%, color-mix(in srgb, var(--env-accent) 16%, transparent), transparent 62%),
+    var(--env-wash),
+    linear-gradient(150deg, rgba(20, 26, 34, 0.92), rgba(10, 13, 18, 0.96));
+}
+:root[data-env] .hub-hero .eyebrow {
+  color: var(--env-accent);
+}
+.hub-hero {
+  position: relative;
+  overflow: hidden;
+}
+/* Deploy tiles read as launchable operations, not menu buttons. */
+.type-grid {
+  gap: 12px;
+}
+.type-tile {
+  position: relative;
+  overflow: hidden;
+  transition: transform 160ms var(--ease), border-color 160ms var(--ease), box-shadow 160ms var(--ease);
+}
+.type-tile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg, transparent 55%, rgba(255, 255, 255, 0.04));
+  pointer-events: none;
+}
+.type-tile:hover {
+  transform: translateY(-3px);
+}
+.type-tile .type-icon {
+  transition: transform 200ms var(--av-ease-out, ease);
+}
+.type-tile:hover .type-icon {
+  transform: scale(1.12) rotate(-4deg);
+}
+
 @media (max-width: 720px) {
   .cmd-hero {
     min-height: 300px;
