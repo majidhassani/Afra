@@ -1,10 +1,23 @@
-/* AgentVerse design tokens — postmodern minimal mission console. */
+/* AgentVerse design tokens — cinematic tactical mission command center. */
 :root {
-  /* Surfaces */
-  --bg-base: #0d0e10;
-  --bg-panel: #15171a;
-  --bg-elevated: #1e2126;
-  --bg-hover: #23262c;
+  /* Surfaces (deep, atmospheric) */
+  --bg-base: #090b0f;
+  --bg-panel: #12151b;
+  --bg-elevated: #1a1f27;
+  --bg-hover: #232935;
+
+  /* Glass panels + glow */
+  --glass-bg: rgba(20, 24, 32, 0.72);
+  --glass-border: rgba(125, 211, 199, 0.14);
+  --glow-ai: 0 0 0 1px rgba(125, 211, 199, 0.25), 0 0 24px -6px rgba(125, 211, 199, 0.45);
+  --glow-mission: 0 0 0 1px rgba(155, 191, 106, 0.25), 0 0 22px -6px rgba(155, 191, 106, 0.4);
+  --glow-danger: 0 0 0 1px rgba(229, 107, 111, 0.3), 0 0 22px -6px rgba(229, 107, 111, 0.5);
+
+  /* Signature atmospheric gradient wash for backgrounds */
+  --wash:
+    radial-gradient(1100px 620px at 14% -8%, rgba(125, 211, 199, 0.09), transparent 60%),
+    radial-gradient(900px 560px at 92% 4%, rgba(168, 155, 255, 0.08), transparent 55%),
+    radial-gradient(1000px 700px at 60% 108%, rgba(155, 191, 106, 0.06), transparent 60%);
 
   /* Text */
   --text-primary: #f5f3ee;
@@ -34,7 +47,10 @@
   /* Geometry */
   --radius-sm: 4px;
   --radius-md: 8px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
   --shadow-panel: 0 8px 28px rgba(0, 0, 0, 0.45);
+  --shadow-float: 0 18px 50px -12px rgba(0, 0, 0, 0.7);
 
   /* Layout */
   --sidenav-width: 216px;

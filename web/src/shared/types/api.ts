@@ -115,11 +115,23 @@ export interface Cost {
   coins_charged: number;
 }
 
+export type ObjectiveType =
+  | "primary"
+  | "required"
+  | "optional"
+  | "hidden"
+  | "dynamic"
+  | "final";
+
 export interface Objective {
   id: string;
+  /** Added by the mission-guidance backend upgrade; older data omits it. */
+  type?: ObjectiveType;
   title: string;
   description: string;
-  status: "active" | "completed" | "failed";
+  status: "locked" | "active" | "completed" | "failed" | "skipped";
+  /** 0-100; older data omits it. */
+  progress?: number;
   required_clues: number;
   optional: boolean;
 }
@@ -207,6 +219,11 @@ export interface Marker {
   has_character: boolean;
   is_locked: boolean;
   badge?: string;
+  /** Recommendation fields added by the mission-guidance backend upgrade. */
+  objective_status?: string;
+  has_required_action?: boolean;
+  recommended?: boolean;
+  priority?: string;
 }
 
 export interface MapView {

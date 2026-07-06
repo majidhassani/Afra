@@ -3,10 +3,12 @@ import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, SendHorizonal } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
+import { useLanguageGuard } from "@/shared/i18n/languageGuard";
 import { charactersApi, walletApi } from "@/shared/api/endpoints";
 import { errorKey } from "@/shared/api/client";
 import { ErrorState, SkeletonRows } from "@/shared/ui/states";
-import { AvatarPlaceholder, CostBadge, Meter } from "@/shared/ui/badges";
+import { CostBadge, Meter } from "@/shared/ui/badges";
+import { Avatar } from "@/shared/ui/Avatar";
 import {
   AttachmentStrip,
   ImageAttachButton,
@@ -29,6 +31,7 @@ export function CharacterChatPage() {
     characterId: string;
   }>();
   const { t } = useI18n();
+  const guardLanguage = useLanguageGuard();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState("");
   const [thread, setThread] = useState<ThreadEntry[]>([]);
@@ -89,6 +92,7 @@ export function CharacterChatPage() {
       clearAttachments();
     },
     onSuccess: (result) => {
+      guardLanguage(result.message);
       setThread((prev) => [
         ...prev,
         {
@@ -141,11 +145,7 @@ export function CharacterChatPage() {
           >
             <ArrowLeft size={16} className="rtl-flip" aria-hidden />
           </Link>
-          <AvatarPlaceholder
-            name={character.name}
-            prompt={character.avatar_prompt}
-            size="lg"
-          />
+          <Avatar name={character.name} category={character.category} size="lg" />
           <div className="grow" style={{ minWidth: 0 }}>
             <h2>{character.name}</h2>
             <p className="sub muted">
@@ -230,8 +230,15 @@ export function CharacterChatPage() {
           </div>
         ))}
         {send.isPending && (
-          <div className="bubble npc" aria-hidden>
-            <span className="skeleton" style={{ display: "block", width: 160 }} />
+          <div className="bubble npc typing" aria-label={t("chars.typing")}>
+            <span className="typing-dots" aria-hidden>
+              <i />
+              <i />
+              <i />
+            </span>
+            <span className="faint" style={{ fontSize: 11 }}>
+              {t("chars.typing", { name: character.name })}
+            </span>
           </div>
         )}
         {send.isError && (

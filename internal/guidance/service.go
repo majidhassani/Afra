@@ -88,12 +88,12 @@ func NewService(
 }
 
 // Guide answers a paid guidance request from any screen.
-func (s *Service) Guide(ctx context.Context, userID, missionID uuid.UUID, message string, reqCtx RequestContext) (*Result, error) {
-	return s.run(ctx, userID, missionID, message, reqCtx, guidanceagent.TaskGuide, wallet.ActionAIGuidance, nil)
+func (s *Service) Guide(ctx context.Context, userID, missionID uuid.UUID, message, language string, reqCtx RequestContext) (*Result, error) {
+	return s.run(ctx, userID, missionID, message, language, reqCtx, guidanceagent.TaskGuide, wallet.ActionAIGuidance, nil)
 }
 
 // AskAtLocation answers a paid location-scoped AI question.
-func (s *Service) AskAtLocation(ctx context.Context, userID, missionID, locationID uuid.UUID, message string) (*Result, error) {
+func (s *Service) AskAtLocation(ctx context.Context, userID, missionID, locationID uuid.UUID, message, language string) (*Result, error) {
 	l, err := s.locations.GetByID(ctx, missionID, locationID)
 	if err != nil {
 		return nil, err
@@ -101,12 +101,12 @@ func (s *Service) AskAtLocation(ctx context.Context, userID, missionID, location
 	if !l.Visible() {
 		return nil, apperrors.NotFound("location_not_found", "location not found")
 	}
-	return s.run(ctx, userID, missionID, message,
+	return s.run(ctx, userID, missionID, message, language,
 		RequestContext{Screen: "location", LocationID: &locationID},
 		guidanceagent.TaskLocation, wallet.ActionLocationAsk, l)
 }
 
-func (s *Service) run(ctx context.Context, userID, missionID uuid.UUID, message string,
+func (s *Service) run(ctx context.Context, userID, missionID uuid.UUID, message, language string,
 	reqCtx RequestContext, taskType, action string, location *gamemap.Location) (*Result, error) {
 
 	if err := validator.New().
@@ -118,7 +118,7 @@ func (s *Service) run(ctx context.Context, userID, missionID uuid.UUID, message 
 		return nil, err
 	}
 
-	input, err := s.buildContext(ctx, userID, missionID, message, reqCtx, location)
+	input, err := s.buildContext(ctx, userID, missionID, message, language, reqCtx, location)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +176,7 @@ func (s *Service) run(ctx context.Context, userID, missionID uuid.UUID, message 
 }
 
 // buildContext assembles the strictly player-visible world state.
-func (s *Service) buildContext(ctx context.Context, userID, missionID uuid.UUID, message string,
+func (s *Service) buildContext(ctx context.Context, userID, missionID uuid.UUID, message, language string,
 	reqCtx RequestContext, location *gamemap.Location) (*guidanceagent.Input, error) {
 
 	summary, err := s.guard.SummaryOf(ctx, userID, missionID)
@@ -246,7 +246,7 @@ func (s *Service) buildContext(ctx context.Context, userID, missionID uuid.UUID,
 		DiscoveredFacts:    s.factTexts(ctx, missionID),
 		PlayerMessage:      message,
 		InjectionDetected:  len(runtime.DetectInjection(message)) > 0,
-		Language:           "en",
+		Language:           runtime.Language(language),
 	}
 	if location != nil {
 		input.LocationName = location.Name

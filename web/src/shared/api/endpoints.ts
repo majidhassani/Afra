@@ -1,5 +1,6 @@
 import { apiRequest } from "./client";
 import { env } from "@/shared/config/env";
+import { withLocale } from "@/shared/i18n/locale";
 import type {
   ActionResult,
   AuthResponse,
@@ -111,7 +112,7 @@ export const missionsApi = {
   create: (input: CreateMissionRequest) =>
     apiRequest<{ mission: Mission }>(`${V1}/missions`, {
       method: "POST",
-      body: input,
+      body: withLocale({ ...input }),
     }).then((r) => r.mission),
   dashboard: (missionId: string) =>
     apiRequest<MissionDashboard>(`${V1}/missions/${missionId}`),
@@ -135,12 +136,12 @@ export const mapApi = {
   runAction: (missionId: string, locationId: string, action: string) =>
     apiRequest<ActionResult>(
       `${V1}/missions/${missionId}/locations/${locationId}/actions`,
-      { method: "POST", body: { action } },
+      { method: "POST", body: withLocale({ action }) },
     ),
   askAi: (missionId: string, locationId: string, message: string) =>
     apiRequest<GuidanceResult>(
       `${V1}/missions/${missionId}/locations/${locationId}/ask-ai`,
-      { method: "POST", body: { message } },
+      { method: "POST", body: withLocale({ message }) },
     ),
 };
 
@@ -164,11 +165,11 @@ export const charactersApi = {
       `${V1}/missions/${missionId}/characters/${characterId}/chat`,
       {
         method: "POST",
-        body: {
+        body: withLocale({
           message,
           ...(images && images.length > 0 ? { images } : {}),
           ...(locationId ? { location_id: locationId } : {}),
-        },
+        }),
       },
     ),
 };
@@ -194,12 +195,12 @@ export const cluesApi = {
   inspect: (missionId: string, clueId: string, question?: string) =>
     apiRequest<ClueInspectResult>(
       `${V1}/missions/${missionId}/clues/${clueId}/inspect`,
-      { method: "POST", body: question ? { question } : {} },
+      { method: "POST", body: withLocale(question ? { question } : {}) },
     ),
   explain: (missionId: string, clueId: string) =>
     apiRequest<ClueExplainResult>(
       `${V1}/missions/${missionId}/clues/${clueId}/explain`,
-      { method: "POST", body: {} },
+      { method: "POST", body: withLocale({}) },
     ),
 };
 
@@ -207,7 +208,7 @@ export const guidanceApi = {
   ask: (missionId: string, message: string, context?: GuidanceContext) =>
     apiRequest<GuidanceResult>(`${V1}/missions/${missionId}/guidance`, {
       method: "POST",
-      body: { message, ...(context ? { context } : {}) },
+      body: withLocale({ message, ...(context ? { context } : {}) }),
     }),
 };
 
@@ -217,7 +218,7 @@ export const timeApi = {
   advance: (missionId: string, amount: number, unit: TimeUnit) =>
     apiRequest<TimeAdvanceResult>(`${V1}/missions/${missionId}/time/advance`, {
       method: "POST",
-      body: { amount, unit },
+      body: withLocale({ amount, unit }),
     }),
 };
 

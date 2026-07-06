@@ -190,7 +190,7 @@ type ActionResult struct {
 
 // Action executes a location action (search/inspect/scan) through the
 // LocationAgent, unlocking any earned clues.
-func (s *Service) Action(ctx context.Context, userID, missionID, locationID uuid.UUID, action string) (*ActionResult, error) {
+func (s *Service) Action(ctx context.Context, userID, missionID, locationID uuid.UUID, action, language string) (*ActionResult, error) {
 	if err := validator.New().
 		Required("action", action).MaxLen("action", action, 60).
 		Err(); err != nil {
@@ -242,7 +242,7 @@ func (s *Service) Action(ctx context.Context, userID, missionID, locationID uuid
 			Action:            action,
 			UndiscoveredClues: clueRefs,
 			DiscoveredFacts:   s.factTexts(ctx, missionID),
-			Language:          "en",
+			Language:          runtime.Language(language),
 		},
 	})
 	if err != nil {

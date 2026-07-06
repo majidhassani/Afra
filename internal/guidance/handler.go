@@ -34,7 +34,7 @@ func (h *Handler) Guide(w http.ResponseWriter, r *http.Request) {
 		response.Err(w, apperrors.Invalid("invalid_body", "invalid JSON body"))
 		return
 	}
-	result, err := h.svc.Guide(r.Context(), userID, missionID, req.Message, req.Context)
+	result, err := h.svc.Guide(r.Context(), userID, missionID, req.Message, httpx.RequestLanguage(r), req.Context)
 	if err != nil {
 		response.Err(w, err)
 		return
@@ -64,7 +64,7 @@ func (h *Handler) AskAtLocation(w http.ResponseWriter, r *http.Request) {
 		response.Err(w, apperrors.Invalid("invalid_body", "invalid JSON body"))
 		return
 	}
-	result, err := h.svc.AskAtLocation(r.Context(), userID, missionID, locationID, req.Message)
+	result, err := h.svc.AskAtLocation(r.Context(), userID, missionID, locationID, req.Message, httpx.RequestLanguage(r))
 	if err != nil {
 		response.Err(w, err)
 		return

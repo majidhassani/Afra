@@ -1,10 +1,11 @@
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, MapPin } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
 import { charactersApi } from "@/shared/api/endpoints";
 import { EmptyState, ErrorState, SkeletonRows } from "@/shared/ui/states";
-import { AvatarPlaceholder, Meter } from "@/shared/ui/badges";
+import { Avatar } from "@/shared/ui/Avatar";
+import { Meter } from "@/shared/ui/badges";
 
 export function CharactersPage() {
   const { missionId } = useParams<{ missionId: string }>();
@@ -18,42 +19,69 @@ export function CharactersPage() {
   return (
     <div className="page">
       <header className="page-header">
-        <h1>{t("chars.title")}</h1>
+        <div>
+          <h1>{t("chars.title")}</h1>
+          <p className="subtitle">{t("chars.subtitle")}</p>
+        </div>
       </header>
-      <div className="panel">
-        {characters.isPending && <SkeletonRows rows={5} />}
-        {characters.isError && (
+
+      {characters.isPending && (
+        <div className="panel">
+          <SkeletonRows rows={5} />
+        </div>
+      )}
+      {characters.isError && (
+        <div className="panel">
           <ErrorState
             error={characters.error}
             onRetry={() => characters.refetch()}
           />
-        )}
-        {characters.isSuccess && characters.data.length === 0 && (
-          <EmptyState title={t("chars.empty")} />
-        )}
-        <div className="item-list">
-          {characters.data?.map((c) => (
-            <Link
-              key={c.id}
-              className="item-row"
-              to={`/app/missions/${missionId}/characters/${c.id}`}
-            >
-              <AvatarPlaceholder name={c.name} prompt={c.avatar_prompt} />
-              <div className="grow">
-                <div className="title">{c.name}</div>
-                <div className="sub">
-                  {c.role} · {c.category}
-                </div>
-              </div>
-              <div className="row" style={{ gap: 6 }}>
-                <span className="faint">{t("chars.trust")}</span>
-                <Meter value={c.trust_level} />
-              </div>
-              <span className="chip">{c.mood}</span>
-              <MessageSquare size={15} aria-hidden />
-            </Link>
-          ))}
         </div>
+      )}
+      {characters.isSuccess && characters.data.length === 0 && (
+        <div className="panel">
+          <EmptyState title={t("chars.empty")} body={t("chars.empty.body")} />
+        </div>
+      )}
+
+      <div className="card-grid">
+        {characters.data?.map((c) => (
+          <Link
+            key={c.id}
+            className="char-card"
+            to={`/app/missions/${missionId}/characters/${c.id}`}
+          >
+            <div className="char-card-head">
+              <Avatar name={c.name} category={c.category} size="lg" />
+              <div className="grow" style={{ minWidth: 0 }}>
+                <div className="char-card-name">{c.name}</div>
+                <div className="sub">{c.role}</div>
+              </div>
+              <span className={`status-chip cat-${c.category}`}>{c.category}</span>
+            </div>
+            <div className="char-card-meters">
+              <div className="char-meter">
+                <span className="faint">{t("chars.trust")}</span>
+                <Meter value={c.trust_level} color="var(--accent-ai)" />
+              </div>
+              <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
+                <span className="status-chip">{t("chars.mood")}: {c.mood}</span>
+                {c.current_location_id && (
+                  <span className="status-chip">
+                    <MapPin size={11} aria-hidden />
+                    {t("chars.onSite")}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="char-card-cta">
+              <span className="game-btn game-btn-ghost sm">
+                <MessageSquare size={14} aria-hidden />
+                {t("chars.talk")}
+              </span>
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   );

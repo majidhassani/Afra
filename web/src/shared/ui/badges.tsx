@@ -91,28 +91,3 @@ export function Meter({ value, color }: { value: number; color?: string }) {
   );
 }
 
-export function AvatarPlaceholder({
-  name,
-  prompt,
-  size,
-}: {
-  name: string;
-  prompt?: string;
-  size?: "lg";
-}) {
-  const initials = name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0] ?? "")
-    .join("")
-    .toUpperCase();
-  return (
-    <span
-      className={`avatar-ph ${size ?? ""}`}
-      title={prompt || name}
-      aria-hidden
-    >
-      {initials || "?"}
-    </span>
-  );
-}

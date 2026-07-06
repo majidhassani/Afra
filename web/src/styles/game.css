@@ -1,0 +1,649 @@
+/* ============================================================
+   AgentVerse — cinematic mission-command-center layer.
+   Loaded after app.css; upgrades the "feel" from admin console
+   to tactical game without changing the layout contract.
+   ============================================================ */
+
+/* ---------- Atmospheric background ---------- */
+
+body {
+  background:
+    var(--wash),
+    var(--bg-base);
+  background-attachment: fixed;
+}
+
+/* Faint tactical grid over the whole app shell */
+.shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(125, 211, 199, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(125, 211, 199, 0.025) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse at 50% 30%, #000 30%, transparent 85%);
+}
+.shell > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- HUD sidenav / topbar ---------- */
+
+.sidenav {
+  background: linear-gradient(180deg, #12151b 0%, #0d1014 100%);
+  border-inline-end: 1px solid var(--border-subtle);
+}
+
+.sidenav-brand {
+  color: var(--accent-ai);
+  text-shadow: 0 0 18px rgba(125, 211, 199, 0.35);
+}
+
+.navlink.active {
+  background: linear-gradient(
+    90deg,
+    var(--accent-ai-dim),
+    transparent
+  );
+  color: var(--text-primary);
+  box-shadow: inset 2px 0 0 var(--accent-ai);
+}
+[dir="rtl"] .navlink.active {
+  box-shadow: inset -2px 0 0 var(--accent-ai);
+}
+
+.topbar {
+  background: rgba(9, 11, 15, 0.7);
+  backdrop-filter: blur(10px);
+}
+
+/* ---------- Glass panels + glowing cards ---------- */
+
+.panel {
+  background: var(--glass-bg);
+  border-color: var(--border-subtle);
+  backdrop-filter: blur(6px);
+}
+
+.glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-panel);
+}
+
+.tac-card {
+  position: relative;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  background:
+    linear-gradient(160deg, rgba(30, 36, 46, 0.6), rgba(16, 19, 25, 0.85));
+  overflow: hidden;
+}
+.tac-card::before {
+  /* corner tick, tactical HUD flavor */
+  content: "";
+  position: absolute;
+  top: 0;
+  inset-inline-start: 0;
+  width: 26px;
+  height: 26px;
+  border-top: 2px solid var(--accent-ai);
+  border-inline-start: 2px solid var(--accent-ai);
+  opacity: 0.5;
+  border-top-left-radius: var(--radius-lg);
+}
+
+/* ---------- Game buttons ---------- */
+
+.game-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border: 1px solid transparent;
+  transition:
+    transform var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    background var(--dur) var(--ease);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.game-btn.sm {
+  padding: 7px 12px;
+  font-size: 12px;
+}
+.game-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.game-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.game-btn-primary {
+  background: linear-gradient(135deg, var(--accent-ai), #5bb3a6);
+  color: #06110f;
+  box-shadow: var(--glow-ai);
+}
+.game-btn-primary:hover:not(:disabled) {
+  box-shadow:
+    0 0 0 1px rgba(125, 211, 199, 0.4),
+    0 0 30px -4px rgba(125, 211, 199, 0.6);
+}
+.game-btn-mission {
+  background: linear-gradient(135deg, var(--accent-mission), #7ba24f);
+  color: #0a1204;
+  box-shadow: var(--glow-mission);
+}
+.game-btn-ghost {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+.game-btn-ghost:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--accent-ai);
+  color: var(--accent-ai);
+}
+
+/* ---------- Status chips ---------- */
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.status-chip.cat-guide {
+  color: var(--accent-ai);
+  border-color: rgba(125, 211, 199, 0.35);
+  background: var(--accent-ai-dim);
+}
+.status-chip.cat-antagonist {
+  color: var(--accent-danger);
+  border-color: rgba(229, 107, 111, 0.35);
+  background: var(--accent-danger-dim);
+}
+.status-chip.cat-field {
+  color: var(--accent-mission);
+  border-color: rgba(155, 191, 106, 0.3);
+  background: var(--accent-mission-dim);
+}
+.status-chip.cat-neutral {
+  color: var(--accent-rare);
+  border-color: rgba(168, 155, 255, 0.3);
+  background: var(--accent-rare-dim);
+}
+
+/* ---------- Avatars ---------- */
+
+.avatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 30%;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.4);
+}
+.avatar-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.avatar-ph2 {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+.avatar-ph2::after {
+  /* subtle sheen */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.12), transparent 45%);
+  pointer-events: none;
+}
+.avatar-initials {
+  position: relative;
+  z-index: 1;
+  letter-spacing: 0.02em;
+}
+.avatar-cat {
+  position: absolute;
+  bottom: 4%;
+  inset-inline-end: 6%;
+  opacity: 0.5;
+}
+.avatar-glow {
+  border-color: var(--accent-ai);
+  box-shadow: var(--glow-ai);
+}
+
+/* ---------- Card grid + character cards ---------- */
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.char-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  background: linear-gradient(160deg, rgba(30, 36, 46, 0.55), rgba(14, 17, 22, 0.85));
+  transition:
+    transform var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+.char-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent-ai);
+  box-shadow: var(--shadow-float);
+}
+.char-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.char-card-name {
+  font-weight: 600;
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.char-card-meters {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.char-meter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.char-meter .meter {
+  flex: 1;
+}
+.char-card-cta {
+  margin-top: auto;
+}
+.char-card-cta .game-btn {
+  width: 100%;
+}
+
+/* ---------- Mission Hub (game lobby) ---------- */
+
+.hub-hero {
+  position: relative;
+  border-radius: var(--radius-xl);
+  padding: 28px;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  background:
+    radial-gradient(700px 300px at 100% 0%, rgba(125, 211, 199, 0.12), transparent 60%),
+    linear-gradient(150deg, rgba(26, 31, 39, 0.9), rgba(12, 15, 20, 0.95));
+  box-shadow: var(--shadow-float);
+}
+.hub-hero h1 {
+  font-size: 26px;
+}
+.hub-hero .eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent-ai);
+}
+
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+.type-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  background: linear-gradient(160deg, rgba(30, 36, 46, 0.5), rgba(14, 17, 22, 0.8));
+  text-align: start;
+  transition:
+    transform var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+  cursor: pointer;
+  color: inherit;
+}
+.type-tile:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent-ai);
+  box-shadow: var(--glow-ai);
+}
+.type-tile .type-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-ai-dim);
+  color: var(--accent-ai);
+}
+.type-tile .type-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* ---------- Mission command-center HUD ---------- */
+
+.hud {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+.hud-stat {
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  background: linear-gradient(160deg, rgba(30, 36, 46, 0.5), rgba(14, 17, 22, 0.85));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hud-stat .hud-label {
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.hud-stat .hud-value {
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Risk meter */
+.risk-meter {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  overflow: hidden;
+  position: relative;
+}
+.risk-meter > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  transition: width var(--dur) var(--ease);
+}
+.risk-low > span {
+  background: linear-gradient(90deg, var(--accent-mission), #b6d17e);
+}
+.risk-med > span {
+  background: linear-gradient(90deg, var(--accent-wallet), #f0c877);
+}
+.risk-high > span {
+  background: linear-gradient(90deg, var(--accent-danger), #f0888c);
+  box-shadow: 0 0 12px -2px var(--accent-danger);
+}
+
+/* Objective progress bar */
+.obj-progress {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  overflow: hidden;
+}
+.obj-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent-ai), #5bb3a6);
+  transition: width 400ms var(--ease);
+}
+
+/* Recommended-action banner */
+.reco-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(125, 211, 199, 0.3);
+  background: var(--accent-ai-dim);
+}
+.reco-banner .reco-icon {
+  color: var(--accent-ai);
+  flex-shrink: 0;
+}
+
+/* ---------- Objectives list ---------- */
+
+.objective-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.objective-row:last-child {
+  border-bottom: none;
+}
+.objective-row.completed .obj-title {
+  color: var(--text-faint);
+  text-decoration: line-through;
+}
+
+/* ---------- Typing indicator ---------- */
+
+.bubble.typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.typing-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+.typing-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-ai);
+  animation: typing 1.2s infinite ease-in-out;
+}
+.typing-dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.typing-dots i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes typing {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+/* ---------- Guidance suggested questions ---------- */
+
+.suggest-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.suggest-chip {
+  padding: 6px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  font-size: 12px;
+  transition:
+    border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+  cursor: pointer;
+}
+.suggest-chip:hover:not(:disabled) {
+  border-color: var(--accent-ai);
+  color: var(--accent-ai);
+}
+
+/* ---------- Evidence figure (clue detail) ---------- */
+
+.evidence-figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 150px;
+  margin-bottom: 14px;
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--border-strong);
+  color: var(--text-faint);
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.015) 0 10px,
+      transparent 10px 20px
+    ),
+    var(--bg-elevated);
+  text-transform: capitalize;
+  letter-spacing: 0.04em;
+  font-size: 12px;
+}
+
+/* ---------- Cinematic loading screen ---------- */
+
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 60dvh;
+  text-align: center;
+}
+.loading-orb {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: var(--accent-ai);
+  border-inline-start-color: var(--accent-ai);
+  animation: spin 1s linear infinite;
+  box-shadow: var(--glow-ai);
+}
+.loading-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+.loading-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  color: var(--text-faint);
+  font-size: 12.5px;
+}
+.loading-steps .step.on {
+  color: var(--accent-ai);
+}
+
+/* ---------- Map marker: recommended / risk states ---------- */
+
+.marker-pin.recommended .marker-dot {
+  border-color: var(--accent-ai);
+  color: var(--accent-ai);
+  box-shadow: var(--glow-ai);
+}
+.marker-pin.highrisk .marker-dot {
+  border-color: var(--accent-danger);
+  color: var(--accent-danger);
+}
+.marker-flag.recommended {
+  background: var(--accent-ai);
+}
+
+/* ---------- Coin visual ---------- */
+
+.coin-balance {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(227, 179, 95, 0.3);
+  background: var(--accent-wallet-dim);
+  color: var(--accent-wallet);
+  font-weight: 700;
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+.coin-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f6d38a, var(--accent-wallet));
+  box-shadow: 0 0 14px -3px var(--accent-wallet);
+  flex-shrink: 0;
+}
+
+/* ---------- Responsive: hub hero + HUD stack on mobile ---------- */
+
+@media (max-width: 860px) {
+  .hub-hero {
+    padding: 20px;
+  }
+  .hub-hero h1 {
+    font-size: 21px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-orb,
+  .typing-dots i {
+    animation: none;
+  }
+  .char-card:hover,
+  .type-tile:hover {
+    transform: none;
+  }
+}

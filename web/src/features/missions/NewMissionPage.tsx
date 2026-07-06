@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Rocket, AlertTriangle } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
@@ -28,8 +28,14 @@ const DIFFICULTIES: Difficulty[] = ["easy", "medium", "hard", "expert"];
 export function NewMissionPage() {
   const { t, lang } = useI18n();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
-  const [type, setType] = useState<MissionType>("detective");
+  const presetType = searchParams.get("type");
+  const [type, setType] = useState<MissionType>(
+    MISSION_TYPES.includes(presetType as MissionType)
+      ? (presetType as MissionType)
+      : "detective",
+  );
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [region, setRegion] = useState("");
   const [language, setLanguage] = useState<Language>(lang);

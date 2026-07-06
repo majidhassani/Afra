@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { Inbox, AlertTriangle, RefreshCw } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Inbox, AlertTriangle, RefreshCw, Coins } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
 import { errorKey } from "@/shared/api/client";
 
@@ -30,17 +31,32 @@ export function ErrorState({
   onRetry?: () => void;
 }) {
   const { t } = useI18n();
+  const key = errorKey(error);
+  const insufficient = key === "error.insufficient_balance";
   return (
     <div className="state-box" role="alert">
-      <AlertTriangle size={26} aria-hidden />
+      <AlertTriangle
+        size={26}
+        aria-hidden
+        color={insufficient ? "var(--accent-wallet)" : undefined}
+      />
       <div className="state-title">{t("common.error.title")}</div>
-      <p className="faint">{t(errorKey(error))}</p>
-      {onRetry && (
-        <button className="btn btn-secondary" onClick={onRetry}>
-          <RefreshCw size={14} aria-hidden />
-          {t("common.retry")}
-        </button>
-      )}
+      <p className="faint">{t(key)}</p>
+      {insufficient && <p className="faint">{t("error.insufficient.cta")}</p>}
+      <div className="row" style={{ gap: 8 }}>
+        {insufficient && (
+          <Link className="game-btn game-btn-primary sm" to="/app/wallet">
+            <Coins size={14} aria-hidden />
+            {t("nav.wallet")}
+          </Link>
+        )}
+        {onRetry && (
+          <button className="btn btn-secondary" onClick={onRetry}>
+            <RefreshCw size={14} aria-hidden />
+            {t("common.retry")}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,11 +1,14 @@
 import { useState, type FormEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Sparkles, SendHorizonal } from "lucide-react";
+import { Radio, SendHorizonal } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
+import { useLanguageGuard } from "@/shared/i18n/languageGuard";
 import { guidanceApi } from "@/shared/api/endpoints";
 import { errorKey } from "@/shared/api/client";
 import { CostBadge } from "@/shared/ui/badges";
+import { Analyzing } from "@/shared/ui/game";
 import type { GuidanceContext, GuidanceResult } from "@/shared/types/api";
+import type { TranslationKey } from "@/shared/i18n/en";
 
 interface Props {
   missionId: string;
@@ -15,7 +18,14 @@ interface Props {
   selectedClueId?: string;
 }
 
-/** Reusable "Ask Mission Control" composer + response panel. */
+const SUGGESTIONS: TranslationKey[] = [
+  "guidance.suggest.next",
+  "guidance.suggest.clue",
+  "guidance.suggest.time",
+  "guidance.suggest.summary",
+];
+
+/** "Ask Mission Control" — the always-available AI assistant. */
 export function GuidancePanel({
   missionId,
   screen,
@@ -23,6 +33,7 @@ export function GuidancePanel({
   selectedClueId,
 }: Props) {
   const { t } = useI18n();
+  const guardLanguage = useLanguageGuard();
   const queryClient = useQueryClient();
   const [message, setMessage] = useState("");
   const [result, setResult] = useState<GuidanceResult | null>(null);
@@ -37,24 +48,57 @@ export function GuidancePanel({
       return guidanceApi.ask(missionId, msg, context);
     },
     onSuccess: (res) => {
+      guardLanguage(res.message);
       setResult(res);
       setMessage("");
       void queryClient.invalidateQueries({ queryKey: ["wallet"] });
     },
   });
 
+  const ask = (msg: string) => {
+    const trimmed = msg.trim();
+    if (trimmed && !mutation.isPending) mutation.mutate(trimmed);
+  };
+
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
-    const trimmed = message.trim();
-    if (trimmed) mutation.mutate(trimmed);
+    ask(message);
   };
 
   return (
     <section aria-label={t("guidance.title")}>
-      <div className="row" style={{ marginBottom: 10 }}>
-        <Sparkles size={15} color="var(--accent-ai)" aria-hidden />
+      <div className="row" style={{ marginBottom: 10, gap: 8 }}>
+        <span
+          className="avatar avatar-ph2"
+          style={{
+            width: 30,
+            height: 30,
+            background: "var(--accent-ai-dim)",
+            color: "var(--accent-ai)",
+            border: "1px solid rgba(125,211,199,0.35)",
+          }}
+          aria-hidden
+        >
+          <Radio size={15} />
+        </span>
         <h3>{t("guidance.title")}</h3>
       </div>
+
+      {/* Suggested questions */}
+      <div className="suggest-chips">
+        {SUGGESTIONS.map((key) => (
+          <button
+            key={key}
+            type="button"
+            className="suggest-chip"
+            disabled={mutation.isPending}
+            onClick={() => ask(t(key))}
+          >
+            {t(key)}
+          </button>
+        ))}
+      </div>
+
       <form onSubmit={onSubmit} className="stack" style={{ gap: 8 }}>
         <textarea
           className="textarea"
@@ -68,18 +112,17 @@ export function GuidancePanel({
         <div className="spread">
           <span className="faint">{t("guidance.disclaimer")}</span>
           <button
-            className="btn btn-secondary"
+            className="game-btn game-btn-ghost sm"
             type="submit"
             disabled={mutation.isPending || !message.trim()}
           >
-            <SendHorizonal size={14} aria-hidden />
+            <SendHorizonal size={14} className="rtl-flip" aria-hidden />
             {t("guidance.ask")}
           </button>
         </div>
       </form>
-      {mutation.isPending && (
-        <div className="skeleton" style={{ height: 56, marginTop: 10 }} />
-      )}
+
+      {mutation.isPending && <Analyzing label={t("guidance.analyzing")} />}
       {mutation.isError && (
         <p className="field-error" role="alert" style={{ marginTop: 10 }}>
           {t(errorKey(mutation.error))}
@@ -89,12 +132,12 @@ export function GuidancePanel({
         <div className="stack" style={{ marginTop: 10, gap: 8 }}>
           <div className="guidance-answer">{result.message}</div>
           <div className="row" style={{ flexWrap: "wrap" }}>
-            <span className="chip chip-ai">
+            <span className="status-chip cat-guide">
               {t("guidance.hintLevel")}: {result.hint_level}
             </span>
             <CostBadge coins={result.cost.coins_charged} />
             {result.referenced_items.map((item) => (
-              <span key={`${item.type}-${item.id}`} className="chip">
+              <span key={`${item.type}-${item.id}`} className="status-chip">
                 {item.name}
               </span>
             ))}

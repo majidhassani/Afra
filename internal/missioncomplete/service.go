@@ -77,6 +77,8 @@ func NewService(
 type Decision struct {
 	Outcome   string `json:"outcome"`
 	Reasoning string `json:"reasoning"`
+	// Language is the language the result feedback must be written in.
+	Language string `json:"-"`
 }
 
 // CompletionCheck is returned when the mission is not yet ready to finish. Its
@@ -211,7 +213,7 @@ func (s *Service) Complete(ctx context.Context, userID, missionID uuid.UUID, dec
 			VisitedLocations: visited,
 			TotalLocations:   totalLocations,
 			TimeUsedMinutes:  snap.ElapsedMinutes,
-			Language:         "en",
+			Language:         runtime.Language(dec.Language),
 		},
 	})
 	if err != nil {

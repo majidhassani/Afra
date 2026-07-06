@@ -51,7 +51,7 @@ func (h *Handler) Advance(w http.ResponseWriter, r *http.Request) {
 		response.Err(w, apperrors.Invalid("invalid_body", "invalid JSON body"))
 		return
 	}
-	result, err := h.svc.Advance(r.Context(), userID, missionID, req.Amount, req.Unit)
+	result, err := h.svc.Advance(r.Context(), userID, missionID, req.Amount, req.Unit, httpx.RequestLanguage(r))
 	if err != nil {
 		response.Err(w, err)
 		return

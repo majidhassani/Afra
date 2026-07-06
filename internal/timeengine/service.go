@@ -103,7 +103,7 @@ type AdvanceResult struct {
 // Advance runs the paid time-advance flow: WalletGuard -> TimeAgent ->
 // domain application (clock, public state, hidden state, events) ->
 // async DirectorAgent.
-func (s *Service) Advance(ctx context.Context, userID, missionID uuid.UUID, amount int, unit string) (*AdvanceResult, error) {
+func (s *Service) Advance(ctx context.Context, userID, missionID uuid.UUID, amount int, unit, language string) (*AdvanceResult, error) {
 	minutes, err := toMinutes(amount, unit)
 	if err != nil {
 		return nil, err
@@ -160,7 +160,7 @@ func (s *Service) Advance(ctx context.Context, userID, missionID uuid.UUID, amou
 			DueEvents:           due,
 			HiddenState:         hiddenState,
 			DiscoveredLocations: discoveredLocations,
-			Language:            "en",
+			Language:            runtime.Language(language),
 		},
 	})
 	if err != nil {
@@ -198,7 +198,7 @@ func (s *Service) Advance(ctx context.Context, userID, missionID uuid.UUID, amou
 	}
 
 	// DirectorAgent pacing pass (best effort, async).
-	s.directorPass(missionID, userID, summary, committedClock)
+	s.directorPass(missionID, userID, summary, committedClock, runtime.Language(language))
 
 	return &AdvanceResult{
 		NewTime: committedClock,
@@ -210,7 +210,7 @@ func (s *Service) Advance(ctx context.Context, userID, missionID uuid.UUID, amou
 
 // directorPass runs the DirectorAgent asynchronously; its output arrives as
 // mission events.
-func (s *Service) directorPass(missionID, userID uuid.UUID, summary, clock string) {
+func (s *Service) directorPass(missionID, userID uuid.UUID, summary, clock, language string) {
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
@@ -243,7 +243,7 @@ func (s *Service) directorPass(missionID, userID uuid.UUID, summary, clock strin
 				VisitedLocations: visited,
 				TotalLocations:   totalLocs,
 				AIInteractions:   interactions,
-				Language:         "en",
+				Language:         language,
 			},
 		})
 		if err != nil {

@@ -2,6 +2,18 @@ package runtime
 
 import "strings"
 
+// Language normalizes a caller-supplied language tag to one the agents
+// localize to ("en" or "fa"), defaulting to English. Agents embed this in
+// their prompt so a Persian UI reliably gets Persian responses.
+func Language(lang string) string {
+	switch strings.ToLower(strings.TrimSpace(lang)) {
+	case "fa", "fa-ir", "persian", "farsi":
+		return "fa"
+	default:
+		return "en"
+	}
+}
+
 // SecurityPreamble is embedded in every agent system prompt. It is the
 // first line of defense against prompt injection; the second is the
 // privacy-guard middleware that scans outgoing JSON.

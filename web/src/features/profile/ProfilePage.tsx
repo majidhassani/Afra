@@ -5,6 +5,7 @@ import { useI18n } from "@/shared/i18n";
 import { avatarApi, profileApi } from "@/shared/api/endpoints";
 import { errorKey } from "@/shared/api/client";
 import { ErrorState, SkeletonRows, EmptyState } from "@/shared/ui/states";
+import { Avatar } from "@/shared/ui/Avatar";
 import { toast } from "@/shared/ui/toast";
 import type { TranslationKey } from "@/shared/i18n/en";
 
@@ -77,22 +78,28 @@ export function ProfilePage() {
   return (
     <div className="page">
       <header className="page-header">
-        <div>
-          <h1>{profile.display_name}</h1>
-          <div className="row subtitle" style={{ flexWrap: "wrap" }}>
-            <span className="chip chip-ai">{profile.rank}</span>
-            <span className="chip mono-num">
-              {t("profile.level")} {profile.level}
+        <div className="row" style={{ gap: 14, alignItems: "center", minWidth: 0 }}>
+          <Avatar name={profile.display_name} category="guide" size="xl" glow />
+          <div style={{ minWidth: 0 }}>
+            <span className="eyebrow" style={{ color: "var(--accent-ai)" }}>
+              {t("hub.agent")}
             </span>
-            <span className="chip mono-num">
-              {profile.xp} {t("profile.xp")}
-            </span>
-            {profile.favorite_mission_type && (
-              <span className="chip">
-                {t("profile.favoriteType")}:{" "}
-                {t(`type.${profile.favorite_mission_type}` as TranslationKey)}
+            <h1>{profile.display_name}</h1>
+            <div className="row subtitle" style={{ flexWrap: "wrap" }}>
+              <span className="status-chip cat-guide">{profile.rank}</span>
+              <span className="status-chip mono-num">
+                {t("profile.level")} {profile.level}
               </span>
-            )}
+              <span className="status-chip mono-num">
+                {profile.xp} {t("profile.xp")}
+              </span>
+              {profile.favorite_mission_type && (
+                <span className="status-chip">
+                  {t("profile.favoriteType")}:{" "}
+                  {t(`type.${profile.favorite_mission_type}` as TranslationKey)}
+                </span>
+              )}
+            </div>
           </div>
         </div>
         {!editing && (

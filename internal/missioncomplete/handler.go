@@ -52,6 +52,7 @@ func (h *Handler) Complete(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	dec.Language = httpx.RequestLanguage(r)
 	result, check, err := h.svc.Complete(r.Context(), userID, missionID, dec)
 	if err != nil {
 		response.Err(w, err)

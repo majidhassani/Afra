@@ -87,7 +87,7 @@ func (h *Handler) Chat(w http.ResponseWriter, r *http.Request) {
 		response.Err(w, err)
 		return
 	}
-	result, err := h.svc.Chat(r.Context(), userID, missionID, characterID, req.Message, attachments, req.LocationID)
+	result, err := h.svc.Chat(r.Context(), userID, missionID, characterID, req.Message, httpx.RequestLanguage(r), attachments, req.LocationID)
 	if err != nil {
 		response.Err(w, err)
 		return

@@ -35,7 +35,7 @@ export const fa: Record<TranslationKey, string> = {
   "error.server": "خطای داخلی سرور رخ داد. دوباره تلاش کنید.",
 
   // Nav
-  "nav.dashboard": "داشبورد",
+  "nav.dashboard": "مرکز مأموریت",
   "nav.missions": "ماموریت‌ها",
   "nav.wallet": "کیف پول",
   "nav.profile": "پروفایل",
@@ -328,4 +328,64 @@ export const fa: Record<TranslationKey, string> = {
   "avatar.ageGroup": "گروه سنی",
   "avatar.generate": "ساخت آواتار",
   "avatar.generating": "در حال ساخت…",
+  "portrait.generating": "در حال ساخت تصویر شخصیت…",
+
+  // Mission Hub (game lobby)
+  "hub.welcome": "خوش برگشتی، مأمور {name}",
+  "hub.tagline": "مرکز فرماندهی تو. یک مأموریت انتخاب کن و اعزام شو.",
+  "hub.agent": "مأمور میدانی",
+  "hub.activeMission": "عملیات فعال",
+  "hub.resume": "ادامه عملیات",
+  "hub.deploy": "اعزام",
+  "hub.newOps": "عملیات جدید",
+  "hub.chooseType": "یک نوع مأموریت انتخاب کن",
+  "hub.recent": "عملیات‌های اخیر",
+  "hub.balance": "موجودی",
+  "hub.rank": "درجه",
+  "hub.level": "سطح",
+
+  // Mission command center (HUD)
+  "hud.objective": "هدف اصلی",
+  "hud.progress": "پیشرفت",
+  "hud.risk": "ریسک",
+  "hud.timeRemaining": "زمان باقی‌مانده",
+  "hud.recommended": "حرکت پیشنهادی بعدی",
+  "hud.openMap": "باز کردن نقشه",
+  "hud.winConditions": "شرایط پیروزی",
+  "hud.noObjective": "در انتظار دستور",
+  "hud.riskLow": "پایدار",
+  "hud.riskMed": "بالا",
+  "hud.riskHigh": "بحرانی",
+
+  // Guidance / Mission Control
+  "guidance.suggested": "پرسش‌های پیشنهادی",
+  "guidance.analyzing": "مرکز عملیات در حال تحلیل است…",
+  "guidance.suggest.next": "الان کجا برم؟",
+  "guidance.suggest.clue": "این نشونه یعنی چی؟",
+  "guidance.suggest.time": "قبل از جلو بردن زمان چه ریسکی دارم؟",
+  "guidance.suggest.summary": "خلاصه چیزهایی که فهمیدم رو بگو.",
+
+  // Characters
+  "chars.subtitle": "آدم‌های میدان. برای فهمیدن حقیقت با آن‌ها حرف بزن.",
+  "chars.empty.body": "برای دیدن افراد درگیر، نقشه را کاوش کن.",
+  "chars.talk": "گفتگو",
+  "chars.onSite": "در محل",
+  "chars.typing": "{name} در حال پاسخ است…",
+
+  // Immersive loading
+  "loading.mission.world": "در حال ساخت دنیای مأموریت…",
+  "loading.mission.characters": "در حال ساخت شخصیت‌ها…",
+  "loading.mission.clues": "در حال جای‌گذاری سرنخ‌ها…",
+  "loading.mission.map": "در حال آماده‌سازی نشانگرهای نقشه…",
+  "loading.analyzing": "در حال تحلیل…",
+
+  // Map marker states
+  "map.marker.recommended": "پیشنهادی",
+  "map.marker.newClue": "سرنخ جدید",
+  "map.marker.character": "مخاطب",
+  "map.marker.completed": "بررسی‌شده",
+  "map.marker.highRisk": "ریسک بالا",
+
+  // Error CTA
+  "error.insufficient.cta": "برای ادامه کیف پولت را شارژ کن یا تبلیغ ببین.",
 };

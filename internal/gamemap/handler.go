@@ -75,7 +75,7 @@ func (h *Handler) Action(w http.ResponseWriter, r *http.Request) {
 		response.Err(w, apperrors.Invalid("invalid_body", "invalid JSON body"))
 		return
 	}
-	result, err := h.svc.Action(r.Context(), userID, missionID, locationID, req.Action)
+	result, err := h.svc.Action(r.Context(), userID, missionID, locationID, req.Action, httpx.RequestLanguage(r))
 	if err != nil {
 		response.Err(w, err)
 		return

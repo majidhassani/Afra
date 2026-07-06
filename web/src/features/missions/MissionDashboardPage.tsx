@@ -11,19 +11,27 @@ import {
   CircleCheck,
   Circle,
   CircleX,
-  Loader2,
+  CircleDot,
   MapPin,
+  Target,
+  Flag,
+  Navigation,
 } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
 import { missionsApi } from "@/shared/api/endpoints";
 import { ErrorState, SkeletonRows, EmptyState } from "@/shared/ui/states";
+import { MissionStatusBadge, DifficultyBadge } from "@/shared/ui/badges";
+import { Avatar } from "@/shared/ui/Avatar";
 import {
-  MissionStatusBadge,
-  DifficultyBadge,
-  AvatarPlaceholder,
-} from "@/shared/ui/badges";
+  GameButton,
+  RiskMeter,
+  ObjectiveProgress,
+  HudStat,
+  LoadingScreen,
+} from "@/shared/ui/game";
 import { GuidancePanel } from "@/features/guidance/GuidancePanel";
 import { useMissionDashboard } from "./missionQueries";
+import { deriveHud } from "./hud";
 import { toast } from "@/shared/ui/toast";
 import type { Objective } from "@/shared/types/api";
 import type { TranslationKey } from "@/shared/i18n/en";
@@ -69,26 +77,27 @@ export function MissionDashboardPage() {
   const objectives: Objective[] = Array.isArray(mission.objectives)
     ? mission.objectives
     : [];
-  const publicState =
-    mission.public_state && typeof mission.public_state === "object"
-      ? Object.entries(mission.public_state)
-      : [];
+  const hud = deriveHud(mission, objectives, clues, locations);
+  const riskLabel =
+    hud.riskBand === "high"
+      ? t("hud.riskHigh")
+      : hud.riskBand === "med"
+        ? t("hud.riskMed")
+        : t("hud.riskLow");
 
   if (mission.status === "generating") {
     return (
       <div className="page">
-        <div className="state-box" style={{ minHeight: "50dvh" }}>
-          <Loader2 size={28} className="spin" aria-hidden />
-          <div className="state-title">{t("missions.generating")}</div>
-          <p className="faint">{t("missions.generating.body")}</p>
-          <div className="stack" style={{ gap: 4, alignItems: "center" }}>
-            {events.data?.slice(0, 5).map((ev) => (
-              <span key={ev.id} className="faint">
-                {ev.type.replace(/_/g, " ")}
-              </span>
-            ))}
-          </div>
-        </div>
+        <LoadingScreen
+          title={t("missions.generating")}
+          steps={[
+            t("loading.mission.world"),
+            t("loading.mission.characters"),
+            t("loading.mission.clues"),
+            t("loading.mission.map"),
+          ]}
+          activeStep={Math.min(3, events.data?.length ?? 0)}
+        />
       </div>
     );
   }
@@ -128,7 +137,13 @@ export function MissionDashboardPage() {
             </span>
           </div>
         </div>
-        <div className="row">
+        <div className="row" style={{ flexWrap: "wrap", gap: 8 }}>
+          <Link to={`/app/missions/${mission.id}/map`}>
+            <GameButton variant="primary">
+              <Map size={15} aria-hidden />
+              {t("hud.openMap")}
+            </GameButton>
+          </Link>
           <button
             className="btn btn-ghost"
             onClick={() => archive.mutate()}
@@ -140,6 +155,63 @@ export function MissionDashboardPage() {
           </button>
         </div>
       </header>
+
+      {/* Command-center HUD */}
+      <div className="hud" style={{ marginBottom: 14 }}>
+        <HudStat label={t("hud.objective")}>
+          <div style={{ fontSize: 14, fontWeight: 600 }}>
+            {hud.primary ? hud.primary.title : t("hud.noObjective")}
+          </div>
+        </HudStat>
+        <HudStat label={t("hud.progress")}>
+          <div className="stack" style={{ gap: 6 }}>
+            <span className="mono-num">{hud.progress}%</span>
+            <ObjectiveProgress value={hud.progress} />
+          </div>
+        </HudStat>
+        <HudStat label={t("hud.risk")}>
+          <div className="stack" style={{ gap: 6 }}>
+            <span
+              className="mono-num"
+              style={{
+                color:
+                  hud.riskBand === "high"
+                    ? "var(--accent-danger)"
+                    : hud.riskBand === "med"
+                      ? "var(--accent-wallet)"
+                      : "var(--accent-mission)",
+              }}
+            >
+              {riskLabel} · {hud.risk}
+            </span>
+            <RiskMeter value={hud.risk} />
+          </div>
+        </HudStat>
+        <HudStat label={t("hud.timeRemaining")}>
+          <span className="mono-num row" style={{ gap: 6 }}>
+            <Clock3 size={14} aria-hidden />
+            {mission.current_time}
+          </span>
+        </HudStat>
+      </div>
+
+      {/* Recommended next move */}
+      {hud.recommended && (
+        <Link
+          to={`/app/missions/${mission.id}/locations/${hud.recommended.id}`}
+          className="reco-banner"
+          style={{ marginBottom: 14 }}
+        >
+          <Navigation size={18} className="reco-icon" aria-hidden />
+          <div className="grow">
+            <div className="faint" style={{ fontSize: 11 }}>
+              {t("hud.recommended")}
+            </div>
+            <strong>{hud.recommended.name}</strong>
+          </div>
+          <span className="status-chip cat-guide">{t("map.marker.recommended")}</span>
+        </Link>
+      )}
 
       <div className="dash-grid">
         <section className="panel col-8" aria-label={t("mission.briefing")}>
@@ -154,50 +226,26 @@ export function MissionDashboardPage() {
             {objectives.length === 0 && (
               <p className="faint">{t("common.empty.title")}</p>
             )}
-            <ul className="stack" style={{ listStyle: "none", margin: 0, padding: 0 }}>
+            <div className="stack" style={{ gap: 0 }}>
               {objectives.map((obj) => (
-                <li key={obj.id} className="row" style={{ alignItems: "flex-start" }}>
-                  {obj.status === "completed" ? (
-                    <CircleCheck size={16} color="var(--accent-mission)" aria-hidden />
-                  ) : obj.status === "failed" ? (
-                    <CircleX size={16} color="var(--accent-danger)" aria-hidden />
-                  ) : (
-                    <Circle size={16} color="var(--text-faint)" aria-hidden />
-                  )}
-                  <div>
-                    <div className="row" style={{ flexWrap: "wrap", gap: 6 }}>
-                      <strong>{obj.title}</strong>
-                      {obj.optional && (
-                        <span className="chip">{t("mission.objective.optional")}</span>
-                      )}
-                      {obj.required_clues > 0 && (
-                        <span className="faint">
-                          {t("mission.objective.requiredClues", {
-                            n: obj.required_clues,
-                          })}
-                        </span>
-                      )}
-                    </div>
-                    <p className="muted">{obj.description}</p>
-                  </div>
-                </li>
+                <ObjectiveItem key={obj.id} obj={obj} />
               ))}
-            </ul>
+            </div>
           </div>
         </section>
 
         <div className="col-4 stack">
-          {publicState.length > 0 && (
-            <section className="panel" aria-label={t("mission.publicState")}>
+          {hud.winConditions.length > 0 && (
+            <section className="panel" aria-label={t("hud.winConditions")}>
               <div className="band-title" style={{ padding: "14px 16px 0" }}>
-                {t("mission.publicState")}
+                {t("hud.winConditions")}
               </div>
               <div className="item-list">
-                {publicState.map(([key, value]) => (
-                  <div key={key} className="item-row">
-                    <span className="grow sub">{key}</span>
-                    <span style={{ fontSize: 13, unicodeBidi: "plaintext" }}>
-                      {String(value)}
+                {hud.winConditions.map((cond) => (
+                  <div key={cond} className="item-row" style={{ gap: 10 }}>
+                    <Flag size={14} color="var(--accent-mission)" aria-hidden />
+                    <span className="grow" style={{ unicodeBidi: "plaintext" }}>
+                      {cond}
                     </span>
                   </div>
                 ))}
@@ -251,7 +299,7 @@ export function MissionDashboardPage() {
                 className="item-row"
                 to={`/app/missions/${mission.id}/characters/${c.id}`}
               >
-                <AvatarPlaceholder name={c.name} prompt={c.avatar_prompt} />
+                <Avatar name={c.name} category={c.category} size="sm" />
                 <div className="grow">
                   <div className="title">{c.name}</div>
                   <div className="sub">{c.role}</div>
@@ -330,6 +378,58 @@ export function MissionDashboardPage() {
             </Link>
           </div>
         </section>
+      </div>
+    </div>
+  );
+}
+
+function ObjectiveItem({ obj }: { obj: Objective }) {
+  const { t } = useI18n();
+  const isPrimary = obj.type === "primary";
+  const isFinal = obj.type === "final";
+  const optional = obj.optional || obj.type === "optional";
+  const progress = typeof obj.progress === "number" ? obj.progress : undefined;
+
+  const Icon =
+    obj.status === "completed"
+      ? CircleCheck
+      : obj.status === "failed"
+        ? CircleX
+        : obj.status === "locked"
+          ? Circle
+          : isPrimary
+            ? Target
+            : CircleDot;
+  const iconColor =
+    obj.status === "completed"
+      ? "var(--accent-mission)"
+      : obj.status === "failed"
+        ? "var(--accent-danger)"
+        : isPrimary
+          ? "var(--accent-ai)"
+          : "var(--text-faint)";
+
+  return (
+    <div className={`objective-row${obj.status === "completed" ? " completed" : ""}`}>
+      <Icon size={17} color={iconColor} aria-hidden style={{ marginTop: 2, flexShrink: 0 }} />
+      <div className="grow" style={{ minWidth: 0 }}>
+        <div className="row" style={{ flexWrap: "wrap", gap: 6 }}>
+          <strong className="obj-title">{obj.title}</strong>
+          {isPrimary && <span className="status-chip cat-guide">{t("hud.objective")}</span>}
+          {isFinal && <span className="status-chip cat-field">{obj.type}</span>}
+          {optional && (
+            <span className="status-chip">{t("mission.objective.optional")}</span>
+          )}
+        </div>
+        <p className="muted" style={{ marginTop: 4 }}>
+          {obj.description}
+        </p>
+        {progress !== undefined && obj.status !== "locked" && (
+          <div className="row" style={{ gap: 8, marginTop: 8 }}>
+            <ObjectiveProgress value={progress} />
+            <span className="faint mono-num">{progress}%</span>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -53,6 +53,8 @@ type Input struct {
 	Images []llm.Image `json:"-"`
 	// ImageCount is serialized instead so audit records stay small.
 	ImageCount int `json:"image_count,omitempty"`
+	// Language is the language the reply must be written in ("en" | "fa").
+	Language string `json:"language"`
 }
 
 // historyLimits keep the prompt small: only the most recent turns are sent,
@@ -107,6 +109,7 @@ func (a *Agent) Prompt(task runtime.Task) ([]llm.Message, error) {
 
 You are roleplaying %s (%s) in this mission: %s
 Current mission time: %s.
+Write every word of "reply" and "new_facts" in this language: %s. Do not switch languages.
 
 Behavior rules:
 - Stay fully in character: personality, role, mood, dialogue style, trust and stress levels.
@@ -121,7 +124,7 @@ Respond with ONLY one JSON object:
 {"reply": string, "emotion": string, "mood": string, "trust_delta": int, "stress_delta": int,
  "unlock_clue_titles": [string], "new_facts": [string]}`,
 		TaskType, runtime.MissionSecurityPreamble, in.CharacterName, in.Role, in.MissionSummary,
-		in.MissionTime, in.InjectionDetected)
+		in.MissionTime, runtime.Language(in.Language), in.InjectionDetected)
 
 	ctxJSON, err := json.Marshal(in)
 	if err != nil {

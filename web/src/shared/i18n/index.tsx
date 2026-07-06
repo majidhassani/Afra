@@ -10,6 +10,11 @@ import { en, type TranslationKey } from "./en";
 import { fa } from "./fa";
 import { env } from "@/shared/config/env";
 import type { Language } from "@/shared/types/api";
+import {
+  setActiveLanguage,
+  currentLocaleTag,
+  responseContract,
+} from "./locale";
 
 const STORAGE_KEY = "agentverse.lang";
 
@@ -45,6 +50,9 @@ function readStoredLang(): Language {
 function applyDocumentLang(lang: Language) {
   document.documentElement.lang = lang;
   document.documentElement.dir = lang === "fa" ? "rtl" : "ltr";
+  // Keep the framework-agnostic locale state in sync so the API client can
+  // read the active language when building request headers/bodies.
+  setActiveLanguage(lang);
 }
 
 export function I18nProvider({ children }: { children: ReactNode }) {
@@ -89,6 +97,20 @@ export function useI18n(): I18nValue {
   const ctx = useContext(I18nContext);
   if (!ctx) throw new Error("useI18n must be used inside I18nProvider");
   return ctx;
+}
+
+/**
+ * useLocale exposes the language metadata AI requests and the dev language
+ * guard need, derived from the active i18n language.
+ */
+export function useLocale() {
+  const { lang, dir } = useI18n();
+  return {
+    language: lang,
+    direction: dir,
+    locale: currentLocaleTag(),
+    contract: responseContract(),
+  };
 }
 
 export type { TranslationKey };

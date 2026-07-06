@@ -73,7 +73,7 @@ func (h *Handler) Inspect(w http.ResponseWriter, r *http.Request) {
 	if r.Body != nil {
 		_ = json.NewDecoder(r.Body).Decode(&req) // question is optional
 	}
-	result, err := h.svc.Inspect(r.Context(), userID, missionID, clueID, req.Question)
+	result, err := h.svc.Inspect(r.Context(), userID, missionID, clueID, req.Question, httpx.RequestLanguage(r))
 	if err != nil {
 		response.Err(w, err)
 		return
@@ -94,7 +94,7 @@ func (h *Handler) Explain(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	result, err := h.svc.Explain(r.Context(), userID, missionID, clueID)
+	result, err := h.svc.Explain(r.Context(), userID, missionID, clueID, httpx.RequestLanguage(r))
 	if err != nil {
 		response.Err(w, err)
 		return

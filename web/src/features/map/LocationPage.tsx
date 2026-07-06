@@ -11,10 +11,13 @@ import {
   Play,
 } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
+import { useLanguageGuard } from "@/shared/i18n/languageGuard";
 import { mapApi } from "@/shared/api/endpoints";
 import { errorKey } from "@/shared/api/client";
 import { ErrorState, SkeletonRows } from "@/shared/ui/states";
-import { AvatarPlaceholder, CostBadge } from "@/shared/ui/badges";
+import { CostBadge } from "@/shared/ui/badges";
+import { Analyzing } from "@/shared/ui/game";
+import { Avatar } from "@/shared/ui/Avatar";
 import { GuidancePanel } from "@/features/guidance/GuidancePanel";
 import type { ActionResult } from "@/shared/types/api";
 import type { TranslationKey } from "@/shared/i18n/en";
@@ -42,6 +45,7 @@ export function LocationPage() {
     locationId: string;
   }>();
   const { t } = useI18n();
+  const guardLanguage = useLanguageGuard();
   const queryClient = useQueryClient();
   const [lastResult, setLastResult] = useState<ActionResult | null>(null);
 
@@ -54,6 +58,7 @@ export function LocationPage() {
   const runAction = useMutation({
     mutationFn: (action: string) => mapApi.runAction(missionId!, locationId!, action),
     onSuccess: (result) => {
+      guardLanguage(result.narrative);
       setLastResult(result);
       void queryClient.invalidateQueries({ queryKey: ["mission", missionId] });
       void queryClient.invalidateQueries({ queryKey: ["wallet"] });
@@ -107,11 +112,6 @@ export function LocationPage() {
         <section className="panel col-8">
           <div className="band">
             <p style={{ unicodeBidi: "plaintext" }}>{location.description}</p>
-            {location.visual_prompt && (
-              <p className="faint" style={{ marginTop: 10 }}>
-                {t("map.visualPrompt")}: {location.visual_prompt}
-              </p>
-            )}
           </div>
           <div className="band">
             <div className="band-title">{t("map.actions")}</div>
@@ -121,7 +121,7 @@ export function LocationPage() {
                 return (
                   <button
                     key={action}
-                    className="btn btn-secondary"
+                    className="game-btn game-btn-ghost sm"
                     disabled={runAction.isPending}
                     onClick={() => runAction.mutate(action)}
                   >
@@ -131,9 +131,7 @@ export function LocationPage() {
                 );
               })}
             </div>
-            {runAction.isPending && (
-              <div className="skeleton" style={{ height: 48, marginTop: 12 }} />
-            )}
+            {runAction.isPending && <Analyzing label={t("loading.analyzing")} />}
             {runAction.isError && (
               <p className="field-error" role="alert" style={{ marginTop: 12 }}>
                 {t(errorKey(runAction.error))}
@@ -196,7 +194,7 @@ export function LocationPage() {
                   className="item-row"
                   to={`/app/missions/${missionId}/characters/${c.id}`}
                 >
-                  <AvatarPlaceholder name={c.name} prompt={c.avatar_prompt} />
+                  <Avatar name={c.name} category={c.category} size="sm" />
                   <div className="grow">
                     <div className="title">{c.name}</div>
                     <div className="sub">{c.role}</div>

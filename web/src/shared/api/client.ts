@@ -6,6 +6,7 @@ import {
 } from "@/features/auth/authStore";
 import type { APIErrorBody, TokenPair } from "@/shared/types/api";
 import { mockRequest } from "./mock/mockClient";
+import { localeHeaders } from "@/shared/i18n/locale";
 
 /** Uniform error thrown for every failed API call. */
 export class ApiError extends Error {
@@ -73,7 +74,9 @@ async function tryRefresh(): Promise<boolean> {
 }
 
 async function rawRequest<T>(path: string, opts: RequestOptions): Promise<T> {
-  const headers: Record<string, string> = {};
+  // Every request advertises the selected UI language so the backend answers
+  // in it (Accept-Language / X-App-Language / X-UI-Direction).
+  const headers: Record<string, string> = { ...localeHeaders() };
   if (opts.body !== undefined) headers["Content-Type"] = "application/json";
   if (!opts.anonymous) {
     const token = getAccessToken();

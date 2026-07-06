@@ -114,7 +114,7 @@ type ChatResult struct {
 }
 
 // Chat runs one paid dialogue exchange with an NPC through the DialogueAgent.
-func (s *Service) Chat(ctx context.Context, userID, missionID, characterID uuid.UUID, message string, attachments []llm.Image, locationID *uuid.UUID) (*ChatResult, error) {
+func (s *Service) Chat(ctx context.Context, userID, missionID, characterID uuid.UUID, message, language string, attachments []llm.Image, locationID *uuid.UUID) (*ChatResult, error) {
 	if err := validator.New().
 		Required("message", message).MaxLen("message", message, 2000).
 		Err(); err != nil {
@@ -166,6 +166,7 @@ func (s *Service) Chat(ctx context.Context, userID, missionID, characterID uuid.
 		DiscoveredFacts:        facts,
 		UndiscoveredClueTitles: undiscovered,
 		RecentMessages:         toTurns(recent),
+		Language:               language,
 		PlayerMessage:          message,
 		Images:                 attachments,
 		InjectionDetected:      len(injection) > 0,

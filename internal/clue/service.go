@@ -93,7 +93,7 @@ type InspectResult struct {
 	Cost     wallet.Cost `json:"cost"`
 }
 
-func (s *Service) Inspect(ctx context.Context, userID, missionID, clueID uuid.UUID, question string) (*InspectResult, error) {
+func (s *Service) Inspect(ctx context.Context, userID, missionID, clueID uuid.UUID, question, language string) (*InspectResult, error) {
 	if err := validator.New().MaxLen("question", question, 1000).Err(); err != nil {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func (s *Service) Inspect(ctx context.Context, userID, missionID, clueID uuid.UU
 			InternalTruth:   rawToMap(c.InternalTruth),
 			Question:        question,
 			DiscoveredFacts: s.factTexts(ctx, missionID),
-			Language:        "en",
+			Language:        runtime.Language(language),
 		},
 	})
 	if err != nil {
@@ -174,7 +174,7 @@ type ExplainResult struct {
 	Cost        wallet.Cost `json:"cost"`
 }
 
-func (s *Service) Explain(ctx context.Context, userID, missionID, clueID uuid.UUID) (*ExplainResult, error) {
+func (s *Service) Explain(ctx context.Context, userID, missionID, clueID uuid.UUID, language string) (*ExplainResult, error) {
 	if err := s.guard.EnsureOwnedActive(ctx, userID, missionID); err != nil {
 		return nil, err
 	}
@@ -218,7 +218,7 @@ func (s *Service) Explain(ctx context.Context, userID, missionID, clueID uuid.UU
 			PublicData:      rawToMap(c.PublicData),
 			DiscoveredClues: titles,
 			Objectives:      objectives,
-			Language:        "en",
+			Language:        runtime.Language(language),
 		},
 	})
 	if err != nil {

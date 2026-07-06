@@ -13,7 +13,8 @@ import { mapApi } from "@/shared/api/endpoints";
 import { ErrorState, SkeletonRows, EmptyState } from "@/shared/ui/states";
 import { GuidancePanel } from "@/features/guidance/GuidancePanel";
 import type { Marker } from "@/shared/types/api";
-import { AvatarPlaceholder } from "@/shared/ui/badges";
+import { Avatar } from "@/shared/ui/Avatar";
+import { GameButton } from "@/shared/ui/game";
 
 /**
  * Fallback tactical map board: positions Google-Maps-compatible markers on a
@@ -68,6 +69,10 @@ export function MapPage() {
               marker.is_locked ? "locked" : "",
               marker.status === "visited" ? "visited" : "",
               selectedId === marker.id ? "selected" : "",
+              marker.recommended && !marker.is_locked ? "recommended pulse" : "",
+              marker.risk_level >= 60 || marker.objective_status === "high_risk"
+                ? "highrisk"
+                : "",
               marker.has_new_clue && !marker.is_locked ? "pulse" : "",
             ]
               .filter(Boolean)
@@ -85,6 +90,7 @@ export function MapPage() {
               ) : (
                 <MapPin size={13} aria-hidden />
               )}
+              {marker.recommended && <span className="marker-flag recommended" />}
               {marker.has_new_clue && <span className="marker-flag clue" />}
               {marker.has_character && <span className="marker-flag character" />}
             </span>
@@ -148,7 +154,17 @@ function SelectedMarkerPanel({
             <ShieldAlert size={12} aria-hidden />
             {t("map.riskLevel")}: {marker.risk_level}
           </span>
-          {marker.badge && <span className="chip chip-rare">{marker.badge}</span>}
+          {marker.recommended && (
+            <span className="status-chip cat-guide">
+              {t("map.marker.recommended")}
+            </span>
+          )}
+          {marker.has_new_clue && (
+            <span className="status-chip cat-neutral">{t("map.marker.newClue")}</span>
+          )}
+          {marker.has_character && (
+            <span className="status-chip">{t("map.marker.character")}</span>
+          )}
         </div>
       </div>
 
@@ -179,7 +195,7 @@ function SelectedMarkerPanel({
                         to={`/app/missions/${missionId}/characters/${c.id}`}
                         className="chip"
                       >
-                        <AvatarPlaceholder name={c.name} prompt={c.avatar_prompt} />
+                        <Avatar name={c.name} category={c.category} size="sm" />
                         {c.name}
                       </Link>
                     ))}
@@ -189,12 +205,11 @@ function SelectedMarkerPanel({
             </div>
           )}
           <div className="band" style={{ borderBottom: "none" }}>
-            <Link
-              className="btn btn-primary"
-              to={`/app/missions/${missionId}/locations/${marker.id}`}
-            >
-              <ExternalLink size={14} aria-hidden />
-              {t("map.openLocation")}
+            <Link to={`/app/missions/${missionId}/locations/${marker.id}`}>
+              <GameButton variant="primary">
+                <ExternalLink size={14} aria-hidden />
+                {t("map.openLocation")}
+              </GameButton>
             </Link>
           </div>
         </>

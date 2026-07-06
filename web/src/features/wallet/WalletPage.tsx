@@ -5,6 +5,7 @@ import { useI18n } from "@/shared/i18n";
 import { walletApi } from "@/shared/api/endpoints";
 import { ApiError, errorKey } from "@/shared/api/client";
 import { EmptyState, ErrorState, SkeletonRows } from "@/shared/ui/states";
+import { WalletBalance } from "@/shared/ui/game";
 import { toast } from "@/shared/ui/toast";
 import type { TranslationKey } from "@/shared/i18n/en";
 
@@ -77,11 +78,9 @@ export function WalletPage() {
       </header>
 
       <div className="dash-grid">
-        <div className="panel stat-block col-4 col-half-sm">
+        <div className="tac-card col-4 col-half-sm stat-block" style={{ gap: 12 }}>
           <span className="label">{t("wallet.balance")}</span>
-          <span className="value" style={{ color: "var(--accent-wallet)" }}>
-            {wallet.data ? wallet.data.balance : "—"}
-          </span>
+          <WalletBalance balance={wallet.data?.balance} />
         </div>
         <div className="panel stat-block col-4 col-half-sm">
           <span className="label">{t("wallet.reserved")}</span>

@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Microscope, Lightbulb } from "lucide-react";
+import { ArrowLeft, Microscope, Lightbulb, ScanSearch } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
+import { useLanguageGuard } from "@/shared/i18n/languageGuard";
 import { cluesApi, walletApi } from "@/shared/api/endpoints";
 import { errorKey } from "@/shared/api/client";
 import { ErrorState, SkeletonRows } from "@/shared/ui/states";
@@ -17,6 +18,7 @@ import type {
 export function ClueDetailPage() {
   const { missionId, clueId } = useParams<{ missionId: string; clueId: string }>();
   const { t } = useI18n();
+  const guardLanguage = useLanguageGuard();
   const queryClient = useQueryClient();
   const [question, setQuestion] = useState("");
   const [inspectResult, setInspectResult] = useState<ClueInspectResult | null>(null);
@@ -37,6 +39,7 @@ export function ClueDetailPage() {
     mutationFn: () =>
       cluesApi.inspect(missionId!, clueId!, question.trim() || undefined),
     onSuccess: (result) => {
+      guardLanguage(result.analysis);
       setInspectResult(result);
       setQuestion("");
       void queryClient.invalidateQueries({
@@ -49,6 +52,7 @@ export function ClueDetailPage() {
   const explain = useMutation({
     mutationFn: () => cluesApi.explain(missionId!, clueId!),
     onSuccess: (result) => {
+      guardLanguage(result.explanation);
       setExplainResult(result);
       void queryClient.invalidateQueries({ queryKey: ["wallet"] });
     },
@@ -105,17 +109,11 @@ export function ClueDetailPage() {
       <div className="dash-grid">
         <section className="panel col-8">
           <div className="band">
+            <div className="evidence-figure" aria-hidden>
+              <ScanSearch size={30} />
+              <span>{data.type.replace(/_/g, " ")}</span>
+            </div>
             <p style={{ unicodeBidi: "plaintext" }}>{data.detailed_description}</p>
-            {data.visual_description && (
-              <p className="muted" style={{ marginTop: 10 }}>
-                {t("clues.visual")}: {data.visual_description}
-              </p>
-            )}
-            {data.avatar_or_thumbnail_prompt && (
-              <p className="faint" style={{ marginTop: 6 }}>
-                {t("clues.promptPlaceholder")}: {data.avatar_or_thumbnail_prompt}
-              </p>
-            )}
           </div>
 
           <div className="band">

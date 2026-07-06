@@ -33,7 +33,7 @@ export const en = {
   "error.server": "The server hit an internal error. Try again.",
 
   // Nav
-  "nav.dashboard": "Dashboard",
+  "nav.dashboard": "Mission Hub",
   "nav.missions": "Missions",
   "nav.wallet": "Wallet",
   "nav.profile": "Profile",
@@ -326,6 +326,66 @@ export const en = {
   "avatar.ageGroup": "Age group",
   "avatar.generate": "Generate avatar",
   "avatar.generating": "Generating…",
+  "portrait.generating": "Generating portrait…",
+
+  // Mission Hub (game lobby)
+  "hub.welcome": "Welcome back, Agent {name}",
+  "hub.tagline": "Your command center. Pick a mission and deploy.",
+  "hub.agent": "Field Agent",
+  "hub.activeMission": "Active operation",
+  "hub.resume": "Resume operation",
+  "hub.deploy": "Deploy",
+  "hub.newOps": "New operation",
+  "hub.chooseType": "Choose a mission type",
+  "hub.recent": "Recent operations",
+  "hub.balance": "Balance",
+  "hub.rank": "Rank",
+  "hub.level": "Level",
+
+  // Mission command center (HUD)
+  "hud.objective": "Primary objective",
+  "hud.progress": "Progress",
+  "hud.risk": "Risk",
+  "hud.timeRemaining": "Time remaining",
+  "hud.recommended": "Recommended next move",
+  "hud.openMap": "Open Map",
+  "hud.winConditions": "Win conditions",
+  "hud.noObjective": "Awaiting orders",
+  "hud.riskLow": "Stable",
+  "hud.riskMed": "Elevated",
+  "hud.riskHigh": "Critical",
+
+  // Guidance / Mission Control
+  "guidance.suggested": "Suggested questions",
+  "guidance.analyzing": "Mission Control is analyzing…",
+  "guidance.suggest.next": "Where should I go next?",
+  "guidance.suggest.clue": "What does this clue mean?",
+  "guidance.suggest.time": "What is the risk of advancing time?",
+  "guidance.suggest.summary": "Summarize what I know.",
+
+  // Characters
+  "chars.subtitle": "The people on the ground. Talk to them to learn the truth.",
+  "chars.empty.body": "Explore the map to meet the people involved.",
+  "chars.talk": "Talk",
+  "chars.onSite": "On site",
+  "chars.typing": "{name} is responding…",
+
+  // Immersive loading
+  "loading.mission.world": "Generating mission world…",
+  "loading.mission.characters": "Creating characters…",
+  "loading.mission.clues": "Placing clues…",
+  "loading.mission.map": "Preparing map markers…",
+  "loading.analyzing": "Analyzing…",
+
+  // Map marker states
+  "map.marker.recommended": "Recommended",
+  "map.marker.newClue": "New clue",
+  "map.marker.character": "Contact",
+  "map.marker.completed": "Cleared",
+  "map.marker.highRisk": "High risk",
+
+  // Error CTA
+  "error.insufficient.cta": "Recharge your wallet or watch an ad to continue.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
