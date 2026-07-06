@@ -16,6 +16,9 @@ import {
   Target,
   Flag,
   Navigation,
+  Coins,
+  Trophy,
+  AlertTriangle,
 } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
 import { missionsApi } from "@/shared/api/endpoints";
@@ -28,6 +31,7 @@ import {
   ObjectiveProgress,
   HudStat,
   LoadingScreen,
+  WalletBalance,
 } from "@/shared/ui/game";
 import { GuidancePanel } from "@/features/guidance/GuidancePanel";
 import { useMissionDashboard } from "./missionQueries";
@@ -58,6 +62,21 @@ export function MissionDashboardPage() {
     },
   });
 
+  const complete = useMutation({
+    mutationFn: () =>
+      missionsApi.complete(missionId!, {
+        outcome: "Submit final mission judgment",
+        reasoning: "Player requested completion from the mission command HUD.",
+      }),
+    onSuccess: () => {
+      toast("success", t("mission.result.ready"));
+      void queryClient.invalidateQueries({ queryKey: ["mission", missionId] });
+      void queryClient.invalidateQueries({
+        queryKey: ["mission", missionId, "events"],
+      });
+    },
+  });
+
   if (dashboard.isPending) {
     return (
       <div className="page">
@@ -73,15 +92,34 @@ export function MissionDashboardPage() {
     );
   }
 
-  const { mission, characters, clues, locations } = dashboard.data;
-  const objectives: Objective[] = Array.isArray(mission.objectives)
-    ? mission.objectives
-    : [];
+  const data = dashboard.data;
+  const { mission, characters, clues, locations } = data;
+  const objectives: Objective[] =
+    data.objectives && data.objectives.length > 0
+      ? [...data.objectives, ...(data.completed_objectives ?? [])]
+      : Array.isArray(mission.objectives)
+        ? mission.objectives
+        : [];
   const hud = deriveHud(mission, objectives, clues, locations);
+  const primaryObjective = data.primary_objective ?? hud.primary;
+  const progress = data.mission_progress ?? hud.progress;
+  const risk = data.risk_score ?? hud.risk;
+  const riskBand = risk >= 66 ? "high" : risk >= 33 ? "med" : "low";
+  const winConditions = data.win_conditions ?? hud.winConditions;
+  const failureConditions = data.failure_conditions ?? [];
+  const recommendedAction = data.next_recommended_actions?.[0];
+  const recommendedLocation =
+    (recommendedAction?.target_type === "location" &&
+      locations.find((l) => l.id === recommendedAction.target_id)) ||
+    hud.recommended;
+  const timelinePreview =
+    data.timeline_preview && data.timeline_preview.length > 0
+      ? data.timeline_preview
+      : events.data?.slice(0, 5);
   const riskLabel =
-    hud.riskBand === "high"
+    riskBand === "high"
       ? t("hud.riskHigh")
-      : hud.riskBand === "med"
+      : riskBand === "med"
         ? t("hud.riskMed")
         : t("hud.riskLow");
 
@@ -160,13 +198,13 @@ export function MissionDashboardPage() {
       <div className="hud" style={{ marginBottom: 14 }}>
         <HudStat label={t("hud.objective")}>
           <div style={{ fontSize: 14, fontWeight: 600 }}>
-            {hud.primary ? hud.primary.title : t("hud.noObjective")}
+            {primaryObjective ? primaryObjective.title : t("hud.noObjective")}
           </div>
         </HudStat>
         <HudStat label={t("hud.progress")}>
           <div className="stack" style={{ gap: 6 }}>
-            <span className="mono-num">{hud.progress}%</span>
-            <ObjectiveProgress value={hud.progress} />
+            <span className="mono-num">{progress}%</span>
+            <ObjectiveProgress value={progress} />
           </div>
         </HudStat>
         <HudStat label={t("hud.risk")}>
@@ -175,30 +213,40 @@ export function MissionDashboardPage() {
               className="mono-num"
               style={{
                 color:
-                  hud.riskBand === "high"
+                  riskBand === "high"
                     ? "var(--accent-danger)"
-                    : hud.riskBand === "med"
+                    : riskBand === "med"
                       ? "var(--accent-wallet)"
                       : "var(--accent-mission)",
               }}
             >
-              {riskLabel} · {hud.risk}
+              {riskLabel} · {risk}
             </span>
-            <RiskMeter value={hud.risk} />
+            <RiskMeter value={risk} />
           </div>
         </HudStat>
         <HudStat label={t("hud.timeRemaining")}>
           <span className="mono-num row" style={{ gap: 6 }}>
             <Clock3 size={14} aria-hidden />
-            {mission.current_time}
+            {data.time_remaining || mission.current_time}
+          </span>
+        </HudStat>
+        <HudStat label={t("dash.walletBalance")}>
+          <span className="row" style={{ gap: 6 }}>
+            <Coins size={14} aria-hidden />
+            <WalletBalance balance={data.wallet_balance} />
           </span>
         </HudStat>
       </div>
 
       {/* Recommended next move */}
-      {hud.recommended && (
+      {(recommendedLocation || recommendedAction) && (
         <Link
-          to={`/app/missions/${mission.id}/locations/${hud.recommended.id}`}
+          to={
+            recommendedLocation
+              ? `/app/missions/${mission.id}/locations/${recommendedLocation.id}`
+              : `/app/missions/${mission.id}/map`
+          }
           className="reco-banner"
           style={{ marginBottom: 14 }}
         >
@@ -207,10 +255,25 @@ export function MissionDashboardPage() {
             <div className="faint" style={{ fontSize: 11 }}>
               {t("hud.recommended")}
             </div>
-            <strong>{hud.recommended.name}</strong>
+            <strong>{recommendedAction?.title ?? recommendedLocation?.name}</strong>
+            {recommendedAction?.description && (
+              <div className="sub" style={{ marginTop: 2 }}>
+                {recommendedAction.description}
+              </div>
+            )}
           </div>
           <span className="status-chip cat-guide">{t("map.marker.recommended")}</span>
         </Link>
+      )}
+
+      {mission.status === "completed" && (
+        <section className="mission-result-panel" aria-label={t("mission.result.title")}>
+          <Trophy size={24} aria-hidden />
+          <div className="grow">
+            <div className="band-title">{t("mission.result.title")}</div>
+            <p className="muted">{t("mission.result.completed")}</p>
+          </div>
+        </section>
       )}
 
       <div className="dash-grid">
@@ -235,15 +298,70 @@ export function MissionDashboardPage() {
         </section>
 
         <div className="col-4 stack">
-          {hud.winConditions.length > 0 && (
+          {winConditions.length > 0 && (
             <section className="panel" aria-label={t("hud.winConditions")}>
               <div className="band-title" style={{ padding: "14px 16px 0" }}>
                 {t("hud.winConditions")}
               </div>
               <div className="item-list">
-                {hud.winConditions.map((cond) => (
+                {winConditions.map((cond) => (
                   <div key={cond} className="item-row" style={{ gap: 10 }}>
                     <Flag size={14} color="var(--accent-mission)" aria-hidden />
+                    <span className="grow" style={{ unicodeBidi: "plaintext" }}>
+                      {cond}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section className="panel" aria-label={t("mission.finish.title")}>
+            <div className="band" style={{ borderBottom: "none" }}>
+              <div className="band-title">{t("mission.finish.title")}</div>
+              {data.can_complete ? (
+                <p className="muted">{t("mission.finish.ready")}</p>
+              ) : (
+                <div className="stack" style={{ gap: 8 }}>
+                  <p className="muted">{t("mission.finish.notReady")}</p>
+                  {(data.missing_requirements ?? []).slice(0, 3).map((req) => (
+                    <div key={req} className="item-row" style={{ padding: 0 }}>
+                      <AlertTriangle
+                        size={14}
+                        color="var(--accent-wallet)"
+                        aria-hidden
+                      />
+                      <span className="sub">{req}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div style={{ marginTop: 12 }}>
+                <GameButton
+                  variant={data.can_complete ? "mission" : "ghost"}
+                  disabled={!data.can_complete || complete.isPending}
+                  onClick={() => complete.mutate()}
+                >
+                  <Trophy size={15} aria-hidden />
+                  {t("mission.finish.cta")}
+                </GameButton>
+              </div>
+            </div>
+          </section>
+
+          {failureConditions.length > 0 && (
+            <section className="panel" aria-label={t("hud.failureConditions")}>
+              <div className="band-title" style={{ padding: "14px 16px 0" }}>
+                {t("hud.failureConditions")}
+              </div>
+              <div className="item-list">
+                {failureConditions.map((cond) => (
+                  <div key={cond} className="item-row" style={{ gap: 10 }}>
+                    <AlertTriangle
+                      size={14}
+                      color="var(--accent-danger)"
+                      aria-hidden
+                    />
                     <span className="grow" style={{ unicodeBidi: "plaintext" }}>
                       {cond}
                     </span>
@@ -351,7 +469,7 @@ export function MissionDashboardPage() {
             <Radio size={14} aria-hidden />
           </Link>
           <div className="item-list">
-            {events.data?.slice(0, 5).map((ev) => (
+            {timelinePreview?.map((ev) => (
               <div key={ev.id} className="item-row">
                 <span className="grow sub">{ev.type.replace(/_/g, " ")}</span>
                 <span className="faint mono-num">
@@ -359,7 +477,7 @@ export function MissionDashboardPage() {
                 </span>
               </div>
             ))}
-            {events.isSuccess && events.data.length === 0 && (
+            {events.isSuccess && (timelinePreview?.length ?? 0) === 0 && (
               <EmptyState title={t("events.empty")} />
             )}
           </div>

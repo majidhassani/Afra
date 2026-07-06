@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="AgentVerse">
+  <rect width="512" height="512" rx="112" fill="#090b0f"/>
+  <path d="M256 72 394 150v132c0 83-57 132-138 158-81-26-138-75-138-158V150L256 72Z" fill="#121820" stroke="#7dd3c7" stroke-width="18"/>
+  <path d="M162 258h188M256 164v188" stroke="#9bbf6a" stroke-width="22" stroke-linecap="round"/>
+  <circle cx="256" cy="258" r="54" fill="#090b0f" stroke="#e3b35f" stroke-width="18"/>
+</svg>

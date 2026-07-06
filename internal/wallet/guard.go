@@ -33,6 +33,11 @@ func (g *Guard) Reserve(ctx context.Context, userID uuid.UUID, missionID *uuid.U
 	return g.svc.Reserve(ctx, userID, missionID, action)
 }
 
+// Balance exposes the current spendable balance for player-safe HUD views.
+func (g *Guard) Balance(ctx context.Context, userID uuid.UUID) (int, error) {
+	return g.svc.Balance(ctx, userID)
+}
+
 // Settle charges the reserved coins after a successful agent run and writes
 // the usage log. Returns the coins actually charged.
 func (g *Guard) Settle(ctx context.Context, res *Reservation, agentName string, meta *runtime.Meta) int {

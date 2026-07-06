@@ -307,6 +307,31 @@ export interface GuidanceContext {
   selected_clue_id?: string | null;
 }
 
+export interface CompletionCheck {
+  can_complete: boolean;
+  reason: string;
+  missing_requirements: string[];
+}
+
+export interface MissionResult {
+  can_complete: boolean;
+  success: boolean;
+  score: number;
+  stars: number;
+  result_title: string;
+  result_summary: string;
+  completed_objectives: string[];
+  failed_objectives: string[];
+  missed_optional_objectives: string[];
+  critical_clues_found: string[];
+  critical_clues_missed: string[];
+  good_decisions: string[];
+  bad_decisions: string[];
+  xp_reward: number;
+  coin_reward: number;
+  cost: Cost;
+}
+
 export interface TimeInfo {
   current_time: string;
   public_state: Record<string, unknown> | null;
@@ -343,11 +368,47 @@ export interface MissionEvent {
   created_at: string;
 }
 
+export interface RecommendedAction {
+  type: string;
+  title: string;
+  description: string;
+  target_type?: string;
+  target_id?: string;
+  priority?: string;
+  cost_hint?: string;
+}
+
+export interface MissionGuidanceSummary {
+  summary?: string;
+  warning?: string;
+  recommended_actions?: RecommendedAction[];
+}
+
 export interface MissionDashboard {
   mission: Mission;
+  mission_id?: string;
+  title?: string;
+  mission_status?: MissionStatus;
+  primary_objective?: Objective | null;
+  objectives?: Objective[];
+  completed_objectives?: Objective[];
+  mission_progress?: number;
+  risk_score?: number;
+  current_time?: string;
+  time_remaining?: string;
+  has_deadline?: boolean;
+  next_recommended_actions?: RecommendedAction[];
+  guidance?: MissionGuidanceSummary;
+  win_conditions?: string[];
+  failure_conditions?: string[];
+  can_complete?: boolean;
+  missing_requirements?: string[];
   characters: PublicCharacter[];
   clues: PublicClue[];
   locations: Marker[];
+  timeline_preview?: MissionEvent[];
+  wallet_balance?: number;
+  result?: unknown;
 }
 
 export interface CreateMissionRequest {

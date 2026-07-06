@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 
 	"casemind/internal/character"
+	"casemind/internal/clue"
 	"casemind/internal/gamemap"
 	"casemind/internal/missionevent"
 )
@@ -19,6 +20,7 @@ type MissionDashboard struct {
 	MissionID     uuid.UUID `json:"mission_id"`
 	Title         string    `json:"title"`
 	MissionStatus string    `json:"mission_status"`
+	Mission       *Mission  `json:"mission"`
 
 	PrimaryObjective    *Objective  `json:"primary_objective"`
 	Objectives          []Objective `json:"objectives"`
@@ -41,8 +43,12 @@ type MissionDashboard struct {
 	CanComplete         bool     `json:"can_complete"`
 	MissingRequirements []string `json:"missing_requirements"`
 
-	Locations []gamemap.Marker `json:"locations"`
-	Result    json.RawMessage  `json:"result,omitempty"`
+	Characters      []character.PublicCharacter `json:"characters"`
+	Clues           []clue.PublicClue           `json:"clues"`
+	Locations       []gamemap.Marker            `json:"locations"`
+	TimelinePreview []missionevent.Event        `json:"timeline_preview"`
+	WalletBalance   int                         `json:"wallet_balance"`
+	Result          json.RawMessage             `json:"result,omitempty"`
 }
 
 // Dashboard assembles the structured mission dashboard for the owner.
@@ -68,7 +74,19 @@ func (s *Service) Dashboard(ctx context.Context, userID, missionID uuid.UUID) (*
 	if err != nil {
 		return nil, err
 	}
+	clues, err := s.clues.ListDiscovered(ctx, missionID)
+	if err != nil {
+		return nil, err
+	}
 	locations, err := s.locations.ListByMission(ctx, missionID)
+	if err != nil {
+		return nil, err
+	}
+	timelinePreview, err := s.events.ListByMission(ctx, missionID, 5)
+	if err != nil {
+		return nil, err
+	}
+	walletBalance, err := s.wallet.Balance(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -150,6 +168,7 @@ func (s *Service) Dashboard(ctx context.Context, userID, missionID uuid.UUID) (*
 		MissionID:              m.ID,
 		Title:                  m.Title,
 		MissionStatus:          m.Status,
+		Mission:                m,
 		PrimaryObjective:       primary,
 		Objectives:             active,
 		CompletedObjectives:    completed,
@@ -165,7 +184,11 @@ func (s *Service) Dashboard(ctx context.Context, userID, missionID uuid.UUID) (*
 		FailureConditions:      public.FailureConditions,
 		CanComplete:            canComplete && m.Playable(),
 		MissingRequirements:    missing,
+		Characters:             character.PublicList(characters),
+		Clues:                  clue.PublicList(clues),
 		Locations:              markers,
+		TimelinePreview:        timelinePreview,
+		WalletBalance:          walletBalance,
 		Result:                 m.Result,
 	}, nil
 }

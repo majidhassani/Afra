@@ -350,10 +350,18 @@ export const en = {
   "hud.recommended": "Recommended next move",
   "hud.openMap": "Open Map",
   "hud.winConditions": "Win conditions",
+  "hud.failureConditions": "Failure conditions",
   "hud.noObjective": "Awaiting orders",
   "hud.riskLow": "Stable",
   "hud.riskMed": "Elevated",
   "hud.riskHigh": "Critical",
+  "mission.finish.title": "Final decision",
+  "mission.finish.ready": "You have enough mission signal to submit the final call.",
+  "mission.finish.notReady": "Keep playing before you finish.",
+  "mission.finish.cta": "Complete Mission",
+  "mission.result.title": "Mission result",
+  "mission.result.completed": "This mission is complete. Review the outcome and rewards from your history.",
+  "mission.result.ready": "Mission result received",
 
   // Guidance / Mission Control
   "guidance.suggested": "Suggested questions",

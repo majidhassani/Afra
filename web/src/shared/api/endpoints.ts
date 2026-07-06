@@ -12,6 +12,7 @@ import type {
   CharacterDetail,
   ClueExplainResult,
   ClueInspectResult,
+  CompletionCheck,
   CreateMissionRequest,
   GuidanceContext,
   GuidanceResult,
@@ -21,6 +22,7 @@ import type {
   MapView,
   Mission,
   MissionDashboard,
+  MissionResult,
   MissionEvent,
   Pricing,
   Profile,
@@ -115,7 +117,7 @@ export const missionsApi = {
       body: withLocale({ ...input }),
     }).then((r) => r.mission),
   dashboard: (missionId: string) =>
-    apiRequest<MissionDashboard>(`${V1}/missions/${missionId}`),
+    apiRequest<MissionDashboard>(`${V1}/missions/${missionId}/dashboard`),
   archive: (missionId: string) =>
     apiRequest<{ mission: Mission }>(`${V1}/missions/${missionId}/archive`, {
       method: "POST",
@@ -124,6 +126,16 @@ export const missionsApi = {
     apiRequest<{ events: MissionEvent[] }>(
       `${V1}/missions/${missionId}/events?limit=${limit}`,
     ).then((r) => r.events),
+  completionCheck: (missionId: string) =>
+    apiRequest<CompletionCheck>(`${V1}/missions/${missionId}/completion-check`),
+  complete: (
+    missionId: string,
+    input: { outcome?: string; reasoning?: string } = {},
+  ) =>
+    apiRequest<MissionResult>(`${V1}/missions/${missionId}/complete`, {
+      method: "POST",
+      body: withLocale(input),
+    }),
 };
 
 export const mapApi = {

@@ -76,7 +76,15 @@ export function ClueDetailPage() {
   const data = clue.data;
   const publicData =
     data.public_data && typeof data.public_data === "object"
-      ? Object.entries(data.public_data)
+      ? Object.entries(data.public_data).filter(([key]) => {
+          const safeKey = key.toLowerCase();
+          return (
+            !safeKey.includes("prompt") &&
+            !safeKey.includes("private") &&
+            !safeKey.includes("hidden") &&
+            !safeKey.includes("truth")
+          );
+        })
       : [];
 
   return (

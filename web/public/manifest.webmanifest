@@ -1,0 +1,18 @@
+{
+  "name": "AgentVerse",
+  "short_name": "AgentVerse",
+  "description": "Mobile-first AI mission game command center.",
+  "start_url": "/app/dashboard",
+  "display": "standalone",
+  "background_color": "#090b0f",
+  "theme_color": "#090b0f",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/pwa-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

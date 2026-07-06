@@ -448,6 +448,21 @@ body {
   flex-shrink: 0;
 }
 
+.mission-result-panel {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(155, 191, 106, 0.35);
+  background:
+    linear-gradient(135deg, rgba(155, 191, 106, 0.16), rgba(125, 211, 199, 0.08)),
+    var(--glass-bg);
+  color: var(--text-primary);
+  box-shadow: var(--glow-mission);
+}
+
 /* ---------- Objectives list ---------- */
 
 .objective-row {
@@ -616,6 +631,13 @@ body {
   font-weight: 700;
   font-size: 20px;
   font-variant-numeric: tabular-nums;
+}
+
+.hud-stat .coin-balance {
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 18px;
 }
 .coin-dot {
   width: 22px;

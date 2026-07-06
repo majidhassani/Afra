@@ -352,10 +352,18 @@ export const fa: Record<TranslationKey, string> = {
   "hud.recommended": "حرکت پیشنهادی بعدی",
   "hud.openMap": "باز کردن نقشه",
   "hud.winConditions": "شرایط پیروزی",
+  "hud.failureConditions": "شرایط شکست",
   "hud.noObjective": "در انتظار دستور",
   "hud.riskLow": "پایدار",
   "hud.riskMed": "بالا",
   "hud.riskHigh": "بحرانی",
+  "mission.finish.title": "تصمیم نهایی",
+  "mission.finish.ready": "سیگنال کافی برای ثبت نتیجه نهایی مأموریت داری.",
+  "mission.finish.notReady": "قبل از پایان دادن، کمی بیشتر بازی را جلو ببر.",
+  "mission.finish.cta": "پایان مأموریت",
+  "mission.result.title": "نتیجه مأموریت",
+  "mission.result.completed": "این مأموریت کامل شده است. نتیجه و پاداش را از تاریخچه ببین.",
+  "mission.result.ready": "نتیجه مأموریت دریافت شد",
 
   // Guidance / Mission Control
   "guidance.suggested": "پرسش‌های پیشنهادی",

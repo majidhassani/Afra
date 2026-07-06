@@ -310,12 +310,65 @@ export async function mockRequest<T>(
       }
     };
 
-    if (rest === "" && method === "GET") {
+    if ((rest === "" || rest === "/dashboard") && method === "GET") {
+      const objectives = Array.isArray(bundle.mission.objectives)
+        ? bundle.mission.objectives
+        : [];
+      const completed = objectives.filter((o) => o.status === "completed");
+      const active = objectives.filter((o) => o.status !== "completed");
+      const progress =
+        objectives.length > 0
+          ? Math.round(
+              objectives.reduce((sum, o) => sum + (o.progress ?? 0), 0) /
+                objectives.length,
+            )
+          : 0;
       return out({
+        mission_id: missionId,
+        title: bundle.mission.title,
+        mission_status: bundle.mission.status,
         mission: bundle.mission,
+        primary_objective:
+          objectives.find((o) => o.type === "primary") ?? objectives[0] ?? null,
+        objectives: active,
+        completed_objectives: completed,
+        mission_progress: progress,
+        risk_score: Number(bundle.mission.public_state?.risk_level ?? 22),
+        current_time: bundle.mission.current_time,
+        time_remaining: "18 hours",
+        has_deadline: true,
+        next_recommended_actions: [
+          {
+            type: "visit_location",
+            title: "Check the recommended marker",
+            description: "The next visible lead is most likely to move the case forward.",
+            target_type: "location",
+            target_id: bundle.markers.find((mk) => mk.recommended)?.id,
+            priority: "high",
+            cost_hint: "free",
+          },
+        ],
+        guidance: {
+          summary: "Follow the timeline and resolve conflicting timestamps.",
+          warning: "Do not wait too long; risk rises as time advances.",
+        },
+        win_conditions: Array.isArray(bundle.mission.public_state?.win_conditions)
+          ? (bundle.mission.public_state.win_conditions as string[])
+          : [],
+        failure_conditions: Array.isArray(
+          bundle.mission.public_state?.failure_conditions,
+        )
+          ? (bundle.mission.public_state.failure_conditions as string[])
+          : [],
+        can_complete: progress >= 80,
+        missing_requirements:
+          progress >= 80 ? [] : ["Find more required clues before the final decision"],
         characters: generating ? [] : bundle.characters,
         clues: generating ? [] : bundle.clues,
         locations: generating ? [] : bundle.markers,
+        timeline_preview: [...bundle.events].reverse().slice(0, 5),
+        wallet_balance: state.wallet.balance,
+        result: bundle.mission.result,
       });
     }
     if (rest === "/archive" && method === "POST") {
@@ -324,6 +377,64 @@ export async function mockRequest<T>(
     }
     if (rest === "/events") {
       return out({ events: [...bundle.events].reverse() });
+    }
+    if (rest === "/completion-check") {
+      const objectives = Array.isArray(bundle.mission.objectives)
+        ? bundle.mission.objectives
+        : [];
+      const progress =
+        objectives.length > 0
+          ? Math.round(
+              objectives.reduce((sum, o) => sum + (o.progress ?? 0), 0) /
+                objectives.length,
+            )
+          : 0;
+      const missing =
+        progress >= 80 ? [] : ["Find more required clues before the final decision"];
+      return out({
+        can_complete: progress >= 80,
+        reason:
+          progress >= 80
+            ? "The mission is ready for your final decision."
+            : missing[0],
+        missing_requirements: missing,
+      });
+    }
+    if (rest === "/complete" && method === "POST") {
+      const cost = charge("final_judgment", missionId);
+      bundle.mission.status = "completed";
+      bundle.mission.completed_at = now();
+      bundle.mission.result = {
+        success: true,
+        score: 84,
+        stars: 4,
+      };
+      bundle.events.push({
+        id: mockId(),
+        mission_id: missionId,
+        type: "mission_completed",
+        payload: {},
+        created_at: now(),
+      });
+      return out({
+        can_complete: true,
+        success: true,
+        score: 84,
+        stars: 4,
+        result_title: "Mission Successful",
+        result_summary:
+          "Your final call fits the visible evidence and resolves the core objective.",
+        completed_objectives: ["Resolve the core timeline"],
+        failed_objectives: [],
+        missed_optional_objectives: ["Recover every minor witness detail"],
+        critical_clues_found: bundle.clues.slice(0, 2).map((c) => c.title),
+        critical_clues_missed: [],
+        good_decisions: ["You connected the warehouse chain to the loan slip."],
+        bad_decisions: [],
+        xp_reward: 420,
+        coin_reward: 40,
+        cost,
+      });
     }
     if (rest === "/map") {
       guardGenerating();
