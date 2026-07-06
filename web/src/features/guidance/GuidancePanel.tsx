@@ -129,18 +129,23 @@ export function GuidancePanel({
         </p>
       )}
       {result && !mutation.isPending && (
-        <div className="stack" style={{ marginTop: 10, gap: 8 }}>
-          <div className="guidance-answer">{result.message}</div>
-          <div className="row" style={{ flexWrap: "wrap" }}>
-            <span className="status-chip cat-guide">
-              {t("guidance.hintLevel")}: {result.hint_level}
-            </span>
-            <CostBadge coins={result.cost.coins_charged} />
+        <div className="mc-briefing" style={{ marginTop: 12 }}>
+          <div className="mc-head">
+            <span className="mc-live" aria-hidden />
+            {t("guidance.title")}
+            <span className="mc-hint">{result.hint_level}</span>
+          </div>
+          <div className="mc-body" style={{ unicodeBidi: "plaintext" }}>
+            {result.message}
+          </div>
+          <div className="mc-foot">
             {result.referenced_items.map((item) => (
-              <span key={`${item.type}-${item.id}`} className="status-chip">
+              <span key={`${item.type}-${item.id}`} className="mc-ref">
                 {item.name}
               </span>
             ))}
+            <span className="grow" />
+            <CostBadge coins={result.cost.coins_charged} />
           </div>
         </div>
       )}

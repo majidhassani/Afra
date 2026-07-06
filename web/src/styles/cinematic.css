@@ -556,6 +556,75 @@
 }
 
 /* ============================================================
+   AI = MISSION CONTROL (structured transmission, not chat)
+   ============================================================ */
+.mc-briefing {
+  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in srgb, var(--accent-ai) 40%, transparent);
+  background:
+    linear-gradient(180deg, rgba(125, 211, 199, 0.06), transparent 60%),
+    var(--bg-elevated);
+  overflow: hidden;
+}
+.mc-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-ai);
+  border-bottom: 1px solid color-mix(in srgb, var(--accent-ai) 22%, transparent);
+  background: rgba(125, 211, 199, 0.06);
+}
+.mc-live {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-ai);
+  box-shadow: 0 0 0 0 rgba(125, 211, 199, 0.6);
+  animation: mc-live 1.8s ease-out infinite;
+}
+@keyframes mc-live {
+  0% { box-shadow: 0 0 0 0 rgba(125, 211, 199, 0.55); }
+  100% { box-shadow: 0 0 0 8px rgba(125, 211, 199, 0); }
+}
+.mc-hint {
+  margin-inline-start: auto;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+.mc-body {
+  padding: 14px;
+  line-height: 1.7;
+  color: var(--text-primary);
+}
+.mc-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 0 14px 14px;
+}
+.mc-ref {
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--accent-ai);
+  border: 1px solid color-mix(in srgb, var(--accent-ai) 30%, transparent);
+  background: var(--accent-ai-dim);
+}
+@media (prefers-reduced-motion: reduce) {
+  .mc-live { animation: none; }
+}
+
+/* ============================================================
    PROFILE — agent progression (crest + service record)
    ============================================================ */
 .agent-crest {
