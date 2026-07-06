@@ -34,12 +34,17 @@ type Character struct {
 	StressLevel       int
 	Mood              string
 	DialogueStyle     string
-	AvatarPrompt      string
-	ThumbnailPrompt   string
 	VisualStyleTags   json.RawMessage
 
-	// Internal only — Truth Layer.
-	PrivateState json.RawMessage
+	// Visual asset delivered to clients. AvatarPrompt/ThumbnailPrompt are
+	// generation inputs and must never cross the public boundary.
+	AvatarURL    string
+	AvatarStatus string // none | pending | ready | unavailable
+
+	// Internal only — generation inputs and Truth Layer.
+	AvatarPrompt    string
+	ThumbnailPrompt string
+	PrivateState    json.RawMessage
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -58,8 +63,8 @@ type PublicCharacter struct {
 	CurrentLocationID *uuid.UUID      `json:"current_location_id,omitempty"`
 	TrustLevel        int             `json:"trust_level"`
 	Mood              string          `json:"mood"`
-	AvatarPrompt      string          `json:"avatar_prompt"`
-	ThumbnailPrompt   string          `json:"thumbnail_prompt"`
+	AvatarURL         string          `json:"avatar_url"`
+	AvatarStatus      string          `json:"avatar_status"`
 	VisualStyleTags   json.RawMessage `json:"visual_style_tags"`
 }
 
@@ -76,10 +81,22 @@ func (c *Character) Public() PublicCharacter {
 		CurrentLocationID: c.CurrentLocationID,
 		TrustLevel:        c.TrustLevel,
 		Mood:              c.Mood,
-		AvatarPrompt:      c.AvatarPrompt,
-		ThumbnailPrompt:   c.ThumbnailPrompt,
+		AvatarURL:         c.AvatarURL,
+		AvatarStatus:      c.PublicAvatarStatus(),
 		VisualStyleTags:   c.VisualStyleTags,
 	}
+}
+
+// PublicAvatarStatus derives the client-visible avatar status: an existing
+// URL always means ready; otherwise the stored status (or "none") is used.
+func (c *Character) PublicAvatarStatus() string {
+	if c.AvatarURL != "" {
+		return "ready"
+	}
+	if c.AvatarStatus != "" {
+		return c.AvatarStatus
+	}
+	return "none"
 }
 
 func PublicList(list []Character) []PublicCharacter {

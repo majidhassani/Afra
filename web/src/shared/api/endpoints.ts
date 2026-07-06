@@ -32,6 +32,7 @@ import type {
   TimeAdvanceResult,
   TimeInfo,
   TimeUnit,
+  TimelineView,
   Transaction,
   User,
   Wallet,
@@ -126,6 +127,10 @@ export const missionsApi = {
     apiRequest<{ events: MissionEvent[] }>(
       `${V1}/missions/${missionId}/events?limit=${limit}`,
     ).then((r) => r.events),
+  timeline: (missionId: string, limit = 200) =>
+    apiRequest<TimelineView>(
+      `${V1}/missions/${missionId}/timeline?limit=${limit}`,
+    ),
   completionCheck: (missionId: string) =>
     apiRequest<CompletionCheck>(`${V1}/missions/${missionId}/completion-check`),
   complete: (

@@ -147,7 +147,6 @@ export const en = {
   "map.askAi": "Ask Mission Control",
   "map.charactersHere": "Characters here",
   "map.cluesHere": "Discovered clues",
-  "map.visualPrompt": "Visual prompt",
   "map.narrative": "Field report",
   "map.newFacts": "New facts",
   "map.discoveredClues": "Discovered clues",

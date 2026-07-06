@@ -35,7 +35,7 @@ export interface MockMissionBundle {
   markers: Marker[];
   locationDescriptions: Record<
     string,
-    { description: string; visual_prompt: string; actions: string[] }
+    { description: string; actions: string[] }
   >;
   characters: PublicCharacter[];
   clues: PublicClue[];
@@ -184,40 +184,30 @@ export function buildMissionBundle(
       description: fa
         ? "سالن مطالعه با سقف بلند و بوی کاغذ قدیمی. میز شماره ۱۲ همان‌جایی است که کاویانی آخرین بار دیده شد."
         : "A high-ceilinged reading hall smelling of old paper. Desk 12 is where Kaviani was last seen.",
-      visual_prompt:
-        "vast reading hall, green desk lamps, rain on tall windows, moody chiaroscuro",
       actions: ["inspect_area", "review_documents", "observe"],
     },
     [locIds[1]]: {
       description: fa
         ? "دفتری کوچک و شلوغ. کشوی میز قفل شده و اثر سوختگی روی سطل زباله دیده می‌شود."
         : "A small cluttered office. The desk drawer is locked; scorch marks stain the wastebasket.",
-      visual_prompt:
-        "cramped archive office, burned notebook on desk, dust motes in lamplight",
       actions: ["inspect_area", "scan_environment", "review_documents"],
     },
     [locIds[2]]: {
       description: fa
         ? "کافه‌ای دنج که پاتوق پژوهشگران است. باریستا همه را می‌شناسد."
         : "A cozy café favored by researchers. The barista knows everyone.",
-      visual_prompt:
-        "warm café interior at dusk, espresso machine steam, geranium pots",
       actions: ["observe", "inspect_area"],
     },
     [locIds[3]]: {
       description: fa
         ? "انباری در حاشیه شهر. درِ آن با زنجیر تازه بسته شده است."
         : "A warehouse on the city's edge. Its door is chained with a brand-new lock.",
-      visual_prompt:
-        "abandoned warehouse exterior, fresh chain on rusted door, sodium light",
       actions: ["scan_environment", "observe"],
     },
     [locIds[4]]: {
       description: fa
         ? "آپارتمانی مرتب اما عجیب: چمدانی نیمه‌بسته روی تخت مانده است."
         : "A tidy apartment with one oddity: a half-packed suitcase left on the bed.",
-      visual_prompt:
-        "neat apartment, half-packed suitcase on bed, curtains drawn at noon",
       actions: ["inspect_area", "review_documents", "search"],
     },
   };
@@ -239,9 +229,8 @@ export function buildMissionBundle(
       current_location_id: locIds[0],
       trust_level: 40,
       mood: "wary",
-      avatar_prompt:
-        "middle-aged librarian, silver-streaked hair in a bun, wire glasses, cardigan, warm side light",
-      thumbnail_prompt: "librarian portrait, muted tones",
+      avatar_url: "",
+      avatar_status: "none",
       visual_style_tags: ["cinematic", "muted"],
     },
     {
@@ -258,9 +247,8 @@ export function buildMissionBundle(
       current_location_id: locIds[2],
       trust_level: 25,
       mood: "nervous",
-      avatar_prompt:
-        "thin researcher in his late 30s, rumpled blazer, restless eyes, café backlight",
-      thumbnail_prompt: "nervous researcher portrait",
+      avatar_url: "",
+      avatar_status: "none",
       visual_style_tags: ["cinematic"],
     },
     {
@@ -277,9 +265,8 @@ export function buildMissionBundle(
       current_location_id: locIds[2],
       trust_level: 60,
       mood: "helpful",
-      avatar_prompt:
-        "young barista with apron, easy smile, espresso bar bokeh",
-      thumbnail_prompt: "barista portrait, warm light",
+      avatar_url: "",
+      avatar_status: "none",
       visual_style_tags: ["warm"],
     },
   ];
@@ -302,8 +289,8 @@ export function buildMissionBundle(
       visual_description: fa
         ? "دفترچه چرمی با لبه‌های سوخته و جوهر آبی"
         : "Leather notebook with charred edges and blue ink",
-      avatar_or_thumbnail_prompt:
-        "half-burned leather notebook on desk, macro shot, forensic lighting",
+      image_url: "",
+      image_status: "none",
       discovered: true,
       reliability: 80,
       importance: "critical",
@@ -326,8 +313,8 @@ export function buildMissionBundle(
       visual_description: fa
         ? "برگه زردشده با مهر تاریخ"
         : "Yellowed slip with a date stamp",
-      avatar_or_thumbnail_prompt:
-        "old library loan slip, date stamp, shallow depth of field",
+      image_url: "",
+      image_status: "none",
       discovered: true,
       reliability: 95,
       importance: "high",
@@ -350,8 +337,8 @@ export function buildMissionBundle(
       visual_description: fa
         ? "رسید مچاله با ساعت چاپ‌شده"
         : "Crumpled receipt with printed time",
-      avatar_or_thumbnail_prompt:
-        "crumpled cafe receipt on marble table, evening light",
+      image_url: "",
+      image_status: "none",
       discovered: true,
       reliability: 70,
       importance: "medium",

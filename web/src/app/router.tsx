@@ -22,6 +22,7 @@ import { HistoryPage } from "@/features/profile/HistoryPage";
 import { SettingsPage } from "@/features/settings/SettingsPage";
 import { DiagnosticsPage } from "@/features/diagnostics/DiagnosticsPage";
 import { NotFoundPage } from "@/shared/ui/NotFoundPage";
+import { env } from "@/shared/config/env";
 
 export const router = createBrowserRouter([
   {
@@ -45,7 +46,10 @@ export const router = createBrowserRouter([
       { path: "wallet", element: <WalletPage /> },
       { path: "history", element: <HistoryPage /> },
       { path: "settings", element: <SettingsPage /> },
-      { path: "diagnostics", element: <DiagnosticsPage /> },
+      // Diagnostics is dev-only; in production the route does not exist.
+      ...(env.enableDiagnostics
+        ? [{ path: "diagnostics", element: <DiagnosticsPage /> }]
+        : []),
       { path: "missions", element: <MissionsListPage /> },
       { path: "missions/new", element: <NewMissionPage /> },
       { path: "missions/:missionId", element: <MissionDashboardPage /> },

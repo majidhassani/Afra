@@ -149,7 +149,6 @@ export const fa: Record<TranslationKey, string> = {
   "map.askAi": "پرسش از کنترل ماموریت",
   "map.charactersHere": "شخصیت‌های حاضر",
   "map.cluesHere": "سرنخ‌های کشف‌شده",
-  "map.visualPrompt": "پرامپت تصویری",
   "map.narrative": "گزارش میدانی",
   "map.newFacts": "یافته‌های تازه",
   "map.discoveredClues": "سرنخ‌های کشف‌شده",

@@ -95,7 +95,9 @@ export function AppShell() {
     { to: "/app/profile", icon: UserRound, label: t("nav.profile") },
     { to: "/app/history", icon: History, label: t("nav.history") },
     { to: "/app/settings", icon: Settings, label: t("nav.settings") },
-    { to: "/app/diagnostics", icon: Activity, label: t("nav.diagnostics") },
+    ...(env.enableDiagnostics
+      ? [{ to: "/app/diagnostics", icon: Activity, label: t("nav.diagnostics") }]
+      : []),
   ];
 
   const mobileNav = missionId

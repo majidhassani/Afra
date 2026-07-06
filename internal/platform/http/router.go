@@ -23,6 +23,7 @@ import (
 	"casemind/internal/location"
 	"casemind/internal/mission"
 	"casemind/internal/missioncomplete"
+	"casemind/internal/missiontimeline"
 	"casemind/internal/notes"
 	"casemind/internal/playerprofile"
 	"casemind/internal/solve"
@@ -42,6 +43,7 @@ type Handlers struct {
 	Wallet          *wallet.Handler
 	Missions        *mission.Handler
 	MissionComplete *missioncomplete.Handler
+	MissionTimeline *missiontimeline.Handler
 	Characters      *character.Handler
 	Clues           *clue.Handler
 	GameMap         *gamemap.Handler
@@ -146,7 +148,10 @@ func NewRouter(
 	mux.Handle("GET /api/v1/missions/{missionID}/completion-check", protected(h.MissionComplete.Check))
 	mux.Handle("POST /api/v1/missions/{missionID}/complete", protected(h.MissionComplete.Complete, agentLimit))
 	mux.Handle("POST /api/v1/missions/{missionID}/archive", protected(h.Missions.Archive))
+	// /events is the raw chronological feed (dev/detail); /timeline is the
+	// official curated player-facing story timeline.
 	mux.Handle("GET /api/v1/missions/{missionID}/events", protected(h.Missions.Events))
+	mux.Handle("GET /api/v1/missions/{missionID}/timeline", protected(h.MissionTimeline.Get))
 	mux.Handle("GET /api/v1/missions/{missionID}/stream", protected(h.Missions.Stream))
 
 	mux.Handle("GET /api/v1/missions/{missionID}/map", protected(h.GameMap.Map))

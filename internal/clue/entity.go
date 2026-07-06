@@ -28,15 +28,20 @@ type Clue struct {
 	ShortDescription        string
 	DetailedDescription     string
 	VisualDescription       string
-	AvatarOrThumbnailPrompt string
 	Discovered              bool
 	Reliability             int
 	Importance              string
 	RelatedCharacterIDs     json.RawMessage
 	PublicData              json.RawMessage
 
-	// Internal only — Truth Layer.
-	InternalTruth json.RawMessage
+	// Visual asset delivered to clients. The generation prompt below must
+	// never cross the public boundary.
+	ImageURL    string
+	ImageStatus string // none | pending | ready | unavailable
+
+	// Internal only — generation inputs and Truth Layer.
+	AvatarOrThumbnailPrompt string
+	InternalTruth           json.RawMessage
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -52,7 +57,8 @@ type PublicClue struct {
 	ShortDescription        string          `json:"short_description"`
 	DetailedDescription     string          `json:"detailed_description"`
 	VisualDescription       string          `json:"visual_description"`
-	AvatarOrThumbnailPrompt string          `json:"avatar_or_thumbnail_prompt"`
+	ImageURL                string          `json:"image_url"`
+	ImageStatus             string          `json:"image_status"`
 	Discovered              bool            `json:"discovered"`
 	Reliability             int             `json:"reliability"`
 	Importance              string          `json:"importance"`
@@ -71,7 +77,8 @@ func (c *Clue) Public() PublicClue {
 		ShortDescription:        c.ShortDescription,
 		DetailedDescription:     c.DetailedDescription,
 		VisualDescription:       c.VisualDescription,
-		AvatarOrThumbnailPrompt: c.AvatarOrThumbnailPrompt,
+		ImageURL:                c.ImageURL,
+		ImageStatus:             c.PublicImageStatus(),
 		Discovered:              c.Discovered,
 		Reliability:             c.Reliability,
 		Importance:              c.Importance,
@@ -79,6 +86,18 @@ func (c *Clue) Public() PublicClue {
 		PublicData:              c.PublicData,
 		CreatedAt:               c.CreatedAt,
 	}
+}
+
+// PublicImageStatus derives the client-visible image status: an existing URL
+// always means ready; otherwise the stored status (or "none") is used.
+func (c *Clue) PublicImageStatus() string {
+	if c.ImageURL != "" {
+		return "ready"
+	}
+	if c.ImageStatus != "" {
+		return c.ImageStatus
+	}
+	return "none"
 }
 
 func PublicList(list []Clue) []PublicClue {

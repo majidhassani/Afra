@@ -378,6 +378,48 @@ export async function mockRequest<T>(
     if (rest === "/events") {
       return out({ events: [...bundle.events].reverse() });
     }
+    if (rest === "/timeline") {
+      // Curated player-facing timeline mirroring GET /missions/{id}/timeline.
+      const typeMap: Record<string, string> = {
+        mission_generated: "mission_started",
+        mission_ready: "mission_started",
+        location_discovered: "new_location_unlocked",
+        location_visited: "location_visited",
+        location_action: "location_visited",
+        clue_discovered: "clue_discovered",
+        dialogue: "character_talked",
+        character_chat: "character_talked",
+        ai_guidance: "ai_guidance_received",
+        time_advanced: "time_advanced",
+        mission_completed: "mission_completed",
+        mission_failed: "mission_failed",
+      };
+      const items = bundle.events
+        .map((ev) => {
+          const type = typeMap[ev.type];
+          if (!type) return null;
+          const payload = ev.payload as Record<string, unknown>;
+          const title = String(
+            payload.title ?? payload.name ?? payload.location ?? "",
+          );
+          if (!title && type !== "mission_completed") return null;
+          return {
+            id: ev.id,
+            type,
+            title: title || bundle.mission.title,
+            occurred_at: ev.created_at,
+            importance:
+              type === "clue_discovered" ||
+              type === "mission_started" ||
+              type === "mission_completed" ||
+              type === "mission_failed"
+                ? "high"
+                : "medium",
+          };
+        })
+        .filter(Boolean);
+      return out({ mission_id: missionId, items });
+    }
     if (rest === "/completion-check") {
       const objectives = Array.isArray(bundle.mission.objectives)
         ? bundle.mission.objectives
@@ -464,7 +506,6 @@ export async function mockRequest<T>(
             status: marker.status,
             risk_level: marker.risk_level,
             description: desc?.description ?? "",
-            visual_prompt: desc?.visual_prompt ?? "",
             available_actions: desc?.actions ?? ["inspect_area"],
             created_at: now(),
             updated_at: now(),

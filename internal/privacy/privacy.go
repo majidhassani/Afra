@@ -25,6 +25,16 @@ var ForbiddenKeys = []string{
 	"real_timeline",
 	"false_leads",
 	"truth",
+	// Image-generation prompts are internal inputs; the public visual
+	// contract is avatar_url/image_url + status only.
+	"avatar_prompt",
+	"thumbnail_prompt",
+	"visual_prompt",
+	"avatar_or_thumbnail_prompt",
+	// WorldBible / hidden mission state must never reach clients.
+	"world_bible",
+	"hidden_state",
+	"private_state",
 }
 
 var forbidden = func() map[string]bool {

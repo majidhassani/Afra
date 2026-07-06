@@ -97,7 +97,14 @@ paths:
     get:
       tags: [Profile]
       responses:
-        "200": { description: Player profile }
+        "200":
+          description: Player profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profile: { $ref: "#/components/schemas/Profile" }
     put:
       tags: [Profile]
       requestBody:
@@ -130,7 +137,14 @@ paths:
     get:
       tags: [Wallet]
       responses:
-        "200": { description: Wallet balance }
+        "200":
+          description: Wallet balance
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  wallet: { $ref: "#/components/schemas/Wallet" }
   /api/v1/wallet/transactions:
     get:
       tags: [Wallet]
@@ -168,6 +182,19 @@ paths:
       responses:
         "200": { description: Purchase credited }
         "409": { description: Receipt already used }
+  /api/v1/avatars/options:
+    get:
+      tags: [Characters]
+      summary: Available avatar generation options
+      responses:
+        "200": { description: Styles, genders, and age groups }
+  /api/v1/avatars/generate:
+    post:
+      tags: [Characters]
+      summary: Generate an avatar image
+      description: Uses the image API when configured, otherwise the built-in procedural generator.
+      responses:
+        "200": { description: Generated avatar (base64 PNG) }
   /api/v1/missions:
     post:
       tags: [Missions]
@@ -200,7 +227,11 @@ paths:
         win/loss hints, annotated map markers, and completion readiness.
       parameters: [ { $ref: "#/components/parameters/MissionID" } ]
       responses:
-        "200": { description: Structured mission state }
+        "200":
+          description: Structured mission state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MissionDashboard" }
         "404": { description: Not found or not owned }
   /api/v1/missions/{missionID}/completion-check:
     get:
@@ -209,7 +240,11 @@ paths:
       description: Returns can_complete and, when false, the missing requirements. Never charged.
       parameters: [ { $ref: "#/components/parameters/MissionID" } ]
       responses:
-        "200": { description: Completion readiness }
+        "200":
+          description: Completion readiness
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompletionCheck" }
   /api/v1/missions/{missionID}/complete:
     post:
       tags: [Missions]
@@ -228,7 +263,11 @@ paths:
                 outcome: { type: string }
                 reasoning: { type: string }
       responses:
-        "200": { description: Judged mission result }
+        "200":
+          description: Judged mission result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MissionResult" }
         "409": { description: Not ready to complete — missing requirements }
   /api/v1/missions/{missionID}/archive:
     post:
@@ -239,6 +278,10 @@ paths:
   /api/v1/missions/{missionID}/events:
     get:
       tags: [Missions]
+      summary: Raw chronological mission event feed (dev/detail)
+      description: >
+        Raw mission events, newest first. Clients building the player-facing
+        story should prefer GET /missions/{missionID}/timeline.
       parameters:
         - { $ref: "#/components/parameters/MissionID" }
         - in: query
@@ -246,6 +289,28 @@ paths:
           schema: { type: integer, default: 100, maximum: 200 }
       responses:
         "200": { description: Mission event log }
+  /api/v1/missions/{missionID}/timeline:
+    get:
+      tags: [Missions]
+      summary: Curated player-facing mission timeline
+      description: >
+        The official story timeline: normalized event categories
+        (mission_started, location_visited, clue_discovered, character_talked,
+        ai_guidance_received, time_advanced, objective_completed, ...),
+        oldest first, built only from player-safe event payloads. Internal
+        noise (generation progress, raw facts, pacing hints) never appears.
+      parameters:
+        - { $ref: "#/components/parameters/MissionID" }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 200, maximum: 200 }
+      responses:
+        "200":
+          description: Curated timeline
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TimelineView" }
+        "404": { description: Not found or not owned }
   /api/v1/missions/{missionID}/stream:
     get:
       tags: [Missions]
@@ -257,7 +322,11 @@ paths:
       tags: [Map]
       parameters: [ { $ref: "#/components/parameters/MissionID" } ]
       responses:
-        "200": { description: Google Maps-compatible markers }
+        "200":
+          description: Google Maps-compatible markers
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MapView" }
   /api/v1/missions/{missionID}/locations/{locationID}:
     get:
       tags: [Map]
@@ -300,7 +369,16 @@ paths:
       tags: [Characters]
       parameters: [ { $ref: "#/components/parameters/MissionID" } ]
       responses:
-        "200": { description: Public NPC list }
+        "200":
+          description: Public NPC list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  characters:
+                    type: array
+                    items: { $ref: "#/components/schemas/PublicCharacter" }
   /api/v1/missions/{missionID}/characters/{characterID}:
     get:
       tags: [Characters]
@@ -322,13 +400,26 @@ paths:
                 message: { type: string }
                 location_id: { type: string, format: uuid }
       responses:
-        "200": { description: NPC reply, state deltas, and cost }
+        "200":
+          description: NPC reply, state deltas, and cost
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChatResult" }
   /api/v1/missions/{missionID}/clues:
     get:
       tags: [Clues]
       parameters: [ { $ref: "#/components/parameters/MissionID" } ]
       responses:
-        "200": { description: Discovered clues only }
+        "200":
+          description: Discovered clues only
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  clues:
+                    type: array
+                    items: { $ref: "#/components/schemas/PublicClue" }
   /api/v1/missions/{missionID}/clues/{clueID}:
     get:
       tags: [Clues]
@@ -347,13 +438,39 @@ paths:
               properties:
                 question: { type: string }
       responses:
-        "200": { description: Paid clue inspection }
+        "200":
+          description: Paid clue inspection
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  analysis: { type: string }
+                  new_facts:
+                    type: array
+                    items: { type: string }
+                  clue: { $ref: "#/components/schemas/PublicClue" }
+                  cost: { $ref: "#/components/schemas/Cost" }
   /api/v1/missions/{missionID}/clues/{clueID}/explain:
     post:
       tags: [Clues]
       parameters: [ { $ref: "#/components/parameters/MissionID" }, { $ref: "#/components/parameters/ClueID" } ]
       responses:
-        "200": { description: Paid clue explanation using public data only }
+        "200":
+          description: Paid clue explanation using public data only
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  explanation: { type: string }
+                  next_steps:
+                    type: array
+                    items: { type: string }
+                  compare_with:
+                    type: array
+                    items: { type: string }
+                  cost: { $ref: "#/components/schemas/Cost" }
   /api/v1/missions/{missionID}/guidance:
     post:
       tags: [Guidance]
@@ -364,7 +481,11 @@ paths:
           application/json:
             schema: { $ref: "#/components/schemas/GuidanceRequest" }
       responses:
-        "200": { description: Paid hint response }
+        "200":
+          description: Paid hint response
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GuidanceResult" }
   /api/v1/missions/{missionID}/time:
     get:
       tags: [Time]
@@ -482,3 +603,284 @@ components:
           properties:
             code: { type: string }
             message: { type: string }
+    Profile:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        display_name: { type: string }
+        rank: { type: string }
+        level: { type: integer }
+        xp: { type: integer }
+        total_missions: { type: integer }
+        completed_missions: { type: integer }
+        failed_missions: { type: integer }
+        success_rate: { type: number }
+        favorite_mission_type: { type: string }
+        total_clues_found: { type: integer }
+        total_ai_interactions: { type: integer }
+        total_locations_visited: { type: integer }
+        badges: {}
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    Wallet:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        balance: { type: integer }
+        reserved_balance: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    Cost:
+      type: object
+      properties:
+        coins_charged: { type: integer }
+    Objective:
+      type: object
+      properties:
+        id: { type: string }
+        type: { type: string, enum: [primary, required, optional, hidden, dynamic, final] }
+        title: { type: string }
+        description: { type: string }
+        status: { type: string, enum: [locked, active, completed, failed, skipped] }
+        progress: { type: integer, minimum: 0, maximum: 100 }
+        required_clues: { type: integer }
+        optional: { type: boolean }
+    PublicCharacter:
+      type: object
+      description: >
+        The only character shape returned to clients. Generation prompts and
+        private state never appear here.
+      properties:
+        id: { type: string, format: uuid }
+        mission_id: { type: string, format: uuid }
+        name: { type: string }
+        role: { type: string }
+        category: { type: string }
+        age: { type: integer }
+        public_profile: { type: string }
+        personality: {}
+        current_location_id: { type: string, format: uuid, nullable: true }
+        trust_level: { type: integer }
+        mood: { type: string }
+        avatar_url: { type: string }
+        avatar_status: { type: string, enum: [none, pending, ready, unavailable] }
+        visual_style_tags: {}
+    PublicClue:
+      type: object
+      description: >
+        The only clue shape returned to clients. Generation prompts and
+        internal truth never appear here.
+      properties:
+        id: { type: string, format: uuid }
+        mission_id: { type: string, format: uuid }
+        location_id: { type: string, format: uuid, nullable: true }
+        title: { type: string }
+        type: { type: string }
+        short_description: { type: string }
+        detailed_description: { type: string }
+        visual_description: { type: string }
+        image_url: { type: string }
+        image_status: { type: string, enum: [none, pending, ready, unavailable] }
+        discovered: { type: boolean }
+        reliability: { type: integer }
+        importance: { type: string }
+        related_character_ids: {}
+        public_data: {}
+        created_at: { type: string, format: date-time }
+    Marker:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        type: { type: string }
+        lat: { type: number }
+        lng: { type: number }
+        status: { type: string, enum: [hidden, discovered, locked, visited] }
+        risk_level: { type: integer }
+        has_new_clue: { type: boolean }
+        has_character: { type: boolean }
+        is_locked: { type: boolean }
+        badge: { type: string }
+        objective_status: { type: string, enum: [available, active, completed, high_risk] }
+        has_required_action: { type: boolean }
+        recommended: { type: boolean }
+        priority: { type: string, enum: [high, medium, low] }
+    MapView:
+      type: object
+      properties:
+        mission_id: { type: string, format: uuid }
+        center:
+          type: object
+          properties:
+            lat: { type: number }
+            lng: { type: number }
+        zoom: { type: integer }
+        locations:
+          type: array
+          items: { $ref: "#/components/schemas/Marker" }
+    TimelineItem:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        type:
+          type: string
+          enum:
+            - mission_started
+            - location_visited
+            - clue_discovered
+            - clue_inspected
+            - character_talked
+            - ai_guidance_received
+            - time_advanced
+            - risk_changed
+            - objective_completed
+            - objective_failed
+            - new_location_unlocked
+            - mission_ready_to_complete
+            - mission_completed
+            - mission_failed
+            - world_event
+        title: { type: string }
+        description: { type: string }
+        mission_time: { type: string, example: "Day 1 — 09:30" }
+        occurred_at: { type: string, format: date-time }
+        location_id: { type: string, format: uuid, nullable: true }
+        related_clue_id: { type: string, format: uuid, nullable: true }
+        related_character_id: { type: string, format: uuid, nullable: true }
+        importance: { type: string, enum: [high, medium, low] }
+    TimelineView:
+      type: object
+      properties:
+        mission_id: { type: string, format: uuid }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/TimelineItem" }
+    RecommendedAction:
+      type: object
+      properties:
+        type: { type: string, example: visit_location }
+        title: { type: string }
+        description: { type: string }
+        target_type: { type: string }
+        target_id: { type: string }
+        priority: { type: string, enum: [high, medium, low] }
+        cost_hint: { type: string }
+    MissionDashboard:
+      type: object
+      properties:
+        mission: {}
+        mission_id: { type: string, format: uuid }
+        title: { type: string }
+        mission_status: { type: string }
+        primary_objective: { $ref: "#/components/schemas/Objective" }
+        objectives:
+          type: array
+          items: { $ref: "#/components/schemas/Objective" }
+        completed_objectives:
+          type: array
+          items: { $ref: "#/components/schemas/Objective" }
+        mission_progress: { type: integer, minimum: 0, maximum: 100 }
+        risk_score: { type: integer, minimum: 0, maximum: 100 }
+        current_time: { type: string }
+        time_remaining: { type: string }
+        has_deadline: { type: boolean }
+        next_recommended_actions:
+          type: array
+          items: { $ref: "#/components/schemas/RecommendedAction" }
+        win_conditions:
+          type: array
+          items: { type: string }
+        failure_conditions:
+          type: array
+          items: { type: string }
+        can_complete: { type: boolean }
+        missing_requirements:
+          type: array
+          items: { type: string }
+        characters:
+          type: array
+          items: { $ref: "#/components/schemas/PublicCharacter" }
+        clues:
+          type: array
+          items: { $ref: "#/components/schemas/PublicClue" }
+        locations:
+          type: array
+          items: { $ref: "#/components/schemas/Marker" }
+        timeline_preview:
+          type: array
+          items: {}
+        wallet_balance: { type: integer }
+        result: {}
+    CompletionCheck:
+      type: object
+      properties:
+        can_complete: { type: boolean }
+        reason: { type: string }
+        missing_requirements:
+          type: array
+          items: { type: string }
+    MissionResult:
+      type: object
+      properties:
+        can_complete: { type: boolean }
+        success: { type: boolean }
+        score: { type: integer }
+        stars: { type: integer, minimum: 0, maximum: 5 }
+        result_title: { type: string }
+        result_summary: { type: string }
+        completed_objectives:
+          type: array
+          items: { type: string }
+        failed_objectives:
+          type: array
+          items: { type: string }
+        missed_optional_objectives:
+          type: array
+          items: { type: string }
+        critical_clues_found:
+          type: array
+          items: { type: string }
+        critical_clues_missed:
+          type: array
+          items: { type: string }
+        good_decisions:
+          type: array
+          items: { type: string }
+        bad_decisions:
+          type: array
+          items: { type: string }
+        xp_reward: { type: integer }
+        coin_reward: { type: integer }
+        cost: { $ref: "#/components/schemas/Cost" }
+    GuidanceResult:
+      type: object
+      properties:
+        message: { type: string }
+        hint_level: { type: string }
+        referenced_items:
+          type: array
+          items:
+            type: object
+            properties:
+              type: { type: string, enum: [location, clue, character, objective] }
+              id: { type: string }
+              name: { type: string }
+        cost: { $ref: "#/components/schemas/Cost" }
+    ChatResult:
+      type: object
+      properties:
+        message: { type: string }
+        emotion: { type: string }
+        mood: { type: string }
+        trust_level: { type: integer }
+        trust_delta: { type: integer }
+        stress_delta: { type: integer }
+        unlocked_clues:
+          type: array
+          items: { $ref: "#/components/schemas/PublicClue" }
+        new_facts:
+          type: array
+          items: { type: string }
+        cost: { $ref: "#/components/schemas/Cost" }

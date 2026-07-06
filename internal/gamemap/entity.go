@@ -28,7 +28,8 @@ type Location struct {
 	Status           string          `json:"status"`
 	RiskLevel        int             `json:"risk_level"`
 	Description      string          `json:"description"`
-	VisualPrompt     string          `json:"visual_prompt"`
+	// VisualPrompt is an image-generation input; never serialized to clients.
+	VisualPrompt     string          `json:"-"`
 	AvailableActions json.RawMessage `json:"available_actions"`
 	CreatedAt        time.Time       `json:"created_at"`
 	UpdatedAt        time.Time       `json:"updated_at"`

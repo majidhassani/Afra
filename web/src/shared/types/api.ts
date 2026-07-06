@@ -170,8 +170,9 @@ export interface PublicCharacter {
   current_location_id?: string | null;
   trust_level: number;
   mood: string;
-  avatar_prompt: string;
-  thumbnail_prompt: string;
+  /** Visual asset contract — generation prompts never cross this boundary. */
+  avatar_url: string;
+  avatar_status: "none" | "pending" | "ready" | "unavailable";
   visual_style_tags: unknown;
 }
 
@@ -198,7 +199,9 @@ export interface PublicClue {
   short_description: string;
   detailed_description: string;
   visual_description: string;
-  avatar_or_thumbnail_prompt: string;
+  /** Visual asset contract — generation prompts never cross this boundary. */
+  image_url: string;
+  image_status: "none" | "pending" | "ready" | "unavailable";
   discovered: boolean;
   reliability: number;
   importance: string;
@@ -243,7 +246,6 @@ export interface LocationEntity {
   status: string;
   risk_level: number;
   description: string;
-  visual_prompt: string;
   available_actions: string[] | null;
   created_at: string;
   updated_at: string;
@@ -366,6 +368,42 @@ export interface MissionEvent {
   type: string;
   payload: Record<string, unknown>;
   created_at: string;
+}
+
+/** Curated player-facing timeline item types (GET /missions/{id}/timeline). */
+export type TimelineItemType =
+  | "mission_started"
+  | "location_visited"
+  | "clue_discovered"
+  | "clue_inspected"
+  | "character_talked"
+  | "ai_guidance_received"
+  | "time_advanced"
+  | "risk_changed"
+  | "objective_completed"
+  | "objective_failed"
+  | "new_location_unlocked"
+  | "mission_ready_to_complete"
+  | "mission_completed"
+  | "mission_failed"
+  | "world_event";
+
+export interface TimelineItem {
+  id: string;
+  type: TimelineItemType;
+  title: string;
+  description?: string;
+  mission_time?: string;
+  occurred_at: string;
+  location_id?: string | null;
+  related_clue_id?: string | null;
+  related_character_id?: string | null;
+  importance: "high" | "medium" | "low";
+}
+
+export interface TimelineView {
+  mission_id: string;
+  items: TimelineItem[];
 }
 
 export interface RecommendedAction {
