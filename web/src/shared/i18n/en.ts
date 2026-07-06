@@ -390,6 +390,9 @@ export const en = {
   "mission.result.goodDecisions": "Good calls",
   "mission.result.badDecisions": "Missteps",
   "mission.result.backToHub": "Back to Mission Hub",
+  "mission.result.backToMission": "Back to mission",
+  "mission.result.viewHistory": "View history",
+  "mission.result.viewFullReport": "View full report",
 
   // Timeline
   "timeline.title": "Mission timeline",

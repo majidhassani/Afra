@@ -1402,6 +1402,53 @@ body {
   margin: 12px 0;
   line-height: 1.6;
 }
+/* Standalone result page (reuses the modal's inner styles). */
+.result-page {
+  max-width: 720px;
+  margin-inline: auto;
+}
+.result-report {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.result-report .result-banner {
+  text-align: center;
+  padding: 28px 24px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--glass-border);
+  background:
+    radial-gradient(600px 260px at 50% -10%, rgba(155, 191, 106, 0.14), transparent 60%),
+    var(--bg-panel);
+}
+.result-report.loss .result-banner {
+  background:
+    radial-gradient(600px 260px at 50% -10%, rgba(229, 107, 111, 0.14), transparent 60%),
+    var(--bg-panel);
+}
+.result-report .result-banner > * {
+  display: flex;
+  justify-content: center;
+}
+.result-report .result-verdict {
+  font-size: 24px;
+  font-weight: 700;
+  margin-top: 10px;
+}
+.result-stars svg.star-pop {
+  animation: star-pop var(--av-duration-slow, 420ms) var(--av-ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+@keyframes star-pop {
+  0% { transform: scale(0.4) rotate(-18deg); opacity: 0; }
+  70% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .result-stars svg.star-pop {
+    animation: none;
+  }
+}
+
 .result-rewards {
   display: flex;
   justify-content: center;

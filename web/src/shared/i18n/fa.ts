@@ -392,6 +392,9 @@ export const fa: Record<TranslationKey, string> = {
   "mission.result.goodDecisions": "تصمیم‌های درست",
   "mission.result.badDecisions": "اشتباهات",
   "mission.result.backToHub": "بازگشت به مرکز مأموریت",
+  "mission.result.backToMission": "بازگشت به مأموریت",
+  "mission.result.viewHistory": "دیدن تاریخچه",
+  "mission.result.viewFullReport": "دیدن گزارش کامل",
 
   // Timeline
   "timeline.title": "خط زمانی مأموریت",

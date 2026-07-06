@@ -464,19 +464,7 @@ export async function mockRequest<T>(
       const cost = charge("final_judgment", missionId);
       bundle.mission.status = "completed";
       bundle.mission.completed_at = now();
-      bundle.mission.result = {
-        success: true,
-        score: 84,
-        stars: 4,
-      };
-      bundle.events.push({
-        id: mockId(),
-        mission_id: missionId,
-        type: "mission_completed",
-        payload: {},
-        created_at: now(),
-      });
-      return out({
+      const result = {
         can_complete: true,
         success: true,
         score: 84,
@@ -494,6 +482,29 @@ export async function mockRequest<T>(
         xp_reward: 420,
         coin_reward: 40,
         cost,
+      };
+      bundle.mission.result = result;
+      bundle.events.push({
+        id: mockId(),
+        mission_id: missionId,
+        type: "mission_completed",
+        payload: { title: result.result_title },
+        created_at: now(),
+      });
+      return out(result);
+    }
+    if (rest === "/result" && method === "GET") {
+      if (!bundle.mission.result) {
+        throw new MockApiError(
+          "mission_not_finished",
+          "this mission has no result yet",
+          409,
+        );
+      }
+      return out({
+        mission_id: missionId,
+        mission_status: bundle.mission.status,
+        result: bundle.mission.result,
       });
     }
     if (rest === "/map") {

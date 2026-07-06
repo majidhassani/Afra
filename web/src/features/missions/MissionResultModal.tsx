@@ -20,9 +20,12 @@ import type { MissionResult } from "@/shared/types/api";
 export function MissionResultModal({
   result,
   onClose,
+  missionId,
 }: {
   result: MissionResult;
   onClose: () => void;
+  /** When set, the modal offers a link to the standalone result report. */
+  missionId?: string;
 }) {
   const { t } = useI18n();
   const success = result.success;
@@ -119,9 +122,20 @@ export function MissionResultModal({
           />
         </div>
 
-        <Link to="/app/dashboard" className="game-btn game-btn-primary result-cta">
-          {t("mission.result.backToHub")}
-        </Link>
+        <div className="row result-cta" style={{ gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
+          {missionId && (
+            <Link
+              to={`/app/missions/${missionId}/result`}
+              className="game-btn game-btn-ghost"
+              onClick={onClose}
+            >
+              {t("mission.result.viewFullReport")}
+            </Link>
+          )}
+          <Link to="/app/dashboard" className="game-btn game-btn-primary">
+            {t("mission.result.backToHub")}
+          </Link>
+        </div>
       </div>
     </div>
   );

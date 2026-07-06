@@ -150,6 +150,7 @@ func NewRouter(
 	mux.Handle("GET /api/v1/missions/{missionID}/dashboard", protected(h.Missions.Dashboard))
 	mux.Handle("GET /api/v1/missions/{missionID}/completion-check", protected(h.MissionComplete.Check))
 	mux.Handle("POST /api/v1/missions/{missionID}/complete", protected(h.MissionComplete.Complete, agentLimit))
+	mux.Handle("GET /api/v1/missions/{missionID}/result", protected(h.MissionComplete.Result))
 	mux.Handle("POST /api/v1/missions/{missionID}/archive", protected(h.Missions.Archive))
 	// /events is the raw chronological feed (dev/detail); /timeline is the
 	// official curated player-facing story timeline.

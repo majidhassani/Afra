@@ -23,6 +23,7 @@ import type {
   Mission,
   MissionDashboard,
   MissionResult,
+  MissionStatus,
   MissionEvent,
   Pricing,
   Profile,
@@ -143,6 +144,12 @@ export const missionsApi = {
       method: "POST",
       body: withLocale(input),
     }),
+  result: (missionId: string) =>
+    apiRequest<{
+      mission_id: string;
+      mission_status: MissionStatus;
+      result: MissionResult;
+    }>(`${V1}/missions/${missionId}/result`),
 };
 
 export const mapApi = {

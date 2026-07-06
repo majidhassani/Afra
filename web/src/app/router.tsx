@@ -7,6 +7,7 @@ import { DashboardPage } from "@/features/missions/DashboardPage";
 import { MissionsListPage } from "@/features/missions/MissionsListPage";
 import { NewMissionPage } from "@/features/missions/NewMissionPage";
 import { MissionDashboardPage } from "@/features/missions/MissionDashboardPage";
+import { MissionResultPage } from "@/features/missions/MissionResultPage";
 import { MapPage } from "@/features/map/MapPage";
 import { LocationPage } from "@/features/map/LocationPage";
 import { CharactersPage } from "@/features/characters/CharactersPage";
@@ -54,6 +55,7 @@ export const router = createBrowserRouter([
       { path: "missions", element: <MissionsListPage /> },
       { path: "missions/new", element: <NewMissionPage /> },
       { path: "missions/:missionId", element: <MissionDashboardPage /> },
+      { path: "missions/:missionId/result", element: <MissionResultPage /> },
       { path: "missions/:missionId/map", element: <MapPage /> },
       {
         path: "missions/:missionId/locations/:locationId",

@@ -303,6 +303,28 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/MissionResult" }
         "409": { description: Not ready to complete — missing requirements }
+  /api/v1/missions/{missionID}/result:
+    get:
+      tags: [Missions]
+      summary: Persisted result of a finished mission
+      description: >
+        Returns the stored end-of-mission result so it can be reviewed after
+        the completion modal closes and from history. 409 when the mission has
+        not reached a terminal state; 404 when no result was stored.
+      parameters: [ { $ref: "#/components/parameters/MissionID" } ]
+      responses:
+        "200":
+          description: Stored mission result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mission_id: { type: string, format: uuid }
+                  mission_status: { type: string, enum: [completed, failed] }
+                  result: { $ref: "#/components/schemas/MissionResult" }
+        "404": { description: No result stored }
+        "409": { description: Mission not finished yet }
   /api/v1/missions/{missionID}/archive:
     post:
       tags: [Missions]

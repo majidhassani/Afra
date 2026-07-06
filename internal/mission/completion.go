@@ -54,6 +54,24 @@ func (s *Service) CompletionSnapshot(ctx context.Context, userID, missionID uuid
 	}, nil
 }
 
+// StoredResult returns the persisted end-of-mission result document for a
+// completed or failed mission. It enforces ownership and reports a conflict
+// when the mission has not reached a terminal state yet (no result to show).
+func (s *Service) StoredResult(ctx context.Context, userID, missionID uuid.UUID) (json.RawMessage, string, error) {
+	m, err := s.repo.GetForUser(ctx, userID, missionID)
+	if err != nil {
+		return nil, "", err
+	}
+	if m.Status != StatusCompleted && m.Status != StatusFailed {
+		return nil, m.Status, apperrors.Conflict("mission_not_finished",
+			"this mission has no result yet (status: "+m.Status+")")
+	}
+	if len(m.Result) == 0 {
+		return nil, m.Status, apperrors.NotFound("result_not_found", "mission result is unavailable")
+	}
+	return m.Result, m.Status, nil
+}
+
 // Finish records the terminal mission outcome: it resolves each objective's
 // status from the judged per-objective results, stores the result document,
 // and moves the mission to completed or failed.

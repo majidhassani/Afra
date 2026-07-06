@@ -290,15 +290,11 @@ export function MissionDashboardPage() {
             <div className="band-title">{t("mission.result.title")}</div>
             <p className="muted">{t("mission.result.completed")}</p>
           </div>
-          {data.result != null && typeof data.result === "object" ? (
-            <GameButton
-              variant="mission"
-              size="sm"
-              onClick={() => setResultModal(data.result as MissionResult)}
-            >
+          <Link to={`/app/missions/${mission.id}/result`}>
+            <GameButton variant="mission" size="sm">
               {t("mission.result.viewReport")}
             </GameButton>
-          ) : null}
+          </Link>
         </section>
       )}
 
@@ -521,6 +517,7 @@ export function MissionDashboardPage() {
       {resultModal && (
         <MissionResultModal
           result={resultModal}
+          missionId={mission.id}
           onClose={() => setResultModal(null)}
         />
       )}

@@ -29,6 +29,7 @@ import (
 type MissionGateway interface {
 	CompletionSnapshot(ctx context.Context, userID, missionID uuid.UUID) (*mission.CompletionSnapshot, error)
 	Finish(ctx context.Context, userID, missionID uuid.UUID, result json.RawMessage, success bool, completedKeys map[string]bool) error
+	StoredResult(ctx context.Context, userID, missionID uuid.UUID) (json.RawMessage, string, error)
 }
 
 // ProfileProgression is the slice of the player-profile module this service
@@ -267,6 +268,13 @@ func (s *Service) Complete(ctx context.Context, userID, missionID uuid.UUID, dec
 	})
 
 	return result, nil, nil
+}
+
+// StoredResult returns the persisted result of a finished mission, so the
+// standalone result page and history can review a mission after the modal is
+// gone. The response includes the mission status for win/loss framing.
+func (s *Service) StoredResult(ctx context.Context, userID, missionID uuid.UUID) (json.RawMessage, string, error) {
+	return s.gateway.StoredResult(ctx, userID, missionID)
 }
 
 func (s *Service) factTexts(ctx context.Context, missionID uuid.UUID) []string {

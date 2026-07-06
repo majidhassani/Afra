@@ -43,6 +43,16 @@ func (g *fakeGateway) Finish(_ context.Context, _, _ uuid.UUID, result json.RawM
 	g.resultJSON = result
 	return nil
 }
+func (g *fakeGateway) StoredResult(_ context.Context, _, _ uuid.UUID) (json.RawMessage, string, error) {
+	if len(g.resultJSON) == 0 {
+		return nil, "active", nil
+	}
+	status := "failed"
+	if g.success {
+		status = "completed"
+	}
+	return g.resultJSON, status, nil
+}
 
 type fakeProfiles struct {
 	applied   bool
