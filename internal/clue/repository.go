@@ -20,6 +20,7 @@ type Repository interface {
 	FindUndiscoveredByTitle(ctx context.Context, missionID uuid.UUID, title string) (*Clue, error)
 	MarkDiscovered(ctx context.Context, clueID uuid.UUID) error
 	AdjustReliability(ctx context.Context, clueID uuid.UUID, delta int) error
+	UpdateImage(ctx context.Context, clueID uuid.UUID, url, status string) error
 	Counts(ctx context.Context, missionID uuid.UUID) (discovered int, total int, err error)
 	// ListCritical returns the high-importance clues for a mission (discovered
 	// or not), so end-of-mission evaluation can report which critical clues
@@ -32,14 +33,14 @@ type PGRepository struct{ pool *pgxpool.Pool }
 func NewPGRepository(pool *pgxpool.Pool) *PGRepository { return &PGRepository{pool: pool} }
 
 const clueColumns = `id, mission_id, location_id, title, type, short_description, detailed_description,
-	visual_description, avatar_or_thumbnail_prompt, discovered, reliability, importance,
+	visual_description, avatar_or_thumbnail_prompt, image_url, image_status, discovered, reliability, importance,
 	related_character_ids, public_data, internal_truth, created_at, updated_at`
 
 func scanClue(row pgx.Row) (*Clue, error) {
 	c := &Clue{}
 	err := row.Scan(&c.ID, &c.MissionID, &c.LocationID, &c.Title, &c.Type, &c.ShortDescription,
-		&c.DetailedDescription, &c.VisualDescription, &c.AvatarOrThumbnailPrompt, &c.Discovered,
-		&c.Reliability, &c.Importance, &c.RelatedCharacterIDs, &c.PublicData, &c.InternalTruth,
+		&c.DetailedDescription, &c.VisualDescription, &c.AvatarOrThumbnailPrompt, &c.ImageURL, &c.ImageStatus,
+		&c.Discovered, &c.Reliability, &c.Importance, &c.RelatedCharacterIDs, &c.PublicData, &c.InternalTruth,
 		&c.CreatedAt, &c.UpdatedAt)
 	if err != nil {
 		return nil, err
@@ -144,6 +145,16 @@ func (r *PGRepository) AdjustReliability(ctx context.Context, clueID uuid.UUID, 
 		 WHERE id = $1`, clueID, delta)
 	if err != nil {
 		return apperrors.Internal(err, "adjust clue reliability")
+	}
+	return nil
+}
+
+func (r *PGRepository) UpdateImage(ctx context.Context, clueID uuid.UUID, url, status string) error {
+	_, err := r.pool.Exec(ctx,
+		`UPDATE clues SET image_url = $2, image_status = $3, updated_at = now() WHERE id = $1`,
+		clueID, url, status)
+	if err != nil {
+		return apperrors.Internal(err, "update clue image")
 	}
 	return nil
 }

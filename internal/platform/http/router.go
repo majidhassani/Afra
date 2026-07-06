@@ -30,6 +30,7 @@ import (
 	"casemind/internal/suspect"
 	"casemind/internal/timeengine"
 	"casemind/internal/timeline"
+	"casemind/internal/visualasset"
 	"casemind/internal/wallet"
 	"casemind/pkg/response"
 )
@@ -46,6 +47,7 @@ type Handlers struct {
 	MissionTimeline *missiontimeline.Handler
 	Characters      *character.Handler
 	Clues           *clue.Handler
+	VisualAsset     *visualasset.Handler
 	GameMap         *gamemap.Handler
 	Guidance        *guidance.Handler
 	Time            *timeengine.Handler
@@ -163,11 +165,13 @@ func NewRouter(
 	mux.Handle("GET /api/v1/missions/{missionID}/characters", protected(h.Characters.List))
 	mux.Handle("GET /api/v1/missions/{missionID}/characters/{characterID}", protected(h.Characters.Get))
 	mux.Handle("POST /api/v1/missions/{missionID}/characters/{characterID}/chat", protected(h.Characters.Chat, agentLimit))
+	mux.Handle("POST /api/v1/missions/{missionID}/characters/{characterID}/avatar", protected(h.VisualAsset.GenerateCharacterAvatar, agentLimit))
 
 	mux.Handle("GET /api/v1/missions/{missionID}/clues", protected(h.Clues.List))
 	mux.Handle("GET /api/v1/missions/{missionID}/clues/{clueID}", protected(h.Clues.Get))
 	mux.Handle("POST /api/v1/missions/{missionID}/clues/{clueID}/inspect", protected(h.Clues.Inspect, agentLimit))
 	mux.Handle("POST /api/v1/missions/{missionID}/clues/{clueID}/explain", protected(h.Clues.Explain, agentLimit))
+	mux.Handle("POST /api/v1/missions/{missionID}/clues/{clueID}/image", protected(h.VisualAsset.GenerateClueImage, agentLimit))
 
 	mux.Handle("POST /api/v1/missions/{missionID}/guidance", protected(h.Guidance.Guide, agentLimit))
 	mux.Handle("GET /api/v1/missions/{missionID}/time", protected(h.Time.Get))

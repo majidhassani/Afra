@@ -439,6 +439,42 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ChatResult" }
+  /api/v1/missions/{missionID}/characters/{characterID}/avatar:
+    post:
+      tags: [Characters]
+      summary: Generate and persist a character avatar
+      description: >
+        Renders an avatar (image API or procedural fallback), stores it as a
+        data URL, and returns the public character with avatar_url/avatar_status
+        set. On generation failure avatar_status becomes "unavailable" so the
+        client shows a placeholder instead of blocking. Never returns prompts.
+      parameters: [ { $ref: "#/components/parameters/MissionID" }, { $ref: "#/components/parameters/CharacterID" } ]
+      responses:
+        "200":
+          description: Character with avatar wired
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  character: { $ref: "#/components/schemas/PublicCharacter" }
+  /api/v1/missions/{missionID}/clues/{clueID}/image:
+    post:
+      tags: [Clues]
+      summary: Generate and persist a clue evidence image
+      description: >
+        Renders an evidence image, stores it as a data URL, and returns the
+        public clue with image_url/image_status set. Never returns prompts.
+      parameters: [ { $ref: "#/components/parameters/MissionID" }, { $ref: "#/components/parameters/ClueID" } ]
+      responses:
+        "200":
+          description: Clue with image wired
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  clue: { $ref: "#/components/schemas/PublicClue" }
   /api/v1/missions/{missionID}/clues:
     get:
       tags: [Clues]

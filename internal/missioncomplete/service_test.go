@@ -79,6 +79,9 @@ func (r *fakeClues) FindUndiscoveredByTitle(context.Context, uuid.UUID, string) 
 }
 func (r *fakeClues) MarkDiscovered(context.Context, uuid.UUID) error         { return nil }
 func (r *fakeClues) AdjustReliability(context.Context, uuid.UUID, int) error { return nil }
+func (r *fakeClues) UpdateImage(context.Context, uuid.UUID, string, string) error {
+	return nil
+}
 func (r *fakeClues) Counts(context.Context, uuid.UUID) (int, int, error) {
 	return r.discovered, r.total, nil
 }

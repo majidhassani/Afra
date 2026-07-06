@@ -68,6 +68,7 @@ import (
 	"casemind/internal/suspect"
 	"casemind/internal/timeengine"
 	timelinepkg "casemind/internal/timeline"
+	"casemind/internal/visualasset"
 	"casemind/internal/wallet"
 	"casemind/internal/worldbible"
 	"casemind/migrations"
@@ -279,6 +280,7 @@ func main() {
 		worldBibleRepo, clueRepo, mapRepo, interactionRepo, missionEventRepo, missionRecorder, log)
 	journalService := journal.NewService(journalRepo, missionService)
 	missionTimelineService := missiontimeline.NewService(missionEventRepo, missionService)
+	visualAssetService := visualasset.NewService(characterRepo, clueRepo, avatarService, missionService, log)
 
 	// HTTP layer.
 	handlers := httpserver.Handlers{
@@ -292,6 +294,7 @@ func main() {
 		MissionTimeline: missiontimeline.NewHandler(missionTimelineService),
 		Characters:      character.NewHandler(characterService),
 		Clues:           clue.NewHandler(clueService),
+		VisualAsset:     visualasset.NewHandler(visualAssetService),
 		GameMap:         gamemap.NewHandler(mapService),
 		Guidance:        guidance.NewHandler(guidanceService),
 		Time:            timeengine.NewHandler(timeService),

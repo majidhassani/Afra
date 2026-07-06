@@ -52,7 +52,12 @@ export function CharactersPage() {
             to={`/app/missions/${missionId}/characters/${c.id}`}
           >
             <div className="char-card-head">
-              <Avatar name={c.name} category={c.category} size="lg" />
+              <Avatar
+                name={c.name}
+                category={c.category}
+                imageUrl={c.avatar_url || undefined}
+                size="lg"
+              />
               <div className="grow" style={{ minWidth: 0 }}>
                 <div className="char-card-name">{c.name}</div>
                 <div className="sub">{c.role}</div>

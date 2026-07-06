@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, SendHorizonal } from "lucide-react";
+import { ArrowLeft, SendHorizonal, ImagePlus } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
 import { useLanguageGuard } from "@/shared/i18n/languageGuard";
 import { charactersApi, walletApi } from "@/shared/api/endpoints";
@@ -56,6 +56,15 @@ export function CharacterChatPage() {
     queryFn: walletApi.pricing,
   });
   const chatCost = pricing.data?.character_chat ?? null;
+
+  const generateAvatar = useMutation({
+    mutationFn: () => charactersApi.generateAvatar(missionId!, characterId!),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ["mission", missionId, "character", characterId],
+      });
+    },
+  });
 
   // Seed the visible thread from the persisted transcript once loaded.
   useEffect(() => {
@@ -145,7 +154,25 @@ export function CharacterChatPage() {
           >
             <ArrowLeft size={16} className="rtl-flip" aria-hidden />
           </Link>
-          <Avatar name={character.name} category={character.category} size="lg" />
+          <div className="portrait-wrap">
+            <Avatar
+              name={character.name}
+              category={character.category}
+              imageUrl={character.avatar_url || undefined}
+              size="lg"
+            />
+            {!character.avatar_url && (
+              <button
+                className="portrait-gen"
+                title={t("chars.portrait.generate")}
+                disabled={generateAvatar.isPending}
+                onClick={() => generateAvatar.mutate()}
+                aria-label={t("chars.portrait.generate")}
+              >
+                <ImagePlus size={12} aria-hidden />
+              </button>
+            )}
+          </div>
           <div className="grow" style={{ minWidth: 0 }}>
             <h2>{character.name}</h2>
             <p className="sub muted">

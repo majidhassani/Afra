@@ -14,6 +14,13 @@ import {
   type MockMissionBundle,
 } from "./mockData";
 
+/** Tiny SVG data-URL portrait used by the mock avatar/clue image endpoints. */
+const MOCK_PORTRAIT =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' width='128' height='128'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#1a1f27'/><stop offset='1' stop-color='#2c3036'/></linearGradient></defs><rect width='128' height='128' fill='url(#g)'/><circle cx='64' cy='50' r='24' fill='#7dd3c7' opacity='0.7'/><rect x='28' y='82' width='72' height='40' rx='18' fill='#7dd3c7' opacity='0.5'/></svg>`,
+  );
+
 class MockApiError extends Error {
   code: string;
   status: number;
@@ -564,7 +571,7 @@ export async function mockRequest<T>(
       }
     }
 
-    const ch = rest.match(/^\/characters(?:\/([^/]+))?(\/chat)?$/);
+    const ch = rest.match(/^\/characters(?:\/([^/]+))?(\/chat|\/avatar)?$/);
     if (ch) {
       guardGenerating();
       if (!ch[1]) {
@@ -575,6 +582,11 @@ export async function mockRequest<T>(
         throw new MockApiError("not_found", "character not found", 404);
       if (!ch[2]) {
         return out({ character, messages: [] });
+      }
+      if (ch[2] === "/avatar" && method === "POST") {
+        character.avatar_url = MOCK_PORTRAIT;
+        character.avatar_status = "ready";
+        return out({ character });
       }
       if (method === "POST") {
         const cost = charge("character_chat", missionId);
@@ -607,7 +619,7 @@ export async function mockRequest<T>(
       }
     }
 
-    const cl = rest.match(/^\/clues(?:\/([^/]+))?(\/inspect|\/explain)?$/);
+    const cl = rest.match(/^\/clues(?:\/([^/]+))?(\/inspect|\/explain|\/image)?$/);
     if (cl) {
       guardGenerating();
       if (!cl[1]) {
@@ -616,6 +628,11 @@ export async function mockRequest<T>(
       const clue = bundle.clues.find((c) => c.id === cl[1]);
       if (!clue) throw new MockApiError("not_found", "clue not found", 404);
       if (!cl[2]) {
+        return out({ clue });
+      }
+      if (cl[2] === "/image" && method === "POST") {
+        clue.image_url = MOCK_PORTRAIT;
+        clue.image_status = "ready";
         return out({ clue });
       }
       if (cl[2] === "/inspect" && method === "POST") {

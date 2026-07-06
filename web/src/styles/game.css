@@ -795,6 +795,50 @@ body {
   letter-spacing: 0.04em;
   font-size: 12px;
 }
+/* Generated evidence image. */
+.evidence-photo {
+  margin: 0 0 14px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-base);
+}
+.evidence-photo img {
+  display: block;
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+}
+
+/* Character portrait with an inline generate button. */
+.portrait-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+.portrait-gen {
+  position: absolute;
+  inset-block-end: -4px;
+  inset-inline-end: -4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-elevated);
+  color: var(--accent-ai);
+  cursor: pointer;
+  transition: transform 140ms var(--ease), border-color 140ms var(--ease);
+}
+.portrait-gen:hover:not(:disabled) {
+  transform: scale(1.08);
+  border-color: var(--accent-ai);
+}
+.portrait-gen:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
 
 /* ---------- Cinematic loading screen ---------- */
 

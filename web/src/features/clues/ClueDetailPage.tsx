@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Microscope, Lightbulb, ScanSearch } from "lucide-react";
+import {
+  ArrowLeft,
+  Microscope,
+  Lightbulb,
+  ScanSearch,
+  ImagePlus,
+} from "lucide-react";
 import { useI18n } from "@/shared/i18n";
 import { useLanguageGuard } from "@/shared/i18n/languageGuard";
 import { cluesApi, walletApi } from "@/shared/api/endpoints";
@@ -54,6 +60,16 @@ export function ClueDetailPage() {
     onSuccess: (result) => {
       guardLanguage(result.explanation);
       setExplainResult(result);
+      void queryClient.invalidateQueries({ queryKey: ["wallet"] });
+    },
+  });
+
+  const generateImage = useMutation({
+    mutationFn: () => cluesApi.generateImage(missionId!, clueId!),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ["mission", missionId, "clue", clueId],
+      });
       void queryClient.invalidateQueries({ queryKey: ["wallet"] });
     },
   });
@@ -117,10 +133,31 @@ export function ClueDetailPage() {
       <div className="dash-grid">
         <section className="panel col-8">
           <div className="band">
-            <div className="evidence-figure" aria-hidden>
-              <ScanSearch size={30} />
-              <span>{data.type.replace(/_/g, " ")}</span>
-            </div>
+            {data.image_url ? (
+              <figure className="evidence-photo">
+                <img
+                  src={data.image_url}
+                  alt={data.title}
+                  loading="lazy"
+                />
+              </figure>
+            ) : (
+              <div className="evidence-figure">
+                <ScanSearch size={30} aria-hidden />
+                <span>{data.type.replace(/_/g, " ")}</span>
+                <button
+                  className="btn btn-ghost sm"
+                  style={{ marginTop: 10 }}
+                  disabled={generateImage.isPending}
+                  onClick={() => generateImage.mutate()}
+                >
+                  <ImagePlus size={13} aria-hidden />
+                  {generateImage.isPending
+                    ? t("clues.image.generating")
+                    : t("clues.image.generate")}
+                </button>
+              </div>
+            )}
             <p style={{ unicodeBidi: "plaintext" }}>{data.detailed_description}</p>
           </div>
 

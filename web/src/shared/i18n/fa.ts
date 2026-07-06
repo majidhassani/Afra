@@ -184,6 +184,8 @@ export const fa: Record<TranslationKey, string> = {
   "clues.importance.high": "زیاد",
   "clues.importance.medium": "متوسط",
   "clues.importance.low": "کم",
+  "clues.image.generate": "ساخت تصویر مدرک",
+  "clues.image.generating": "در حال ساخت…",
   "clues.inspect": "بررسی موشکافانه",
   "clues.inspect.question": "می‌خواهید چه چیزی را بررسی کنید؟",
   "clues.inspect.placeholder": "پرسش اختیاری و متمرکز درباره این سرنخ…",
@@ -437,6 +439,7 @@ export const fa: Record<TranslationKey, string> = {
   "chars.subtitle": "آدم‌های میدان. برای فهمیدن حقیقت با آن‌ها حرف بزن.",
   "chars.empty.body": "برای دیدن افراد درگیر، نقشه را کاوش کن.",
   "chars.talk": "گفتگو",
+  "chars.portrait.generate": "ساخت پرتره",
   "chars.onSite": "در محل",
   "chars.typing": "{name} در حال پاسخ است…",
 

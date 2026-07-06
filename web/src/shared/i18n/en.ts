@@ -182,6 +182,8 @@ export const en = {
   "clues.importance.high": "High",
   "clues.importance.medium": "Medium",
   "clues.importance.low": "Low",
+  "clues.image.generate": "Generate evidence image",
+  "clues.image.generating": "Generating…",
   "clues.inspect": "Inspect",
   "clues.inspect.question": "What do you want to examine?",
   "clues.inspect.placeholder": "Optional focused question about this clue…",
@@ -435,6 +437,7 @@ export const en = {
   "chars.subtitle": "The people on the ground. Talk to them to learn the truth.",
   "chars.empty.body": "Explore the map to meet the people involved.",
   "chars.talk": "Talk",
+  "chars.portrait.generate": "Generate portrait",
   "chars.onSite": "On site",
   "chars.typing": "{name} is responding…",
 

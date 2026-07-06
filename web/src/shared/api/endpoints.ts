@@ -191,6 +191,11 @@ export const charactersApi = {
         }),
       },
     ),
+  generateAvatar: (missionId: string, characterId: string) =>
+    apiRequest<{ character: PublicCharacter }>(
+      `${V1}/missions/${missionId}/characters/${characterId}/avatar`,
+      { method: "POST" },
+    ).then((r) => r.character),
 };
 
 export const avatarApi = {
@@ -221,6 +226,11 @@ export const cluesApi = {
       `${V1}/missions/${missionId}/clues/${clueId}/explain`,
       { method: "POST", body: withLocale({}) },
     ),
+  generateImage: (missionId: string, clueId: string) =>
+    apiRequest<{ clue: PublicClue }>(
+      `${V1}/missions/${missionId}/clues/${clueId}/image`,
+      { method: "POST" },
+    ).then((r) => r.clue),
 };
 
 export const guidanceApi = {
