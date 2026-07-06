@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -34,10 +35,12 @@ import {
   WalletBalance,
 } from "@/shared/ui/game";
 import { GuidancePanel } from "@/features/guidance/GuidancePanel";
+import { TimelineLog } from "./TimelineLog";
+import { MissionResultModal } from "./MissionResultModal";
 import { useMissionDashboard } from "./missionQueries";
 import { deriveHud } from "./hud";
 import { toast } from "@/shared/ui/toast";
-import type { Objective } from "@/shared/types/api";
+import type { MissionResult, Objective } from "@/shared/types/api";
 import type { TranslationKey } from "@/shared/i18n/en";
 
 export function MissionDashboardPage() {
@@ -46,6 +49,7 @@ export function MissionDashboardPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const dashboard = useMissionDashboard(missionId);
+  const [resultModal, setResultModal] = useState<MissionResult | null>(null);
 
   const events = useQuery({
     queryKey: ["mission", missionId, "events"],
@@ -68,8 +72,14 @@ export function MissionDashboardPage() {
         outcome: "Submit final mission judgment",
         reasoning: "Player requested completion from the mission command HUD.",
       }),
-    onSuccess: () => {
-      toast("success", t("mission.result.ready"));
+    onSuccess: (res) => {
+      // A ready mission returns the judged result; an unready one returns a
+      // completion check (can_complete=false) which the readiness panel covers.
+      if (res && "result_title" in res && res.can_complete !== false) {
+        setResultModal(res as MissionResult);
+      } else {
+        toast("success", t("mission.result.ready"));
+      }
       void queryClient.invalidateQueries({ queryKey: ["mission", missionId] });
       void queryClient.invalidateQueries({
         queryKey: ["mission", missionId, "events"],
@@ -273,6 +283,15 @@ export function MissionDashboardPage() {
             <div className="band-title">{t("mission.result.title")}</div>
             <p className="muted">{t("mission.result.completed")}</p>
           </div>
+          {data.result != null && typeof data.result === "object" ? (
+            <GameButton
+              variant="mission"
+              size="sm"
+              onClick={() => setResultModal(data.result as MissionResult)}
+            >
+              {t("mission.result.viewReport")}
+            </GameButton>
+          ) : null}
         </section>
       )}
 
@@ -457,29 +476,23 @@ export function MissionDashboardPage() {
           </div>
         </section>
 
-        <section className="panel col-12" aria-label={t("mission.events")}>
+        <section className="panel col-12" aria-label={t("timeline.title")}>
           <Link
             className="spread"
-            style={{ padding: "14px 16px 0" }}
+            style={{ padding: "14px 16px 4px" }}
             to={`/app/missions/${mission.id}/events`}
           >
             <span className="band-title" style={{ marginBottom: 0 }}>
-              {t("mission.events")}
+              {t("timeline.title")}
             </span>
             <Radio size={14} aria-hidden />
           </Link>
-          <div className="item-list">
-            {timelinePreview?.map((ev) => (
-              <div key={ev.id} className="item-row">
-                <span className="grow sub">{ev.type.replace(/_/g, " ")}</span>
-                <span className="faint mono-num">
-                  {new Date(ev.created_at).toLocaleTimeString()}
-                </span>
-              </div>
-            ))}
-            {events.isSuccess && (timelinePreview?.length ?? 0) === 0 && (
-              <EmptyState title={t("events.empty")} />
-            )}
+          <div style={{ padding: "8px 16px 16px" }}>
+            <TimelineLog
+              events={timelinePreview}
+              missionId={mission.id}
+              limit={6}
+            />
           </div>
         </section>
 
@@ -497,6 +510,13 @@ export function MissionDashboardPage() {
           </div>
         </section>
       </div>
+
+      {resultModal && (
+        <MissionResultModal
+          result={resultModal}
+          onClose={() => setResultModal(null)}
+        />
+      )}
     </div>
   );
 }

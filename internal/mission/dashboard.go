@@ -34,8 +34,8 @@ type MissionDashboard struct {
 	TimeRemaining string `json:"time_remaining,omitempty"`
 	HasDeadline   bool   `json:"has_deadline"`
 
-	NextRecommendedActions []RecommendedAction `json:"next_recommended_actions"`
-	Guidance               Guidance            `json:"guidance"`
+	NextRecommendedActions []DashboardAction `json:"next_recommended_actions"`
+	Guidance               DashboardGuidance `json:"guidance"`
 
 	WinConditions     []string `json:"win_conditions"`
 	FailureConditions []string `json:"failure_conditions"`
@@ -49,6 +49,50 @@ type MissionDashboard struct {
 	TimelinePreview []missionevent.Event        `json:"timeline_preview"`
 	WalletBalance   int                         `json:"wallet_balance"`
 	Result          json.RawMessage             `json:"result,omitempty"`
+}
+
+// DashboardAction is the player-safe "what to do next" shape the game client
+// consumes. It flattens the internal guidance action (whose target is either a
+// location or a character) into a single target_type/target_id pair so the UI
+// can deep-link without knowing the internal field layout.
+type DashboardAction struct {
+	Type        string `json:"type"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	TargetType  string `json:"target_type,omitempty"` // location | character
+	TargetID    string `json:"target_id,omitempty"`
+	Priority    string `json:"priority,omitempty"`
+}
+
+// DashboardGuidance is the summary form of the guidance the client shows in the
+// mission HUD.
+type DashboardGuidance struct {
+	Summary            string            `json:"summary"`
+	Warning            string            `json:"warning,omitempty"`
+	RecommendedActions []DashboardAction `json:"recommended_actions"`
+}
+
+// toDashboardActions maps internal guidance actions to the client contract.
+func toDashboardActions(actions []RecommendedAction) []DashboardAction {
+	out := make([]DashboardAction, 0, len(actions))
+	for _, a := range actions {
+		da := DashboardAction{
+			Type:        a.Action,
+			Title:       a.Title,
+			Description: a.Reason,
+			Priority:    a.Priority,
+		}
+		switch {
+		case a.LocationID != "":
+			da.TargetType = "location"
+			da.TargetID = a.LocationID
+		case a.CharacterID != "":
+			da.TargetType = "character"
+			da.TargetID = a.CharacterID
+		}
+		out = append(out, da)
+	}
+	return out
 }
 
 // Dashboard assembles the structured mission dashboard for the owner.
@@ -178,8 +222,12 @@ func (s *Service) Dashboard(ctx context.Context, userID, missionID uuid.UUID) (*
 		CurrentTime:            m.CurrentTime,
 		TimeRemaining:          timeLabel,
 		HasDeadline:            hasDeadline,
-		NextRecommendedActions: guidance.RecommendedActions,
-		Guidance:               guidance,
+		NextRecommendedActions: toDashboardActions(guidance.RecommendedActions),
+		Guidance: DashboardGuidance{
+			Summary:            guidance.Summary,
+			Warning:            firstOrEmpty(guidance.Warnings),
+			RecommendedActions: toDashboardActions(guidance.RecommendedActions),
+		},
 		WinConditions:          public.WinConditions,
 		FailureConditions:      public.FailureConditions,
 		CanComplete:            canComplete && m.Playable(),
@@ -369,6 +417,13 @@ func decisionTarget(totalClues int) int {
 		return 3
 	}
 	return totalClues
+}
+
+func firstOrEmpty(s []string) string {
+	if len(s) > 0 {
+		return s[0]
+	}
+	return ""
 }
 
 func deadlineApproaching(remaining, deadline int) bool {
