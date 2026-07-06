@@ -155,6 +155,11 @@ export const fa: Record<TranslationKey, string> = {
   "map.discoveredClues": "سرنخ‌های کشف‌شده",
   "map.openLocation": "باز کردن موقعیت",
   "map.lockedHint": "این موقعیت قفل است. ابتدا جای دیگری پیشرفت کنید.",
+  "map.inspectArea": "بررسی منطقه",
+  "map.talk": "گفتگو",
+  "map.viewClues": "دیدن سرنخ‌ها",
+  "map.devNoKey":
+    "DEV: کلید VITE_GOOGLE_MAPS_API_KEY تنظیم نشده — تخته تاکتیکی جایگزین نمایش داده می‌شود",
 
   // Characters
   "chars.title": "شخصیت‌ها",

@@ -153,6 +153,11 @@ export const en = {
   "map.discoveredClues": "Discovered clues",
   "map.openLocation": "Open location",
   "map.lockedHint": "This location is locked. Progress elsewhere first.",
+  "map.inspectArea": "Inspect Area",
+  "map.talk": "Talk",
+  "map.viewClues": "View Clues",
+  "map.devNoKey":
+    "DEV: no VITE_GOOGLE_MAPS_API_KEY — rendering tactical fallback board",
 
   // Characters
   "chars.title": "Characters",

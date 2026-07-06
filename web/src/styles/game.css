@@ -808,6 +808,35 @@ body {
   color: var(--accent-ai);
 }
 
+/* ---------- Real Google Maps surface ---------- */
+
+.gmap-canvas {
+  position: absolute;
+  inset: 0;
+}
+/* Marker pins live in the maps overlayMouseTarget pane; they reuse the
+   .marker-pin visual system but need absolute px positioning. */
+.gmap-pin {
+  position: absolute;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+.map-dev-warning {
+  position: absolute;
+  bottom: 10px;
+  inset-inline-start: 10px;
+  z-index: 5;
+  font-size: 11px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(227, 179, 95, 0.14);
+  border: 1px solid rgba(227, 179, 95, 0.4);
+  color: var(--accent-wallet);
+  max-width: 70%;
+}
+
 /* ---------- Next action card (roadmap: what to do and why) ---------- */
 
 .next-action-card {

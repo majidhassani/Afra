@@ -7,6 +7,9 @@ import {
   CheckCircle2,
   ExternalLink,
   ShieldAlert,
+  Search,
+  MessageCircle,
+  Sparkles,
 } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
 import { mapApi } from "@/shared/api/endpoints";
@@ -15,16 +18,21 @@ import { GuidancePanel } from "@/features/guidance/GuidancePanel";
 import type { Marker } from "@/shared/types/api";
 import { Avatar } from "@/shared/ui/Avatar";
 import { GameButton } from "@/shared/ui/game";
+import { hasGoogleMapsKey } from "@/shared/lib/googleMaps";
+import { GoogleMissionMap } from "./GoogleMissionMap";
 
 /**
- * Fallback tactical map board: positions Google-Maps-compatible markers on a
- * dark grid surface using normalized lat/lng. Swappable for a real Maps
- * implementation without changing the data contract.
+ * Mission map. With a Google Maps key the real map renders (markers as HTML
+ * overlays with full game state); without one the tactical fallback board
+ * takes over. Marker tap opens the side panel (desktop) or the bottom sheet
+ * (mobile) with location intel and actions.
  */
 export function MapPage() {
   const { missionId } = useParams<{ missionId: string }>();
   const { t } = useI18n();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [mapsUnavailable, setMapsUnavailable] = useState(false);
+  const useRealMap = hasGoogleMapsKey() && !mapsUnavailable;
 
   const map = useQuery({
     queryKey: ["mission", missionId, "map"],
@@ -32,71 +40,38 @@ export function MapPage() {
     enabled: !!missionId,
   });
 
-  const positioned = useMemo(() => {
-    const markers = map.data?.locations ?? [];
-    if (markers.length === 0) return [];
-    const lats = markers.map((m) => m.lat);
-    const lngs = markers.map((m) => m.lng);
-    const minLat = Math.min(...lats);
-    const maxLat = Math.max(...lats);
-    const minLng = Math.min(...lngs);
-    const maxLng = Math.max(...lngs);
-    const latSpan = maxLat - minLat || 1;
-    const lngSpan = maxLng - minLng || 1;
-    // 12% padding keeps labels inside the board.
-    return markers.map((m) => ({
-      marker: m,
-      x: 12 + ((m.lng - minLng) / lngSpan) * 76,
-      y: 12 + ((maxLat - m.lat) / latSpan) * 76,
-    }));
-  }, [map.data]);
-
   const selected =
     map.data?.locations.find((m) => m.id === selectedId) ?? null;
 
   return (
     <div className="map-layout">
-      <div className="map-board-wrap" role="application" aria-label={t("map.title")}>
+      <div
+        className="map-board-wrap"
+        role="application"
+        aria-label={t("map.title")}
+      >
         {map.isPending && <SkeletonRows rows={5} />}
         {map.isError && (
           <ErrorState error={map.error} onRetry={() => map.refetch()} />
         )}
-        {positioned.map(({ marker, x, y }) => (
-          <button
-            key={marker.id}
-            className={[
-              "marker-pin",
-              marker.is_locked ? "locked" : "",
-              marker.status === "visited" ? "visited" : "",
-              selectedId === marker.id ? "selected" : "",
-              marker.recommended && !marker.is_locked ? "recommended pulse" : "",
-              marker.risk_level >= 60 || marker.objective_status === "high_risk"
-                ? "highrisk"
-                : "",
-              marker.has_new_clue && !marker.is_locked ? "pulse" : "",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            style={{ left: `${x}%`, top: `${y}%` }}
-            onClick={() => setSelectedId(marker.id)}
-            aria-label={marker.name}
-            aria-pressed={selectedId === marker.id}
-          >
-            <span className="marker-dot">
-              {marker.is_locked ? (
-                <Lock size={13} aria-hidden />
-              ) : marker.status === "visited" ? (
-                <CheckCircle2 size={13} aria-hidden />
-              ) : (
-                <MapPin size={13} aria-hidden />
-              )}
-              {marker.recommended && <span className="marker-flag recommended" />}
-              {marker.has_new_clue && <span className="marker-flag clue" />}
-              {marker.has_character && <span className="marker-flag character" />}
-            </span>
-            <span className="marker-label">{marker.name}</span>
-          </button>
-        ))}
+        {map.data && useRealMap && (
+          <GoogleMissionMap
+            view={map.data}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            onUnavailable={() => setMapsUnavailable(true)}
+          />
+        )}
+        {map.data && !useRealMap && (
+          <FallbackBoard
+            markers={map.data.locations}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+          />
+        )}
+        {import.meta.env.DEV && !hasGoogleMapsKey() && (
+          <div className="map-dev-warning">{t("map.devNoKey")}</div>
+        )}
       </div>
 
       <aside className="map-side" aria-label={t("map.selectLocation")}>
@@ -118,6 +93,79 @@ export function MapPage() {
   );
 }
 
+/**
+ * Fallback tactical map board: positions Google-Maps-compatible markers on a
+ * dark grid surface using normalized lat/lng.
+ */
+function FallbackBoard({
+  markers,
+  selectedId,
+  onSelect,
+}: {
+  markers: Marker[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+}) {
+  const positioned = useMemo(() => {
+    if (markers.length === 0) return [];
+    const lats = markers.map((m) => m.lat);
+    const lngs = markers.map((m) => m.lng);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+    const latSpan = maxLat - minLat || 1;
+    const lngSpan = maxLng - minLng || 1;
+    // 12% padding keeps labels inside the board.
+    return markers.map((m) => ({
+      marker: m,
+      x: 12 + ((m.lng - minLng) / lngSpan) * 76,
+      y: 12 + ((maxLat - m.lat) / latSpan) * 76,
+    }));
+  }, [markers]);
+
+  return (
+    <>
+      {positioned.map(({ marker, x, y }) => (
+        <button
+          key={marker.id}
+          className={[
+            "marker-pin",
+            marker.is_locked ? "locked" : "",
+            marker.status === "visited" ? "visited" : "",
+            selectedId === marker.id ? "selected" : "",
+            marker.recommended && !marker.is_locked ? "recommended pulse" : "",
+            marker.risk_level >= 60 || marker.objective_status === "high_risk"
+              ? "highrisk"
+              : "",
+            marker.has_new_clue && !marker.is_locked ? "pulse" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          style={{ left: `${x}%`, top: `${y}%` }}
+          onClick={() => onSelect(marker.id)}
+          aria-label={marker.name}
+          aria-pressed={selectedId === marker.id}
+        >
+          <span className="marker-dot">
+            {marker.is_locked ? (
+              <Lock size={13} aria-hidden />
+            ) : marker.status === "visited" ? (
+              <CheckCircle2 size={13} aria-hidden />
+            ) : (
+              <MapPin size={13} aria-hidden />
+            )}
+            {marker.recommended && <span className="marker-flag recommended" />}
+            {marker.has_new_clue && <span className="marker-flag clue" />}
+            {marker.has_character && <span className="marker-flag character" />}
+          </span>
+          <span className="marker-label">{marker.name}</span>
+        </button>
+      ))}
+    </>
+  );
+}
+
 function SelectedMarkerPanel({
   missionId,
   marker,
@@ -131,6 +179,8 @@ function SelectedMarkerPanel({
     queryFn: () => mapApi.location(missionId, marker.id),
     enabled: !marker.is_locked,
   });
+
+  const firstCharacter = detail.data?.characters[0];
 
   return (
     <div>
@@ -148,7 +198,7 @@ function SelectedMarkerPanel({
             </span>
           )}
           <span
-            className={`chip ${marker.risk_level >= 3 ? "chip-danger" : ""}`}
+            className={`chip ${marker.risk_level >= 60 ? "chip-danger" : ""}`}
             title={t("map.riskLevel")}
           >
             <ShieldAlert size={12} aria-hidden />
@@ -195,8 +245,30 @@ function SelectedMarkerPanel({
                         to={`/app/missions/${missionId}/characters/${c.id}`}
                         className="chip"
                       >
-                        <Avatar name={c.name} category={c.category} size="sm" />
+                        <Avatar
+                          name={c.name}
+                          category={c.category}
+                          imageUrl={c.avatar_url || undefined}
+                          size="sm"
+                        />
                         {c.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {detail.data.discovered_clues.length > 0 && (
+                <div style={{ marginTop: 12 }}>
+                  <div className="band-title">{t("map.cluesHere")}</div>
+                  <div className="row" style={{ flexWrap: "wrap" }}>
+                    {detail.data.discovered_clues.map((c) => (
+                      <Link
+                        key={c.id}
+                        to={`/app/missions/${missionId}/clues/${c.id}`}
+                        className="chip"
+                      >
+                        <Search size={12} aria-hidden />
+                        {c.title}
                       </Link>
                     ))}
                   </div>
@@ -204,13 +276,40 @@ function SelectedMarkerPanel({
               )}
             </div>
           )}
+          {/* Location actions: inspect / talk / ask AI / view clues */}
           <div className="band" style={{ borderBottom: "none" }}>
-            <Link to={`/app/missions/${missionId}/locations/${marker.id}`}>
-              <GameButton variant="primary">
-                <ExternalLink size={14} aria-hidden />
-                {t("map.openLocation")}
-              </GameButton>
-            </Link>
+            <div className="row" style={{ flexWrap: "wrap", gap: 8 }}>
+              <Link to={`/app/missions/${missionId}/locations/${marker.id}`}>
+                <GameButton variant="primary">
+                  <ExternalLink size={14} aria-hidden />
+                  {t("map.inspectArea")}
+                </GameButton>
+              </Link>
+              {firstCharacter && (
+                <Link
+                  to={`/app/missions/${missionId}/characters/${firstCharacter.id}`}
+                >
+                  <GameButton variant="ghost">
+                    <MessageCircle size={14} aria-hidden />
+                    {t("map.talk")}
+                  </GameButton>
+                </Link>
+              )}
+              <Link
+                to={`/app/missions/${missionId}/locations/${marker.id}?ask=1`}
+              >
+                <GameButton variant="ghost">
+                  <Sparkles size={14} aria-hidden />
+                  {t("map.askAi")}
+                </GameButton>
+              </Link>
+              <Link to={`/app/missions/${missionId}/clues`}>
+                <GameButton variant="ghost">
+                  <Search size={14} aria-hidden />
+                  {t("map.viewClues")}
+                </GameButton>
+              </Link>
+            </div>
           </div>
         </>
       )}
