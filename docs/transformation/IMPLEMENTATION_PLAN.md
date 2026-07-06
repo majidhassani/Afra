@@ -118,6 +118,33 @@ Frontend:
 - Frontend: `cd web && npm run build && npm test && npm run lint`
 - Docker: `docker compose config` (build where network/time allows)
 
+## 6b. Execution Status (all phases complete)
+
+- Phase 0 — contracts/privacy: `/missions/{id}/timeline`; prompt fields removed
+  from public DTOs (character/clue/location) and replaced with `avatar_url`/
+  `image_url` + status; privacy guard extended to block prompt/world-bible keys;
+  OpenAPI schemas expanded; `npm run lint` (ESLint flat config); Diagnostics
+  dev-gated. ✅
+- Phase 1 — timeline/roadmap: curated `/timeline`, upgraded `TimelineLog`,
+  `NextActionCard`, dedicated `TimelinePage`, `mission_ready_to_complete`
+  milestone. ✅
+- Phase 2 — Google Maps: `GoogleMissionMap` with real markers + states, dark
+  AVDS style, fallback board when key missing, marker actions. ✅
+- Phase 3 — UI revolution: game-economy Wallet, mission-archive History,
+  AVDS motion tokens, Diagnostics hidden. ✅
+- Phase 4 — image pipeline: migration `0003`, `internal/visualasset`, avatar/
+  clue image endpoints, data-URL storage, placeholders, generate controls. ✅
+- Phase 5 — AI language hardening: `runtime.LanguageDirective` enforced across
+  guidance/director/location/clue agents; tests; `cmd/llmsmoke`. ✅
+- Phase 6 — result page: `GET /missions/{id}/result`, `/app/missions/:id/result`
+  with star reveal + count-ups, history/modal deep links. ✅
+- Phase 7 — wallet demo/production split: `WALLET_DEMO_PURCHASES`, gated
+  purchase/ad, `GET /wallet/config`. ✅
+- Phase 8 — mobile/PWA: AI tab + bottom nav (Mission|Map|AI|Clues|Profile),
+  `useKeyboardInset`, SW never caches `/api/`, manifest review. ✅
+- Phase 9 — QA: `go test ./...` (85 pkgs), `go vet`, `docker compose config`,
+  `npm run build/lint/test` (incl. mock E2E loop), prompt-visibility grep. ✅
+
 ## 7. Rollback Notes
 
 - All work is incremental commits on `develop`; each phase is separately revertable.
