@@ -56,13 +56,41 @@ func MinutesSinceStart(t time.Time) int {
 }
 
 // Objective is one structured mission objective (stored as JSONB).
+//
+// Type and Progress were added by the Mission Guidance upgrade; older stored
+// objectives predate them, so read them through NormalizedType()/ClampProgress
+// which fill sensible defaults from the legacy Optional flag.
 type Objective struct {
 	ID            string `json:"id"`
+	Type          string `json:"type"` // primary | required | optional | hidden | dynamic | final
 	Title         string `json:"title"`
 	Description   string `json:"description"`
-	Status        string `json:"status"` // active | completed | failed
+	Status        string `json:"status"`   // locked | active | completed | failed | skipped
+	Progress      int    `json:"progress"` // 0-100
 	RequiredClues int    `json:"required_clues"`
 	Optional      bool   `json:"optional"`
+}
+
+// NormalizedType returns the objective type, deriving one from the legacy
+// Optional flag when Type is empty (objectives generated before this upgrade).
+func (o Objective) NormalizedType() string {
+	if o.Type != "" {
+		return o.Type
+	}
+	if o.Optional {
+		return ObjectiveOptional
+	}
+	return ObjectiveRequired
+}
+
+// Mandatory reports whether the objective must be completed to win.
+func (o Objective) Mandatory() bool {
+	switch o.NormalizedType() {
+	case ObjectivePrimary, ObjectiveRequired, ObjectiveFinal:
+		return true
+	default:
+		return false
+	}
 }
 
 type Mission struct {

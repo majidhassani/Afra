@@ -89,6 +89,7 @@ func (s *Service) Map(ctx context.Context, userID, missionID uuid.UUID) (*MapVie
 	}
 
 	markers := []Marker{}
+	recommendedChosen := false
 	for i := range locations {
 		l := &locations[i]
 		if !l.Visible() {
@@ -98,7 +99,12 @@ func (s *Service) Map(ctx context.Context, userID, missionID uuid.UUID) (*MapVie
 		if err != nil {
 			return nil, err
 		}
+		undiscovered, err := s.clues.ListUndiscoveredAtLocation(ctx, missionID, l.ID)
+		if err != nil {
+			return nil, err
+		}
 		hasNewClue := len(discovered) > 0
+		hasMore := len(undiscovered) > 0
 		m := Marker{
 			ID: l.ID, Name: l.Name, Type: l.Type, Lat: l.Latitude, Lng: l.Longitude,
 			Status: l.Status, RiskLevel: l.RiskLevel,
@@ -112,6 +118,13 @@ func (s *Service) Map(ctx context.Context, userID, missionID uuid.UUID) (*MapVie
 			m.Badge = "new_clue"
 		case m.HasCharacter:
 			m.Badge = "character"
+		}
+		// Recommend the first not-yet-visited, accessible location as the
+		// player's next best step.
+		recommend := !recommendedChosen && l.Status == StatusDiscovered
+		m.Annotate(hasMore, recommend)
+		if m.Recommended {
+			recommendedChosen = true
 		}
 		markers = append(markers, m)
 	}

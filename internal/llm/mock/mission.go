@@ -60,12 +60,15 @@ func missionPlanJSON(mt string) string {
   "briefing": "Agent, you are deploying to the Kavir Reserve field sector. In the last three weeks every collared cheetah has vanished from tracking, and the reserve's radio net has been unreliable. Work the map, talk to the people on the ground, and find out what is really happening before the population is lost. Mission Control will assist you at every step.",
   "region": "Kavir Reserve, Iran",
   "objectives": [
-    {"key": "obj_source", "title": "Find the source of the cheetah disappearance", "description": "Investigate map locations and gather enough clues to explain the vanishing collars.", "required_clues": 3, "optional": false},
-    {"key": "obj_network", "title": "Identify who is behind it", "description": "Collect evidence pointing to the people or forces responsible.", "required_clues": 2, "optional": false},
-    {"key": "obj_trust", "title": "Win the rangers' trust", "description": "Talk with the field staff and corroborate their accounts.", "required_clues": 1, "optional": true}
+    {"key": "obj_primary", "type": "primary", "title": "Save the remaining cheetahs", "description": "Find the cause of the disappearances and act before the reserve loses its last cheetahs.", "required_clues": 3, "optional": false},
+    {"key": "obj_source", "type": "required", "title": "Find the source of the cheetah disappearance", "description": "Investigate map locations and gather enough clues to explain the vanishing collars.", "required_clues": 3, "optional": false},
+    {"key": "obj_network", "type": "required", "title": "Identify who is behind it", "description": "Collect evidence pointing to the people or forces responsible.", "required_clues": 2, "optional": false},
+    {"key": "obj_trust", "type": "optional", "title": "Win the rangers' trust", "description": "Talk with the field staff and corroborate their accounts.", "required_clues": 1, "optional": true},
+    {"key": "obj_final", "type": "final", "title": "Close the migration corridor", "description": "Convince a ranger or official to act on your findings before time runs out.", "required_clues": 4, "optional": false}
   ],
-  "win_conditions": ["Explain the disappearance with supporting clues", "Name the responsible party with evidence"],
-  "fail_conditions": ["The remaining population disperses before the cause is found", "Accusing the wrong party without evidence"]
+  "win_conditions": ["Discover the cause of the disappearances", "Gather enough evidence", "Protect the remaining animals before time runs out"],
+  "fail_conditions": ["The remaining population disperses before the cause is found", "Accusing the wrong party without evidence", "The mission deadline passes"],
+  "deadline_hours": 120
 }`, title)
 }
 

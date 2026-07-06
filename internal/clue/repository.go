@@ -21,6 +21,10 @@ type Repository interface {
 	MarkDiscovered(ctx context.Context, clueID uuid.UUID) error
 	AdjustReliability(ctx context.Context, clueID uuid.UUID, delta int) error
 	Counts(ctx context.Context, missionID uuid.UUID) (discovered int, total int, err error)
+	// ListCritical returns the high-importance clues for a mission (discovered
+	// or not), so end-of-mission evaluation can report which critical clues
+	// were found and which were missed.
+	ListCritical(ctx context.Context, missionID uuid.UUID) ([]Clue, error)
 }
 
 type PGRepository struct{ pool *pgxpool.Pool }
@@ -142,6 +146,12 @@ func (r *PGRepository) AdjustReliability(ctx context.Context, clueID uuid.UUID, 
 		return apperrors.Internal(err, "adjust clue reliability")
 	}
 	return nil
+}
+
+func (r *PGRepository) ListCritical(ctx context.Context, missionID uuid.UUID) ([]Clue, error) {
+	return r.list(ctx,
+		`SELECT `+clueColumns+` FROM clues
+		 WHERE mission_id = $1 AND importance = 'high' ORDER BY created_at`, missionID)
 }
 
 func (r *PGRepository) Counts(ctx context.Context, missionID uuid.UUID) (int, int, error) {

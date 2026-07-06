@@ -52,6 +52,10 @@ type Repository interface {
 	// Recent returns the last n messages in chronological order.
 	Recent(ctx context.Context, interactionID uuid.UUID, n int) ([]Message, error)
 	CountByMission(ctx context.Context, missionID uuid.UUID) (int, error)
+	// CountInteractedCharacters returns how many distinct characters the player
+	// has actually exchanged messages with (character chats with at least one
+	// player message).
+	CountInteractedCharacters(ctx context.Context, missionID uuid.UUID) (int, error)
 }
 
 type PGRepository struct{ pool *pgxpool.Pool }
@@ -126,6 +130,21 @@ func (r *PGRepository) CountByMission(ctx context.Context, missionID uuid.UUID) 
 		 WHERE i.mission_id = $1 AND im.sender = $2`, missionID, SenderPlayer).Scan(&n)
 	if err != nil {
 		return 0, apperrors.Internal(err, "count mission interactions")
+	}
+	return n, nil
+}
+
+func (r *PGRepository) CountInteractedCharacters(ctx context.Context, missionID uuid.UUID) (int, error) {
+	var n int
+	err := r.pool.QueryRow(ctx,
+		`SELECT count(DISTINCT i.character_id) FROM interactions i
+		 WHERE i.mission_id = $1 AND i.interaction_type = $2 AND i.character_id IS NOT NULL
+		   AND EXISTS (
+		     SELECT 1 FROM interaction_messages im
+		     WHERE im.interaction_id = i.id AND im.sender = $3
+		   )`, missionID, TypeCharacterChat, SenderPlayer).Scan(&n)
+	if err != nil {
+		return 0, apperrors.Internal(err, "count interacted characters")
 	}
 	return n, nil
 }

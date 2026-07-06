@@ -22,6 +22,7 @@ import (
 	"casemind/internal/journal"
 	"casemind/internal/location"
 	"casemind/internal/mission"
+	"casemind/internal/missioncomplete"
 	"casemind/internal/notes"
 	"casemind/internal/playerprofile"
 	"casemind/internal/solve"
@@ -34,25 +35,26 @@ import (
 
 // Handlers aggregates every module handler for routing.
 type Handlers struct {
-	Auth       *auth.Handler
-	Avatar     *avatar.Handler
-	Detective  *detective.Handler
-	Profile    *playerprofile.Handler
-	Wallet     *wallet.Handler
-	Missions   *mission.Handler
-	Characters *character.Handler
-	Clues      *clue.Handler
-	GameMap    *gamemap.Handler
-	Guidance   *guidance.Handler
-	Time       *timeengine.Handler
-	Journal    *journal.Handler
-	Cases      *cases.Handler
-	Suspects   *suspect.Handler
-	Evidence   *evidence.Handler
-	Timeline   *timeline.Handler
-	Location   *location.Handler
-	Notes      *notes.Handler
-	Solve      *solve.Handler
+	Auth            *auth.Handler
+	Avatar          *avatar.Handler
+	Detective       *detective.Handler
+	Profile         *playerprofile.Handler
+	Wallet          *wallet.Handler
+	Missions        *mission.Handler
+	MissionComplete *missioncomplete.Handler
+	Characters      *character.Handler
+	Clues           *clue.Handler
+	GameMap         *gamemap.Handler
+	Guidance        *guidance.Handler
+	Time            *timeengine.Handler
+	Journal         *journal.Handler
+	Cases           *cases.Handler
+	Suspects        *suspect.Handler
+	Evidence        *evidence.Handler
+	Timeline        *timeline.Handler
+	Location        *location.Handler
+	Notes           *notes.Handler
+	Solve           *solve.Handler
 }
 
 // NewRouter builds the full API router with middleware.
@@ -140,6 +142,9 @@ func NewRouter(
 	mux.Handle("POST /api/v1/missions", protected(h.Missions.Create, agentLimit))
 	mux.Handle("GET /api/v1/missions", protected(h.Missions.List))
 	mux.Handle("GET /api/v1/missions/{missionID}", protected(h.Missions.Get))
+	mux.Handle("GET /api/v1/missions/{missionID}/dashboard", protected(h.Missions.Dashboard))
+	mux.Handle("GET /api/v1/missions/{missionID}/completion-check", protected(h.MissionComplete.Check))
+	mux.Handle("POST /api/v1/missions/{missionID}/complete", protected(h.MissionComplete.Complete, agentLimit))
 	mux.Handle("POST /api/v1/missions/{missionID}/archive", protected(h.Missions.Archive))
 	mux.Handle("GET /api/v1/missions/{missionID}/events", protected(h.Missions.Events))
 	mux.Handle("GET /api/v1/missions/{missionID}/stream", protected(h.Missions.Stream))

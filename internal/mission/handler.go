@@ -76,6 +76,23 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, dashboard)
 }
 
+func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
+	userID, ok := httpx.RequestUser(w, r)
+	if !ok {
+		return
+	}
+	missionID, ok := httpx.PathUUID(w, r, "missionID")
+	if !ok {
+		return
+	}
+	dashboard, err := h.svc.Dashboard(r.Context(), userID, missionID)
+	if err != nil {
+		response.Err(w, err)
+		return
+	}
+	response.JSON(w, http.StatusOK, dashboard)
+}
+
 func (h *Handler) Archive(w http.ResponseWriter, r *http.Request) {
 	userID, ok := httpx.RequestUser(w, r)
 	if !ok {

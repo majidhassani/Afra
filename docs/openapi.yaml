@@ -190,6 +190,46 @@ paths:
       responses:
         "200": { description: Mission dashboard }
         "404": { description: Not found or not owned }
+  /api/v1/missions/{missionID}/dashboard:
+    get:
+      tags: [Missions]
+      summary: Structured mission dashboard
+      description: >
+        Objectives (primary/required/optional/final), deterministic mission
+        progress and risk scores, time remaining, next recommended actions,
+        win/loss hints, annotated map markers, and completion readiness.
+      parameters: [ { $ref: "#/components/parameters/MissionID" } ]
+      responses:
+        "200": { description: Structured mission state }
+        "404": { description: Not found or not owned }
+  /api/v1/missions/{missionID}/completion-check:
+    get:
+      tags: [Missions]
+      summary: Whether the mission can be completed yet
+      description: Returns can_complete and, when false, the missing requirements. Never charged.
+      parameters: [ { $ref: "#/components/parameters/MissionID" } ]
+      responses:
+        "200": { description: Completion readiness }
+  /api/v1/missions/{missionID}/complete:
+    post:
+      tags: [Missions]
+      summary: Submit the final mission decision
+      description: >
+        Gates on readiness (returns 409 with missing requirements when not
+        ready), otherwise runs the JudgeAgent and returns the win/loss result
+        with objective- and clue-level explanation, stars, XP, and coins.
+      parameters: [ { $ref: "#/components/parameters/MissionID" } ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                outcome: { type: string }
+                reasoning: { type: string }
+      responses:
+        "200": { description: Judged mission result }
+        "409": { description: Not ready to complete — missing requirements }
   /api/v1/missions/{missionID}/archive:
     post:
       tags: [Missions]

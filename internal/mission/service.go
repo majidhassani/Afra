@@ -11,6 +11,7 @@ import (
 	"casemind/internal/character"
 	"casemind/internal/clue"
 	"casemind/internal/gamemap"
+	"casemind/internal/interaction"
 	"casemind/internal/missionevent"
 	"casemind/internal/wallet"
 	apperrors "casemind/pkg/errors"
@@ -22,15 +23,16 @@ type ProfileCounter interface {
 }
 
 type Service struct {
-	repo       Repository
-	characters character.Repository
-	clues      clue.Repository
-	locations  gamemap.Repository
-	events     missionevent.Repository
-	generator  *Generator
-	wallet     *wallet.Guard
-	profiles   ProfileCounter
-	log        *slog.Logger
+	repo         Repository
+	characters   character.Repository
+	clues        clue.Repository
+	locations    gamemap.Repository
+	interactions interaction.Repository
+	events       missionevent.Repository
+	generator    *Generator
+	wallet       *wallet.Guard
+	profiles     ProfileCounter
+	log          *slog.Logger
 }
 
 func NewService(
@@ -38,6 +40,7 @@ func NewService(
 	characters character.Repository,
 	clues clue.Repository,
 	locations gamemap.Repository,
+	interactions interaction.Repository,
 	events missionevent.Repository,
 	generator *Generator,
 	walletGuard *wallet.Guard,
@@ -46,7 +49,8 @@ func NewService(
 ) *Service {
 	return &Service{
 		repo: repo, characters: characters, clues: clues, locations: locations,
-		events: events, generator: generator, wallet: walletGuard, profiles: profiles, log: log,
+		interactions: interactions, events: events, generator: generator,
+		wallet: walletGuard, profiles: profiles, log: log,
 	}
 }
 

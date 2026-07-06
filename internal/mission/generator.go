@@ -302,9 +302,22 @@ func (g *Generator) generate(ctx context.Context, m *Mission, language string) (
 	// 7. Player-facing mission content.
 	objectives := make([]Objective, 0, len(plan.Objectives))
 	for _, o := range plan.Objectives {
+		objType := o.Type
+		if objType == "" {
+			objType = ObjectiveRequired
+			if o.Optional {
+				objType = ObjectiveOptional
+			}
+		}
+		// Hidden objectives start locked; everything else is immediately active.
+		status := ObjStatusActive
+		if objType == ObjectiveHidden {
+			status = ObjStatusLocked
+		}
 		objectives = append(objectives, Objective{
-			ID: o.Key, Title: o.Title, Description: o.Description,
-			Status: "active", RequiredClues: o.RequiredClues, Optional: o.Optional,
+			ID: o.Key, Type: objType, Title: o.Title, Description: o.Description,
+			Status: status, Progress: 0, RequiredClues: o.RequiredClues,
+			Optional: o.Optional || objType == ObjectiveOptional,
 		})
 	}
 	m.Title = plan.Title
@@ -312,7 +325,18 @@ func (g *Generator) generate(ctx context.Context, m *Mission, language string) (
 	m.Briefing = plan.Briefing
 	m.Region = plan.Region
 	m.Objectives = mustJSONRaw(objectives, `[]`)
-	m.PublicState = mustJSONRaw(world.PublicState, `{}`)
+
+	// Fold the player-safe win/loss hints and the mission deadline into the
+	// public state so the dashboard and completion checks can read them
+	// without touching the private World Bible.
+	publicState := map[string]any{}
+	for k, v := range world.PublicState {
+		publicState[k] = v
+	}
+	publicState[PublicKeyWinConditions] = plan.WinConditions
+	publicState[PublicKeyFailureConditions] = plan.FailConditions
+	publicState[PublicKeyDeadlineMinutes] = plan.DeadlineHours * 60
+	m.PublicState = mustJSONRaw(publicState, `{}`)
 	m.CenterLat = worldMap.CenterLat
 	m.CenterLng = worldMap.CenterLng
 	m.MapZoom = worldMap.Zoom

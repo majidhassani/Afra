@@ -52,6 +52,7 @@ import (
 	"casemind/internal/location"
 	"casemind/internal/memory"
 	"casemind/internal/mission"
+	"casemind/internal/missioncomplete"
 	"casemind/internal/missionevent"
 	"casemind/internal/notes"
 	"casemind/internal/notification"
@@ -261,13 +262,16 @@ func main() {
 	missionGenerator := mission.NewGenerator(orch, missionRepo, worldBibleRepo, mapRepo,
 		characterRepo, clueRepo, missionRecorder, walletGuard, log)
 	missionService := mission.NewService(missionRepo, characterRepo, clueRepo, mapRepo,
-		missionEventRepo, missionGenerator, walletGuard, playerProfileService, log)
+		interactionRepo, missionEventRepo, missionGenerator, walletGuard, playerProfileService, log)
 	characterService := character.NewService(characterRepo, missionService, walletGuard, orch,
 		interactionRepo, clueRepo, missionEventRepo, missionRecorder, playerProfileService, log)
 	clueService := clue.NewService(clueRepo, missionService, walletGuard, orch,
 		missionEventRepo, missionRecorder, playerProfileService, log)
 	mapService := gamemap.NewService(mapRepo, missionService, walletGuard, orch,
 		clueRepo, characterRepo, missionEventRepo, missionRecorder, playerProfileService, log)
+	missionCompleteService := missioncomplete.NewService(missionService, clueRepo, mapRepo,
+		interactionRepo, missionEventRepo, worldBibleRepo, orch, walletGuard, walletService,
+		playerProfileService, missionRecorder, log)
 	guidanceService := guidance.NewService(missionService, walletGuard, orch,
 		interactionRepo, clueRepo, mapRepo, characterRepo, missionEventRepo, missionRecorder, playerProfileService, log)
 	timeService := timeengine.NewService(missionService, walletGuard, orch,
@@ -276,25 +280,26 @@ func main() {
 
 	// HTTP layer.
 	handlers := httpserver.Handlers{
-		Auth:       auth.NewHandler(authService),
-		Avatar:     avatar.NewHandler(avatarService),
-		Detective:  detective.NewHandler(detectiveService),
-		Profile:    playerprofile.NewHandler(playerProfileService),
-		Wallet:     wallet.NewHandler(walletService),
-		Missions:   mission.NewHandler(missionService, bus),
-		Characters: character.NewHandler(characterService),
-		Clues:      clue.NewHandler(clueService),
-		GameMap:    gamemap.NewHandler(mapService),
-		Guidance:   guidance.NewHandler(guidanceService),
-		Time:       timeengine.NewHandler(timeService),
-		Journal:    journal.NewHandler(journalService),
-		Cases:      cases.NewHandler(caseService, bus),
-		Suspects:   suspect.NewHandler(suspectService),
-		Evidence:   evidence.NewHandler(evidenceService),
-		Timeline:   timelinepkg.NewHandler(timelineService),
-		Location:   location.NewHandler(locationService),
-		Notes:      notes.NewHandler(notesService),
-		Solve:      solve.NewHandler(solveService),
+		Auth:            auth.NewHandler(authService),
+		Avatar:          avatar.NewHandler(avatarService),
+		Detective:       detective.NewHandler(detectiveService),
+		Profile:         playerprofile.NewHandler(playerProfileService),
+		Wallet:          wallet.NewHandler(walletService),
+		Missions:        mission.NewHandler(missionService, bus),
+		MissionComplete: missioncomplete.NewHandler(missionCompleteService),
+		Characters:      character.NewHandler(characterService),
+		Clues:           clue.NewHandler(clueService),
+		GameMap:         gamemap.NewHandler(mapService),
+		Guidance:        guidance.NewHandler(guidanceService),
+		Time:            timeengine.NewHandler(timeService),
+		Journal:         journal.NewHandler(journalService),
+		Cases:           cases.NewHandler(caseService, bus),
+		Suspects:        suspect.NewHandler(suspectService),
+		Evidence:        evidence.NewHandler(evidenceService),
+		Timeline:        timelinepkg.NewHandler(timelineService),
+		Location:        location.NewHandler(locationService),
+		Notes:           notes.NewHandler(notesService),
+		Solve:           solve.NewHandler(solveService),
 	}
 	router := httpserver.NewRouter(cfg, log, pool, rdb, tokens, handlers, docs.OpenAPISpec)
 
