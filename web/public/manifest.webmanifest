@@ -1,18 +1,28 @@
 {
-  "name": "AgentVerse",
+  "id": "/app/dashboard",
+  "name": "AgentVerse — AI Mission Game",
   "short_name": "AgentVerse",
   "description": "Mobile-first AI mission game command center.",
   "start_url": "/app/dashboard",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#090b0f",
   "theme_color": "#090b0f",
   "orientation": "portrait-primary",
+  "categories": ["games", "entertainment"],
   "icons": [
     {
       "src": "/pwa-icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
   ]
 }

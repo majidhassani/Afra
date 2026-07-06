@@ -48,6 +48,7 @@ export const fa: Record<TranslationKey, string> = {
   "nav.journal": "دفترچه",
   "nav.events": "رویدادها",
   "nav.timeline": "خط زمانی",
+  "nav.ai": "هوش مصنوعی",
   "nav.time": "زمان",
   "nav.overview": "نمای کلی",
   "nav.account": "حساب",
@@ -201,6 +202,7 @@ export const fa: Record<TranslationKey, string> = {
 
   // Guidance
   "guidance.title": "کنترل ماموریت",
+  "guidance.subtitle": "دستیار هوش مصنوعی بدون لو دادن — حرکت بعدی را بپرس.",
   "guidance.placeholder": "درباره حرکت بعدی راهنمایی بخواهید…",
   "guidance.hintLevel": "سطح راهنمایی",
   "guidance.referenced": "موارد ارجاع‌شده",

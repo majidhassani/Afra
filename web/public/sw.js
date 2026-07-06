@@ -1,4 +1,4 @@
-const CACHE_NAME = "agentverse-shell-v1";
+const CACHE_NAME = "agentverse-shell-v2";
 const SHELL_ASSETS = ["/", "/app/dashboard", "/manifest.webmanifest", "/pwa-icon.svg"];
 
 self.addEventListener("install", (event) => {
@@ -25,7 +25,11 @@ self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
   const url = new URL(request.url);
+  // Never cache authenticated API traffic: it is per-user and can go stale in
+  // dangerous ways. Let the network handle every /api/ request directly.
   if (url.pathname.startsWith("/api/")) return;
+  // Only cache same-origin static assets; ignore cross-origin (maps, fonts).
+  if (url.origin !== self.location.origin) return;
 
   event.respondWith(
     fetch(request)

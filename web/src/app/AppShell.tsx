@@ -13,6 +13,7 @@ import {
   NotebookPen,
   Radio,
   Clock3,
+  Sparkles,
   LogOut,
 } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
@@ -20,10 +21,12 @@ import { useAuthStore, getRefreshToken } from "@/features/auth/authStore";
 import { authApi } from "@/shared/api/endpoints";
 import { LanguageSwitcher } from "@/shared/ui/LanguageSwitcher";
 import { WalletChip, HealthIndicator } from "@/shared/ui/badges";
+import { useKeyboardInset } from "@/shared/ui/useKeyboardInset";
 import { env } from "@/shared/config/env";
 
 export function AppShell() {
   const { t } = useI18n();
+  useKeyboardInset();
   const navigate = useNavigate();
   const clear = useAuthStore((s) => s.clear);
   const user = useAuthStore((s) => s.session?.user);
@@ -61,6 +64,11 @@ export function AppShell() {
     ? [
         { to: `/app/missions/${missionId}`, icon: Rocket, label: t("nav.overview") },
         { to: `/app/missions/${missionId}/map`, icon: Map, label: t("nav.map") },
+        {
+          to: `/app/missions/${missionId}/ai`,
+          icon: Sparkles,
+          label: t("nav.ai"),
+        },
         {
           to: `/app/missions/${missionId}/characters`,
           icon: Users,
@@ -100,9 +108,17 @@ export function AppShell() {
       : []),
   ];
 
+  // Mobile bottom nav follows the game layout: Mission | Map | AI | Clues |
+  // Profile in a mission; the lobby essentials otherwise. Wallet stays in HUD.
   const mobileNav = missionId
-    ? [missionNav[0], missionNav[1], missionNav[3], missionNav[4], mainNav[0]]
-    : [...mainNav, accountNav[0], accountNav[2]];
+    ? [
+        missionNav[0], // Mission
+        missionNav[1], // Map
+        missionNav[2], // AI
+        missionNav[4], // Clues
+        accountNav[0], // Profile
+      ]
+    : [...mainNav, accountNav[0], accountNav[1]];
 
   return (
     <div className="shell">

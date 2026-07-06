@@ -46,6 +46,7 @@ export const en = {
   "nav.journal": "Journal",
   "nav.events": "Events",
   "nav.timeline": "Timeline",
+  "nav.ai": "AI",
   "nav.time": "Time",
   "nav.overview": "Overview",
   "nav.account": "Account",
@@ -199,6 +200,7 @@ export const en = {
 
   // Guidance
   "guidance.title": "Mission Control",
+  "guidance.subtitle": "Your no-spoiler AI assistant — ask for the next move.",
   "guidance.placeholder": "Ask for guidance on your next move…",
   "guidance.hintLevel": "Hint level",
   "guidance.referenced": "Referenced",

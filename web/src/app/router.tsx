@@ -13,6 +13,7 @@ import { LocationPage } from "@/features/map/LocationPage";
 import { CharactersPage } from "@/features/characters/CharactersPage";
 import { CharacterChatPage } from "@/features/characters/CharacterChatPage";
 import { CluesPage } from "@/features/clues/CluesPage";
+import { GuidancePage } from "@/features/guidance/GuidancePage";
 import { ClueDetailPage } from "@/features/clues/ClueDetailPage";
 import { JournalPage } from "@/features/journal/JournalPage";
 import { EventsPage } from "@/features/events/EventsPage";
@@ -66,6 +67,7 @@ export const router = createBrowserRouter([
         path: "missions/:missionId/characters/:characterId",
         element: <CharacterChatPage />,
       },
+      { path: "missions/:missionId/ai", element: <GuidancePage /> },
       { path: "missions/:missionId/clues", element: <CluesPage /> },
       { path: "missions/:missionId/clues/:clueId", element: <ClueDetailPage /> },
       { path: "missions/:missionId/journal", element: <JournalPage /> },

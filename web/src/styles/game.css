@@ -1255,10 +1255,19 @@ body {
   }
 
   .chat-composer {
-    padding-bottom: max(14px, env(safe-area-inset-bottom));
+    /* Lift above the on-screen keyboard (--kb-inset) and the home indicator. */
+    padding-bottom: calc(
+      max(14px, env(safe-area-inset-bottom)) + var(--kb-inset, 0px)
+    );
+    transition: padding-bottom 140ms var(--ease);
   }
   .chat-composer textarea {
     font-size: 16px;
+  }
+  /* When the keyboard is up, keep the bottom nav from covering the composer. */
+  .mobilenav {
+    transform: translateY(var(--kb-inset, 0px));
+    transition: transform 140ms var(--ease);
   }
 
   .map-side {
