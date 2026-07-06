@@ -298,6 +298,7 @@ export const en = {
   "profile.coinsSpent": "Coins spent",
   "profile.coinsEarned": "Coins earned",
   "profile.badges": "Badges",
+  "profile.achievements": "Service Record",
   "profile.badges.empty": "No badges yet",
   "profile.saved": "Profile updated",
 

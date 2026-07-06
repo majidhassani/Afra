@@ -1,6 +1,18 @@
 import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BadgeCheck, Pencil, Sparkles } from "lucide-react";
+import {
+  BadgeCheck,
+  Pencil,
+  Sparkles,
+  Rocket,
+  Trophy,
+  CircleX,
+  Target,
+  Search,
+  MapPin,
+  Coins,
+  ShieldHalf,
+} from "lucide-react";
 import { useI18n } from "@/shared/i18n";
 import { avatarApi, profileApi } from "@/shared/api/endpoints";
 import { errorKey } from "@/shared/api/client";
@@ -60,47 +72,65 @@ export function ProfilePage() {
     if (name.trim() && !save.isPending) save.mutate();
   };
 
-  const numbers: Array<[TranslationKey, string | number]> = [
-    ["profile.totalMissions", profile.total_missions],
-    ["profile.completed", profile.completed_missions],
-    ["profile.failed", profile.failed_missions],
-    [
-      "profile.successRate",
-      `${Math.round((profile.success_rate <= 1 ? profile.success_rate * 100 : profile.success_rate))}%`,
-    ],
-    ["profile.cluesFound", profile.total_clues_found],
-    ["profile.aiInteractions", profile.total_ai_interactions],
-    ["profile.locationsVisited", profile.total_locations_visited],
-    ["profile.coinsSpent", stats.data.total_coins_spent],
-    ["profile.coinsEarned", stats.data.total_coins_earned],
+  const successRate = Math.round(
+    profile.success_rate <= 1 ? profile.success_rate * 100 : profile.success_rate,
+  );
+  // XP progress within the current rank (assume 500 XP per level as flavor;
+  // the raw XP total is shown alongside so nothing is misrepresented).
+  const xpIntoLevel = ((profile.xp % 500) / 500) * 100;
+
+  const achievements: Array<{
+    key: TranslationKey;
+    value: string | number;
+    icon: typeof Rocket;
+    tone: string;
+  }> = [
+    { key: "profile.totalMissions", value: profile.total_missions, icon: Rocket, tone: "ai" },
+    { key: "profile.completed", value: profile.completed_missions, icon: Trophy, tone: "mission" },
+    { key: "profile.failed", value: profile.failed_missions, icon: CircleX, tone: "danger" },
+    { key: "profile.successRate", value: `${successRate}%`, icon: Target, tone: "wallet" },
+    { key: "profile.cluesFound", value: profile.total_clues_found, icon: Search, tone: "ai" },
+    { key: "profile.aiInteractions", value: profile.total_ai_interactions, icon: Sparkles, tone: "rare" },
+    { key: "profile.locationsVisited", value: profile.total_locations_visited, icon: MapPin, tone: "mission" },
+    { key: "profile.coinsSpent", value: stats.data.total_coins_spent, icon: Coins, tone: "danger" },
+    { key: "profile.coinsEarned", value: stats.data.total_coins_earned, icon: Coins, tone: "mission" },
   ];
 
   return (
     <div className="page">
-      <header className="page-header">
-        <div className="row" style={{ gap: 14, alignItems: "center", minWidth: 0 }}>
+      {/* Agent progression crest */}
+      <section className="agent-crest">
+        <div className="crest-avatar">
           <Avatar name={profile.display_name} category="guide" size="xl" glow />
-          <div style={{ minWidth: 0 }}>
-            <span className="eyebrow" style={{ color: "var(--accent-ai)" }}>
-              {t("hub.agent")}
-            </span>
-            <h1>{profile.display_name}</h1>
-            <div className="row subtitle" style={{ flexWrap: "wrap" }}>
-              <span className="status-chip cat-guide">{profile.rank}</span>
-              <span className="status-chip mono-num">
+          <span className="crest-level mono-num" aria-hidden>
+            {profile.level}
+          </span>
+        </div>
+        <div className="grow" style={{ minWidth: 0 }}>
+          <span className="eyebrow row" style={{ gap: 6, color: "var(--accent-ai)" }}>
+            <ShieldHalf size={13} aria-hidden />
+            {profile.rank}
+          </span>
+          <h1 style={{ marginTop: 2 }}>{profile.display_name}</h1>
+          <div className="crest-xp">
+            <div className="crest-xp-head">
+              <span>
                 {t("profile.level")} {profile.level}
               </span>
-              <span className="status-chip mono-num">
+              <span className="mono-num">
                 {profile.xp} {t("profile.xp")}
               </span>
-              {profile.favorite_mission_type && (
-                <span className="status-chip">
-                  {t("profile.favoriteType")}:{" "}
-                  {t(`type.${profile.favorite_mission_type}` as TranslationKey)}
-                </span>
-              )}
+            </div>
+            <div className="xp-bar" role="img" aria-label={`${profile.xp} XP`}>
+              <span style={{ width: `${xpIntoLevel}%` }} />
             </div>
           </div>
+          {profile.favorite_mission_type && (
+            <span className="status-chip" style={{ marginTop: 10 }}>
+              {t("profile.favoriteType")}:{" "}
+              {t(`type.${profile.favorite_mission_type}` as TranslationKey)}
+            </span>
+          )}
         </div>
         {!editing && (
           <button
@@ -114,7 +144,7 @@ export function ProfilePage() {
             {t("common.edit")}
           </button>
         )}
-      </header>
+      </section>
 
       {editing && (
         <form
@@ -156,14 +186,22 @@ export function ProfilePage() {
         </form>
       )}
 
-      <div className="dash-grid">
-        {numbers.map(([key, value]) => (
-          <div key={key} className="panel stat-block col-4 col-half-sm">
-            <span className="label">{t(key)}</span>
-            <span className="value">{value}</span>
+      <div className="band-title" style={{ margin: "18px 0 10px" }}>
+        {t("profile.achievements")}
+      </div>
+      <div className="achv-grid">
+        {achievements.map((a) => (
+          <div key={a.key} className={`achv-tile tone-${a.tone}`}>
+            <span className="achv-icon" aria-hidden>
+              <a.icon size={18} />
+            </span>
+            <span className="achv-value mono-num">{a.value}</span>
+            <span className="achv-label">{t(a.key)}</span>
           </div>
         ))}
+      </div>
 
+      <div className="dash-grid" style={{ marginTop: 14 }}>
         <AvatarGeneratorSection seed={profile.display_name} />
 
         <section className="panel col-12" aria-label={t("profile.badges")}>

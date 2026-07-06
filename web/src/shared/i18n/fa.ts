@@ -300,6 +300,7 @@ export const fa: Record<TranslationKey, string> = {
   "profile.coinsSpent": "سکه‌های خرج‌شده",
   "profile.coinsEarned": "سکه‌های کسب‌شده",
   "profile.badges": "نشان‌ها",
+  "profile.achievements": "کارنامه خدمت",
   "profile.badges.empty": "هنوز نشانی ندارید",
   "profile.saved": "پروفایل به‌روزرسانی شد",
 
