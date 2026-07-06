@@ -159,15 +159,49 @@ paths:
       tags: [Wallet]
       responses:
         "200": { description: Server-side pricing rules }
+  /api/v1/wallet/config:
+    get:
+      tags: [Wallet]
+      summary: Wallet demo/production state and store catalog
+      description: >
+        Exposes whether demo purchases/ads are enabled in this environment and
+        the purchasable coin packs. Real balance, pricing, and AI charging are
+        always active regardless of this flag.
+      responses:
+        "200":
+          description: Wallet configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  demo_purchases: { type: boolean }
+                  rewarded_ad_coins: { type: integer }
+                  coin_packs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        product_id: { type: string }
+                        coins: { type: integer }
   /api/v1/wallet/rewarded-ad/claim:
     post:
       tags: [Wallet]
+      summary: Claim the daily rewarded-ad bonus (demo-gated)
+      description: >
+        Credits the fixed rewarded-ad payout, enforcing a server-side daily
+        cap. Disabled (409 demo_disabled) when demo purchases are off.
       responses:
         "200": { description: Reward credited }
-        "409": { description: Daily ad limit reached }
+        "409": { description: Daily limit reached or demo disabled }
   /api/v1/wallet/purchase/verify:
     post:
       tags: [Wallet]
+      summary: Verify a store purchase (demo/mock, gated in production)
+      description: >
+        Records the receipt (deduplicated) and credits the product coins.
+        Store-side receipt verification is a placeholder; disabled
+        (409 demo_disabled) when demo purchases are off (default in production).
       requestBody:
         required: true
         content:

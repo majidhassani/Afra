@@ -111,6 +111,18 @@ export interface Transaction {
 /** Server pricing rules: action name -> coin price. */
 export type Pricing = Record<string, number>;
 
+export interface CoinPack {
+  product_id: string;
+  coins: number;
+}
+
+export interface WalletConfig {
+  /** Whether mock purchase/ad crediting is available in this environment. */
+  demo_purchases: boolean;
+  coin_packs: CoinPack[];
+  rewarded_ad_coins: number;
+}
+
 export interface Cost {
   coins_charged: number;
 }

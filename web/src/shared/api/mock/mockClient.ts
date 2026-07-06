@@ -242,6 +242,17 @@ export async function mockRequest<T>(
   if (p === "/api/v1/wallet/pricing") {
     return out({ pricing: MOCK_PRICING });
   }
+  if (p === "/api/v1/wallet/config") {
+    return out({
+      demo_purchases: true,
+      coin_packs: [
+        { product_id: "coins_small", coins: 200 },
+        { product_id: "coins_medium", coins: 600 },
+        { product_id: "coins_large", coins: 1500 },
+      ],
+      rewarded_ad_coins: 20,
+    });
+  }
   if (p === "/api/v1/wallet/rewarded-ad/claim" && method === "POST") {
     if (state.adClaimedToday) {
       throw new MockApiError("ad_limit_reached", "daily ad limit reached", 409);

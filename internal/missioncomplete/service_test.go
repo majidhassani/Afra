@@ -205,7 +205,7 @@ func newHarness(t *testing.T, discovered, total, target int) *harness {
 	events.Insert(context.Background(), missionID, "fact_discovered", []byte(`{"fact":"collars were cut cleanly"}`))
 	recorder := missionevent.NewRecorder(events, notification.NewBus(), slog.Default())
 
-	walletSvc := wallet.NewService(fakeWalletRepo{})
+	walletSvc := wallet.NewService(fakeWalletRepo{}, true)
 	guard := wallet.NewGuard(walletSvc, slog.Default())
 
 	svc := NewService(gateway,

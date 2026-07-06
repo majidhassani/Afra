@@ -137,6 +137,7 @@ func NewRouter(
 	mux.Handle("GET /api/v1/wallet", protected(h.Wallet.Get))
 	mux.Handle("GET /api/v1/wallet/transactions", protected(h.Wallet.Transactions))
 	mux.Handle("GET /api/v1/wallet/pricing", protected(h.Wallet.Pricing))
+	mux.Handle("GET /api/v1/wallet/config", protected(h.Wallet.Config))
 	mux.Handle("POST /api/v1/wallet/rewarded-ad/claim", protected(h.Wallet.ClaimRewardedAd))
 	mux.Handle("POST /api/v1/wallet/purchase/verify", protected(h.Wallet.VerifyPurchase))
 

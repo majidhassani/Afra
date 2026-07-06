@@ -55,6 +55,19 @@ func (h *Handler) Pricing(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, map[string]any{"pricing": pricing})
 }
 
+// Config exposes the wallet's demo/production state and store catalog so the
+// game economy UI can present coin packs and hide demo-only controls.
+func (h *Handler) Config(w http.ResponseWriter, r *http.Request) {
+	if _, ok := httpx.RequestUser(w, r); !ok {
+		return
+	}
+	response.JSON(w, http.StatusOK, map[string]any{
+		"demo_purchases":    h.svc.DemoPurchasesEnabled(),
+		"coin_packs":        h.svc.Catalog(),
+		"rewarded_ad_coins": h.svc.RewardedAdCoinValue(),
+	})
+}
+
 func (h *Handler) ClaimRewardedAd(w http.ResponseWriter, r *http.Request) {
 	userID, ok := httpx.RequestUser(w, r)
 	if !ok {

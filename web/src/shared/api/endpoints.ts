@@ -36,6 +36,7 @@ import type {
   Transaction,
   User,
   Wallet,
+  WalletConfig,
 } from "@/shared/types/api";
 
 const V1 = "/api/v1";
@@ -92,6 +93,7 @@ export const walletApi = {
     apiRequest<{ pricing: Pricing }>(`${V1}/wallet/pricing`).then(
       (r) => r.pricing,
     ),
+  config: () => apiRequest<WalletConfig>(`${V1}/wallet/config`),
   claimRewardedAd: () =>
     apiRequest<{ transaction: Transaction }>(`${V1}/wallet/rewarded-ad/claim`, {
       method: "POST",

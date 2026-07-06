@@ -300,6 +300,237 @@ body {
   width: 100%;
 }
 
+/* ---------- Mission archive (history) ---------- */
+
+.archive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.archive-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-panel);
+  color: inherit;
+  transition: border-color 160ms var(--ease), transform 160ms var(--ease);
+}
+.archive-card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+}
+.archive-card .ac-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.archive-card .ac-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.archive-card .ac-badge.won {
+  background: var(--accent-mission-dim);
+  color: var(--accent-mission);
+}
+.archive-card .ac-badge.lost {
+  background: var(--accent-danger-dim);
+  color: var(--accent-danger);
+}
+.archive-card .ac-badge.open {
+  background: var(--accent-ai-dim);
+  color: var(--accent-ai);
+}
+.archive-card .ac-title {
+  font-weight: 600;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.archive-card .ac-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ac-stars {
+  display: inline-flex;
+  gap: 2px;
+}
+.ac-stars .on {
+  color: var(--accent-wallet);
+  fill: var(--accent-wallet);
+}
+.ac-stars .off {
+  color: var(--border-strong);
+}
+
+/* ---------- Wallet (game economy) ---------- */
+
+.wallet-hud {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 12px;
+}
+.wallet-balance-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 20px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(227, 179, 95, 0.3);
+  background:
+    radial-gradient(400px 160px at 100% 0%, rgba(227, 179, 95, 0.14), transparent 60%),
+    var(--bg-elevated);
+}
+.wallet-balance-card .eyebrow {
+  color: var(--accent-wallet);
+}
+.wallet-reward-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-elevated);
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 160ms var(--ease), transform 160ms var(--ease);
+}
+.wallet-reward-card:hover:not(:disabled) {
+  border-color: var(--accent-mission);
+  transform: translateY(-1px);
+}
+.wallet-reward-card:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.wallet-reward-card .wr-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(155, 191, 106, 0.14);
+  color: var(--accent-mission);
+  flex-shrink: 0;
+}
+
+.coin-pack-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.coin-pack {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 22px 16px 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-elevated);
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 160ms var(--ease), transform 160ms var(--ease),
+    box-shadow 160ms var(--ease);
+}
+.coin-pack:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+.coin-pack:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+.coin-pack .cp-coin {
+  color: var(--accent-wallet);
+}
+.coin-pack .cp-amount {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.coin-pack .cp-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.coin-pack .cp-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  color: var(--accent-ai);
+}
+.coin-pack .cp-shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 40%, rgba(255, 255, 255, 0.05) 50%, transparent 60%);
+  pointer-events: none;
+}
+.coin-pack.tier-common:hover:not(:disabled) {
+  border-color: var(--accent-mission);
+  box-shadow: var(--glow-mission);
+}
+.coin-pack.tier-rare:hover:not(:disabled) {
+  border-color: var(--accent-ai);
+  box-shadow: var(--glow-ai);
+}
+.coin-pack.tier-epic {
+  border-color: rgba(168, 155, 255, 0.35);
+  background:
+    radial-gradient(300px 120px at 50% 0%, rgba(168, 155, 255, 0.12), transparent 60%),
+    var(--bg-elevated);
+}
+.coin-pack.tier-epic:hover:not(:disabled) {
+  border-color: var(--accent-rare);
+  box-shadow: 0 0 0 1px rgba(168, 155, 255, 0.3), 0 0 22px -6px rgba(168, 155, 255, 0.5);
+}
+
+.txn-dir {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.txn-dir.in {
+  background: var(--accent-mission-dim);
+  color: var(--accent-mission);
+}
+.txn-dir.out {
+  background: var(--accent-danger-dim);
+  color: var(--accent-danger);
+}
+
+@media (max-width: 720px) {
+  .wallet-hud {
+    grid-template-columns: 1fr;
+  }
+  .coin-pack-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ---------- Mission Hub (game lobby) ---------- */
 
 .hub-hero {

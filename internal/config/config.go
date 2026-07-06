@@ -106,6 +106,16 @@ type RateLimit struct {
 	AgentPerMinute int
 }
 
+// Wallet controls the demo/production boundary of the coin economy. Real
+// balance, pricing, reservations, and AI charging are always active; only
+// fake purchase verification and rewarded-ad crediting are gated here.
+type Wallet struct {
+	// DemoPurchases enables the mock purchase-verification and rewarded-ad
+	// endpoints. Defaults on outside production so demos still work; in
+	// production it must be explicitly enabled.
+	DemoPurchases bool
+}
+
 type Config struct {
 	Env  string
 	Port string
@@ -126,6 +136,12 @@ type Config struct {
 	MinIO     MinIO
 	QdrantURL string
 	RateLimit RateLimit
+	Wallet    Wallet
+}
+
+// IsProduction reports whether the server runs in the production environment.
+func (c *Config) IsProduction() bool {
+	return strings.EqualFold(c.Env, "production")
 }
 
 func Load() (*Config, error) {
@@ -175,6 +191,10 @@ func Load() (*Config, error) {
 			AgentPerMinute: getint("RATE_LIMIT_AGENT_PER_MINUTE", 30),
 		},
 	}
+
+	// Demo purchases/ads default on outside production; in production they are
+	// off unless WALLET_DEMO_PURCHASES is explicitly set true.
+	cfg.Wallet.DemoPurchases = getbool("WALLET_DEMO_PURCHASES", !cfg.IsProduction())
 
 	if cfg.DatabaseURL == "" {
 		return nil, fmt.Errorf("DATABASE_URL is required")

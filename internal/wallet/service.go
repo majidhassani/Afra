@@ -22,9 +22,37 @@ var products = map[string]int{
 
 type Service struct {
 	repo Repository
+	// demoPurchases enables the mock purchase-verification and rewarded-ad
+	// endpoints. When false (production without an explicit opt-in) these
+	// endpoints are refused. Real balance/pricing/AI charging is unaffected.
+	demoPurchases bool
 }
 
-func NewService(repo Repository) *Service { return &Service{repo: repo} }
+func NewService(repo Repository, demoPurchases bool) *Service {
+	return &Service{repo: repo, demoPurchases: demoPurchases}
+}
+
+// DemoPurchasesEnabled reports whether the mock purchase/ad paths are active.
+func (s *Service) DemoPurchasesEnabled() bool { return s.demoPurchases }
+
+// CoinPack is one purchasable coin bundle in the store catalog.
+type CoinPack struct {
+	ProductID string `json:"product_id"`
+	Coins     int    `json:"coins"`
+}
+
+// Catalog returns the purchasable coin packs, cheapest first.
+func (s *Service) Catalog() []CoinPack {
+	packs := []CoinPack{
+		{ProductID: "coins_small", Coins: products["coins_small"]},
+		{ProductID: "coins_medium", Coins: products["coins_medium"]},
+		{ProductID: "coins_large", Coins: products["coins_large"]},
+	}
+	return packs
+}
+
+// RewardedAdCoinValue exposes the fixed rewarded-ad payout for the UI.
+func (s *Service) RewardedAdCoinValue() int { return RewardedAdCoins }
 
 func (s *Service) Get(ctx context.Context, userID uuid.UUID) (*Wallet, error) {
 	return s.repo.GetOrCreate(ctx, userID)
@@ -94,6 +122,9 @@ func (s *Service) InsertUsageLog(ctx context.Context, log *UsageLog) error {
 // Real ad-network callback validation is a placeholder; double-claim
 // protection is enforced here.
 func (s *Service) ClaimRewardedAd(ctx context.Context, userID uuid.UUID) (*Transaction, error) {
+	if !s.demoPurchases {
+		return nil, apperrors.Conflict("demo_disabled", "rewarded ads are not available in this environment")
+	}
 	since := time.Now().UTC().Truncate(24 * time.Hour)
 	claims, err := s.repo.CountAdClaimsSince(ctx, userID, since)
 	if err != nil {
@@ -111,6 +142,9 @@ func (s *Service) ClaimRewardedAd(ctx context.Context, userID uuid.UUID) (*Trans
 // VerifyPurchase records the receipt (deduplicated by hash) and credits the
 // product's coins. Store-side receipt verification is a placeholder hook.
 func (s *Service) VerifyPurchase(ctx context.Context, userID uuid.UUID, platform, productID, receipt string) (*Transaction, error) {
+	if !s.demoPurchases {
+		return nil, apperrors.Conflict("demo_disabled", "demo purchases are disabled in this environment")
+	}
 	if err := validator.New().
 		Required("platform", platform).OneOf("platform", platform, "ios", "android").
 		Required("product_id", productID).

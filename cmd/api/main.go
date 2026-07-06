@@ -233,7 +233,7 @@ func main() {
 	recorder := history.NewRecorder(eventRepo, bus, log)
 	missionRecorder := missionevent.NewRecorder(missionEventRepo, bus, log)
 	memoryService := memory.NewService(factRepo, vc, log)
-	walletService := wallet.NewService(walletRepo)
+	walletService := wallet.NewService(walletRepo, cfg.Wallet.DemoPurchases)
 	walletGuard := wallet.NewGuard(walletService, log)
 	playerProfileService := playerprofile.NewService(playerProfileRepo, walletService)
 
