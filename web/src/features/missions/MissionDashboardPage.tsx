@@ -36,6 +36,7 @@ import {
 } from "@/shared/ui/game";
 import { GuidancePanel } from "@/features/guidance/GuidancePanel";
 import { TimelineLog } from "./TimelineLog";
+import { NextActionCard } from "./NextActionCard";
 import { MissionResultModal } from "./MissionResultModal";
 import { useMissionDashboard } from "./missionQueries";
 import { deriveHud } from "./hud";
@@ -55,6 +56,21 @@ export function MissionDashboardPage() {
     queryKey: ["mission", missionId, "events"],
     queryFn: () => missionsApi.events(missionId!, 8),
     enabled: !!missionId,
+  });
+
+  const timeline = useQuery({
+    queryKey: ["mission", missionId, "timeline"],
+    queryFn: () => missionsApi.timeline(missionId!),
+    enabled: !!missionId,
+  });
+
+  // Record the "ready for final decision" timeline milestone (server dedupes).
+  const canComplete = dashboard.data?.can_complete === true;
+  useQuery({
+    queryKey: ["mission", missionId, "ready-milestone"],
+    queryFn: () => missionsApi.completionCheck(missionId!),
+    enabled: !!missionId && canComplete,
+    staleTime: Infinity,
   });
 
   const archive = useMutation({
@@ -122,10 +138,6 @@ export function MissionDashboardPage() {
     (recommendedAction?.target_type === "location" &&
       locations.find((l) => l.id === recommendedAction.target_id)) ||
     hud.recommended;
-  const timelinePreview =
-    data.timeline_preview && data.timeline_preview.length > 0
-      ? data.timeline_preview
-      : events.data?.slice(0, 5);
   const riskLabel =
     riskBand === "high"
       ? t("hud.riskHigh")
@@ -249,14 +261,14 @@ export function MissionDashboardPage() {
         </HudStat>
       </div>
 
-      {/* Recommended next move */}
-      {(recommendedLocation || recommendedAction) && (
+      {/* Recommended next move — what to do and why it matters */}
+      {recommendedAction ? (
+        <div style={{ marginBottom: 14 }}>
+          <NextActionCard action={recommendedAction} missionId={mission.id} />
+        </div>
+      ) : recommendedLocation ? (
         <Link
-          to={
-            recommendedLocation
-              ? `/app/missions/${mission.id}/locations/${recommendedLocation.id}`
-              : `/app/missions/${mission.id}/map`
-          }
+          to={`/app/missions/${mission.id}/locations/${recommendedLocation.id}`}
           className="reco-banner"
           style={{ marginBottom: 14 }}
         >
@@ -265,16 +277,11 @@ export function MissionDashboardPage() {
             <div className="faint" style={{ fontSize: 11 }}>
               {t("hud.recommended")}
             </div>
-            <strong>{recommendedAction?.title ?? recommendedLocation?.name}</strong>
-            {recommendedAction?.description && (
-              <div className="sub" style={{ marginTop: 2 }}>
-                {recommendedAction.description}
-              </div>
-            )}
+            <strong>{recommendedLocation.name}</strong>
           </div>
           <span className="status-chip cat-guide">{t("map.marker.recommended")}</span>
         </Link>
-      )}
+      ) : null}
 
       {mission.status === "completed" && (
         <section className="mission-result-panel" aria-label={t("mission.result.title")}>
@@ -480,7 +487,7 @@ export function MissionDashboardPage() {
           <Link
             className="spread"
             style={{ padding: "14px 16px 4px" }}
-            to={`/app/missions/${mission.id}/events`}
+            to={`/app/missions/${mission.id}/timeline`}
           >
             <span className="band-title" style={{ marginBottom: 0 }}>
               {t("timeline.title")}
@@ -489,7 +496,7 @@ export function MissionDashboardPage() {
           </Link>
           <div style={{ padding: "8px 16px 16px" }}>
             <TimelineLog
-              events={timelinePreview}
+              items={timeline.data?.items}
               missionId={mission.id}
               limit={6}
             />

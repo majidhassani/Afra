@@ -79,9 +79,9 @@ export function AppShell() {
           label: t("nav.journal"),
         },
         {
-          to: `/app/missions/${missionId}/events`,
+          to: `/app/missions/${missionId}/timeline`,
           icon: Radio,
-          label: t("nav.events"),
+          label: t("nav.timeline"),
         },
         {
           to: `/app/missions/${missionId}/time`,

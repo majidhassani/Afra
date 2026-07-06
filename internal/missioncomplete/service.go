@@ -134,11 +134,32 @@ func (s *Service) Check(ctx context.Context, userID, missionID uuid.UUID) (*Comp
 		VisitedLocations:   visited,
 		RequiredClueTarget: snap.RequiredClueTarget,
 	})
+	if canComplete {
+		s.emitReadyOnce(ctx, missionID)
+	}
 	return &CompletionCheck{
 		CanComplete:         canComplete,
 		Reason:              notReadyReason(canComplete, missing),
 		MissingRequirements: missing,
 	}, nil
+}
+
+// emitReadyOnce records the mission_ready_to_complete timeline milestone the
+// first time readiness is observed. Repeated checks must not spam the story.
+func (s *Service) emitReadyOnce(ctx context.Context, missionID uuid.UUID) {
+	events, err := s.events.ListByMission(ctx, missionID, 200)
+	if err != nil {
+		return
+	}
+	for i := range events {
+		if events[i].Type == "mission_ready_to_complete" {
+			return
+		}
+	}
+	s.recorder.Emit(ctx, missionID, "mission_ready_to_complete", map[string]any{
+		"title":  "Ready for the final decision",
+		"reason": "All completion requirements are met — submit your final judgment when you are confident.",
+	})
 }
 
 // Complete gates on readiness, then runs the JudgeAgent and finalises the

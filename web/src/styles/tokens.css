@@ -56,9 +56,13 @@
   --sidenav-width: 216px;
   --topbar-height: 52px;
 
-  /* Motion */
+  /* Motion (AVDS motion values) */
   --ease: cubic-bezier(0.3, 0.7, 0.3, 1);
   --dur: 160ms;
+  --av-duration-fast: 120ms;
+  --av-duration-normal: 220ms;
+  --av-duration-slow: 420ms;
+  --av-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 [dir="rtl"] {
@@ -68,5 +72,8 @@
 @media (prefers-reduced-motion: reduce) {
   :root {
     --dur: 0ms;
+    --av-duration-fast: 1ms;
+    --av-duration-normal: 1ms;
+    --av-duration-slow: 1ms;
   }
 }

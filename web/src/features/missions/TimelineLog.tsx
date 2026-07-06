@@ -2,70 +2,62 @@ import { Link } from "react-router-dom";
 import {
   Search,
   MapPin,
-  Lightbulb,
   Clock3,
-  Radio,
   Trophy,
   CircleX,
-  Footprints,
   CircleDot,
+  CircleCheck,
+  Users,
+  Sparkles,
+  Flag,
+  AlertTriangle,
+  Unlock,
+  Globe,
 } from "lucide-react";
 import { useI18n, type TranslationKey } from "@/shared/i18n";
-import type { MissionEvent } from "@/shared/types/api";
+import type { TimelineItem, TimelineItemType } from "@/shared/types/api";
 
 /**
- * TimelineLog — a mission-log timeline so the player can see how far they have
- * progressed: mission time, event title, type, importance, and the related
- * location/clue when the event references one.
+ * TimelineLog — the curated mission story (GET /missions/{id}/timeline).
+ * Each item answers: what happened, when, where, and why it matters —
+ * icon by category, importance color, and deep links to the related
+ * location or clue.
  */
 
-type Importance = "high" | "medium" | "low";
-
-const iconFor: Record<string, typeof Search> = {
+const iconFor: Record<TimelineItemType, typeof Search> = {
+  mission_started: Flag,
+  location_visited: MapPin,
   clue_discovered: Search,
   clue_inspected: Search,
-  location_visited: MapPin,
-  location_discovered: MapPin,
-  fact_discovered: Lightbulb,
+  character_talked: Users,
+  ai_guidance_received: Sparkles,
   time_advanced: Clock3,
-  ai_guidance: Radio,
-  director_hint: Radio,
-  player_action: Footprints,
+  risk_changed: AlertTriangle,
+  objective_completed: CircleCheck,
+  objective_failed: CircleX,
+  new_location_unlocked: Unlock,
+  mission_ready_to_complete: Trophy,
   mission_completed: Trophy,
-  mission_ready: Trophy,
   mission_failed: CircleX,
+  world_event: Globe,
 };
-
-const importanceFor: Record<string, Importance> = {
-  clue_discovered: "high",
-  mission_completed: "high",
-  mission_failed: "high",
-  mission_ready: "high",
-  fact_discovered: "medium",
-  time_advanced: "medium",
-  location_visited: "medium",
-  clue_inspected: "medium",
-};
-
-function str(payload: Record<string, unknown>, ...keys: string[]): string {
-  for (const k of keys) {
-    const v = payload[k];
-    if (typeof v === "string" && v.trim()) return v;
-  }
-  return "";
-}
 
 export function TimelineLog({
-  events,
+  items,
   missionId,
   limit,
+  newestFirst = true,
 }: {
-  events: MissionEvent[] | undefined;
+  items: TimelineItem[] | undefined;
   missionId: string;
   limit?: number;
+  /** Preview panels show the latest items first; the full page reads as a story. */
+  newestFirst?: boolean;
 }) {
   const { t } = useI18n();
-  const list = (events ?? []).slice(0, limit ?? events?.length ?? 0);
+  let list = items ?? [];
+  if (newestFirst) list = [...list].reverse();
+  if (limit) list = list.slice(0, limit);
 
   if (list.length === 0) {
     return <div className="tl-empty faint">{t("timeline.empty")}</div>;
@@ -79,53 +71,66 @@ export function TimelineLog({
 
   return (
     <ol className="timeline-log">
-      {list.map((ev) => {
-        const payload = (ev.payload ?? {}) as Record<string, unknown>;
-        const Icon = iconFor[ev.type] ?? CircleDot;
-        const importance: Importance =
-          (payload.importance as Importance) ?? importanceFor[ev.type] ?? "low";
-        const title =
-          str(payload, "title", "name", "fact", "summary", "hint") ||
-          typeLabel(ev.type);
-        const related = str(payload, "location_name", "clue_title", "source");
-        const clock = str(payload, "new_time", "mission_time");
+      {list.map((item, index) => {
+        const Icon = iconFor[item.type] ?? CircleDot;
         const time =
-          clock || new Date(ev.created_at).toLocaleTimeString(undefined, {
+          item.mission_time ||
+          new Date(item.occurred_at).toLocaleTimeString(undefined, {
             hour: "2-digit",
             minute: "2-digit",
           });
+        const linkTo = item.related_clue_id
+          ? `/app/missions/${missionId}/clues/${item.related_clue_id}`
+          : item.related_character_id
+            ? `/app/missions/${missionId}/characters/${item.related_character_id}`
+            : item.location_id
+              ? `/app/missions/${missionId}/locations/${item.location_id}`
+              : null;
+
+        const body = (
+          <div className="tl-body">
+            <div className="tl-meta">
+              <span className="tl-time mono-num">{time}</span>
+              <span className="tl-type">{typeLabel(item.type)}</span>
+              <span className={`tl-imp imp-${item.importance}`}>
+                {t(`timeline.importance.${item.importance}` as TranslationKey)}
+              </span>
+            </div>
+            <div className="tl-title" style={{ unicodeBidi: "plaintext" }}>
+              {item.title}
+            </div>
+            {item.description && (
+              <div className="tl-related" style={{ unicodeBidi: "plaintext" }}>
+                {item.description}
+              </div>
+            )}
+          </div>
+        );
 
         return (
-          <li key={ev.id} className={`tl-item imp-${importance}`}>
+          <li
+            key={item.id}
+            className={`tl-item tl-reveal imp-${item.importance}`}
+            style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
+          >
             <span className="tl-rail" aria-hidden>
               <span className="tl-dot">
                 <Icon size={12} />
               </span>
             </span>
-            <div className="tl-body">
-              <div className="tl-meta">
-                <span className="tl-time mono-num">{time}</span>
-                <span className="tl-type">{typeLabel(ev.type)}</span>
-                <span className={`tl-imp imp-${importance}`}>
-                  {t(`timeline.importance.${importance}` as TranslationKey)}
-                </span>
-              </div>
-              <div className="tl-title" style={{ unicodeBidi: "plaintext" }}>
-                {title}
-              </div>
-              {related && (
-                <div className="tl-related">
-                  <MapPin size={11} aria-hidden />
-                  {related}
-                </div>
-              )}
-            </div>
+            {linkTo ? (
+              <Link to={linkTo} className="tl-link grow">
+                {body}
+              </Link>
+            ) : (
+              body
+            )}
           </li>
         );
       })}
-      {missionId && (
+      {missionId && limit && (
         <li className="tl-more">
-          <Link className="faint" to={`/app/missions/${missionId}/events`}>
+          <Link className="faint" to={`/app/missions/${missionId}/timeline`}>
             {t("timeline.viewAll")} →
           </Link>
         </li>
