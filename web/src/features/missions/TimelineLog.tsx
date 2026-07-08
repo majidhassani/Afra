@@ -29,6 +29,8 @@ const iconFor: Record<TimelineItemType, typeof Search> = {
   location_visited: MapPin,
   clue_discovered: Search,
   clue_inspected: Search,
+  evidence_confirmed: CircleCheck,
+  hypothesis_submitted: Sparkles,
   character_talked: Users,
   ai_guidance_received: Sparkles,
   time_advanced: Clock3,

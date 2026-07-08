@@ -21,6 +21,8 @@ type Repository interface {
 	MarkDiscovered(ctx context.Context, clueID uuid.UUID) error
 	AdjustReliability(ctx context.Context, clueID uuid.UUID, delta int) error
 	UpdateImage(ctx context.Context, clueID uuid.UUID, url, status string) error
+	SetStatus(ctx context.Context, clueID uuid.UUID, status string) error
+	CountConfirmed(ctx context.Context, missionID uuid.UUID) (int, error)
 	Counts(ctx context.Context, missionID uuid.UUID) (discovered int, total int, err error)
 	// ListCritical returns the high-importance clues for a mission (discovered
 	// or not), so end-of-mission evaluation can report which critical clues
@@ -33,14 +35,14 @@ type PGRepository struct{ pool *pgxpool.Pool }
 func NewPGRepository(pool *pgxpool.Pool) *PGRepository { return &PGRepository{pool: pool} }
 
 const clueColumns = `id, mission_id, location_id, title, type, short_description, detailed_description,
-	visual_description, avatar_or_thumbnail_prompt, image_url, image_status, discovered, reliability, importance,
+	visual_description, avatar_or_thumbnail_prompt, image_url, image_status, discovered, status, reliability, importance,
 	related_character_ids, public_data, internal_truth, created_at, updated_at`
 
 func scanClue(row pgx.Row) (*Clue, error) {
 	c := &Clue{}
 	err := row.Scan(&c.ID, &c.MissionID, &c.LocationID, &c.Title, &c.Type, &c.ShortDescription,
 		&c.DetailedDescription, &c.VisualDescription, &c.AvatarOrThumbnailPrompt, &c.ImageURL, &c.ImageStatus,
-		&c.Discovered, &c.Reliability, &c.Importance, &c.RelatedCharacterIDs, &c.PublicData, &c.InternalTruth,
+		&c.Discovered, &c.Status, &c.Reliability, &c.Importance, &c.RelatedCharacterIDs, &c.PublicData, &c.InternalTruth,
 		&c.CreatedAt, &c.UpdatedAt)
 	if err != nil {
 		return nil, err
@@ -157,6 +159,26 @@ func (r *PGRepository) UpdateImage(ctx context.Context, clueID uuid.UUID, url, s
 		return apperrors.Internal(err, "update clue image")
 	}
 	return nil
+}
+
+func (r *PGRepository) SetStatus(ctx context.Context, clueID uuid.UUID, status string) error {
+	_, err := r.pool.Exec(ctx,
+		`UPDATE clues SET status = $2, updated_at = now() WHERE id = $1`, clueID, status)
+	if err != nil {
+		return apperrors.Internal(err, "set clue status")
+	}
+	return nil
+}
+
+func (r *PGRepository) CountConfirmed(ctx context.Context, missionID uuid.UUID) (int, error) {
+	var n int
+	err := r.pool.QueryRow(ctx,
+		`SELECT count(*) FROM clues WHERE mission_id = $1 AND status = 'confirmed'`,
+		missionID).Scan(&n)
+	if err != nil {
+		return 0, apperrors.Internal(err, "count confirmed clues")
+	}
+	return n, nil
 }
 
 func (r *PGRepository) ListCritical(ctx context.Context, missionID uuid.UUID) ([]Clue, error) {

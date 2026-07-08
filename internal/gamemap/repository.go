@@ -15,6 +15,7 @@ type Repository interface {
 	Create(ctx context.Context, l *Location) error
 	GetByID(ctx context.Context, missionID, locationID uuid.UUID) (*Location, error)
 	ListByMission(ctx context.Context, missionID uuid.UUID) ([]Location, error)
+	ListLocked(ctx context.Context, missionID uuid.UUID) ([]Location, error)
 	UpdateStatus(ctx context.Context, locationID uuid.UUID, status string) error
 	UpdateRisk(ctx context.Context, locationID uuid.UUID, riskLevel int) error
 	CountVisited(ctx context.Context, missionID uuid.UUID) (visited int, total int, err error)
@@ -87,6 +88,30 @@ func (r *PGRepository) ListByMission(ctx context.Context, missionID uuid.UUID) (
 	}
 	if rows.Err() != nil {
 		return nil, apperrors.Internal(rows.Err(), "iterate map locations")
+	}
+	return locations, nil
+}
+
+// ListLocked returns the mission's locked locations, oldest first — the order
+// the unlock engine opens them in.
+func (r *PGRepository) ListLocked(ctx context.Context, missionID uuid.UUID) ([]Location, error) {
+	rows, err := r.pool.Query(ctx,
+		`SELECT `+locationColumns+` FROM map_locations
+		 WHERE mission_id = $1 AND status = 'locked' ORDER BY created_at`, missionID)
+	if err != nil {
+		return nil, apperrors.Internal(err, "list locked locations")
+	}
+	defer rows.Close()
+	locations := []Location{}
+	for rows.Next() {
+		l, err := scanLocation(rows)
+		if err != nil {
+			return nil, apperrors.Internal(err, "scan locked location")
+		}
+		locations = append(locations, *l)
+	}
+	if rows.Err() != nil {
+		return nil, apperrors.Internal(rows.Err(), "iterate locked locations")
 	}
 	return locations, nil
 }

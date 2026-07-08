@@ -215,6 +215,8 @@ export interface PublicClue {
   image_url: string;
   image_status: "none" | "pending" | "ready" | "unavailable";
   discovered: boolean;
+  /** Evidence lifecycle stage (added by the gameplay-state fix). */
+  status?: "discovered" | "inspected" | "confirmed";
   reliability: number;
   importance: string;
   related_character_ids: unknown;
@@ -388,6 +390,8 @@ export type TimelineItemType =
   | "location_visited"
   | "clue_discovered"
   | "clue_inspected"
+  | "evidence_confirmed"
+  | "hypothesis_submitted"
   | "character_talked"
   | "ai_guidance_received"
   | "time_advanced"
@@ -416,6 +420,28 @@ export interface TimelineItem {
 export interface TimelineView {
   mission_id: string;
   items: TimelineItem[];
+}
+
+/** Uniform envelope returned by state-changing progression actions. */
+export interface ProgressionEnvelope {
+  message: string;
+  state_changes: Array<{ entity: string; id: string; from: string; to: string }>;
+  timeline_events: string[];
+  unlocked_locations: Array<{ id: string; name: string; reason: string }>;
+  next_recommended_actions: Array<{ type: string; title: string }>;
+}
+
+export type HypothesisVerdict =
+  | "too_early"
+  | "unsupported"
+  | "partially_correct";
+
+export interface HypothesisResult {
+  verdict: HypothesisVerdict;
+  feedback: string;
+  needs_more_evidence: boolean;
+  confirmed_count: number;
+  progression: ProgressionEnvelope;
 }
 
 export interface RecommendedAction {

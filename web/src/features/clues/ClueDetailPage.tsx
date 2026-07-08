@@ -7,11 +7,14 @@ import {
   Lightbulb,
   ScanSearch,
   ImagePlus,
+  ShieldCheck,
+  Unlock,
 } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
 import { useLanguageGuard } from "@/shared/i18n/languageGuard";
 import { cluesApi, walletApi } from "@/shared/api/endpoints";
 import { errorKey } from "@/shared/api/client";
+import { toast } from "@/shared/ui/toast";
 import { ErrorState, SkeletonRows } from "@/shared/ui/states";
 import { CostBadge, Meter } from "@/shared/ui/badges";
 import { GuidancePanel } from "@/features/guidance/GuidancePanel";
@@ -74,6 +77,30 @@ export function ClueDetailPage() {
     },
   });
 
+  const confirm = useMutation({
+    mutationFn: () => cluesApi.confirm(missionId!, clueId!),
+    onSuccess: (env) => {
+      // A confirmation can open a new location — surface it and refresh the world.
+      for (const loc of env.unlocked_locations) {
+        toast("success", `${t("clues.unlocked")}: ${loc.name}`);
+      }
+      if (env.unlocked_locations.length === 0) {
+        toast("success", t("clues.confirmed"));
+      }
+      void queryClient.invalidateQueries({ queryKey: ["mission", missionId] });
+      void queryClient.invalidateQueries({
+        queryKey: ["mission", missionId, "clue", clueId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["mission", missionId, "map"],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["mission", missionId, "timeline"],
+      });
+    },
+    onError: (err) => toast("error", t(errorKey(err))),
+  });
+
   if (clue.isPending) {
     return (
       <div className="page">
@@ -121,6 +148,12 @@ export function ClueDetailPage() {
             <span className={`chip ${importanceChip(data.importance)}`}>
               {t("clues.importance")}: {importanceLabel(t, data.importance)}
             </span>
+            {data.status === "confirmed" && (
+              <span className="chip chip-mission">
+                <ShieldCheck size={12} aria-hidden />
+                {t("clues.status.confirmed")}
+              </span>
+            )}
             <span className="row faint" style={{ gap: 6 }}>
               {t("clues.reliability")}
               <Meter value={data.reliability} color="var(--accent-wallet)" />
@@ -128,6 +161,17 @@ export function ClueDetailPage() {
             </span>
           </div>
         </div>
+        {data.status !== "confirmed" && (
+          <button
+            className="btn btn-primary"
+            disabled={confirm.isPending}
+            onClick={() => confirm.mutate()}
+            title={t("clues.confirm.hint")}
+          >
+            <Unlock size={14} aria-hidden />
+            {t("clues.confirm")}
+          </button>
+        )}
       </header>
 
       <div className="dash-grid">

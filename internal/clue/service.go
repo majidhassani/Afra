@@ -153,6 +153,15 @@ func (s *Service) Inspect(ctx context.Context, userID, missionID, clueID uuid.UU
 	s.recorder.Emit(ctx, missionID, "clue_inspected", map[string]any{
 		"clue_id": c.ID, "title": c.Title,
 	})
+	// Advance the evidence lifecycle: discovered → inspected (never downgrade a
+	// clue that is already confirmed).
+	if c.LifecycleStatus() == StatusDiscovered {
+		if err := s.repo.SetStatus(ctx, c.ID, StatusInspected); err != nil {
+			s.log.Error("advance clue status", "error", err)
+		} else {
+			c.Status = StatusInspected
+		}
+	}
 	if err := s.profiles.AddCounters(ctx, userID, 0, 1, 0); err != nil {
 		s.log.Error("profile counter", "error", err)
 	}

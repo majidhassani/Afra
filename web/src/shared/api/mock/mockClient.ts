@@ -405,6 +405,9 @@ export async function mockRequest<T>(
         location_visited: "location_visited",
         location_action: "location_visited",
         clue_discovered: "clue_discovered",
+        evidence_confirmed: "evidence_confirmed",
+        location_unlocked: "new_location_unlocked",
+        hypothesis_submitted: "hypothesis_submitted",
         dialogue: "character_talked",
         character_chat: "character_talked",
         ai_guidance: "ai_guidance_received",
@@ -630,7 +633,57 @@ export async function mockRequest<T>(
       }
     }
 
-    const cl = rest.match(/^\/clues(?:\/([^/]+))?(\/inspect|\/explain|\/image)?$/);
+    if (rest === "/hypothesis" && method === "POST") {
+      const confirmedCount = bundle.clues.filter(
+        (c) => c.status === "confirmed",
+      ).length;
+      const linked = Array.isArray(body.clue_ids) ? body.clue_ids : [];
+      const linkedConfirmed = bundle.clues.filter(
+        (c) => c.status === "confirmed" && linked.includes(c.id),
+      ).length;
+      let verdict: "too_early" | "unsupported" | "partially_correct";
+      let feedback: string;
+      let needsMore = true;
+      if (confirmedCount < 2) {
+        verdict = "too_early";
+        feedback =
+          "It is too early to commit to a theory — confirm more evidence first.";
+      } else if (linkedConfirmed === 0) {
+        verdict = "unsupported";
+        feedback =
+          "Your theory is not yet backed by confirmed evidence. Link confirmed clues.";
+      } else {
+        verdict = "partially_correct";
+        needsMore = false;
+        feedback =
+          "Your theory is consistent with your confirmed evidence. Submit your final decision when ready.";
+      }
+      bundle.events.push({
+        id: mockId(),
+        mission_id: missionId,
+        type: "hypothesis_submitted",
+        payload: { verdict, summary: String(body.answer ?? "").slice(0, 80) },
+        created_at: now(),
+      });
+      return out({
+        verdict,
+        feedback,
+        needs_more_evidence: needsMore,
+        confirmed_count: confirmedCount,
+        progression: {
+          message: feedback,
+          state_changes: [],
+          timeline_events: ["hypothesis_submitted"],
+          unlocked_locations: [],
+          next_recommended_actions:
+            verdict === "partially_correct"
+              ? [{ type: "prepare_final", title: "Prepare your final decision" }]
+              : [],
+        },
+      });
+    }
+
+    const cl = rest.match(/^\/clues(?:\/([^/]+))?(\/inspect|\/explain|\/image|\/confirm)?$/);
     if (cl) {
       guardGenerating();
       if (!cl[1]) {
@@ -645,6 +698,47 @@ export async function mockRequest<T>(
         clue.image_url = MOCK_PORTRAIT;
         clue.image_status = "ready";
         return out({ clue });
+      }
+      if (cl[2] === "/confirm" && method === "POST") {
+        const already = clue.status === "confirmed";
+        clue.status = "confirmed";
+        // Unlock the earliest still-locked marker on first confirm.
+        const unlocked: Array<{ id: string; name: string; reason: string }> = [];
+        if (!already) {
+          const locked = bundle.markers.find((m) => m.is_locked);
+          if (locked) {
+            locked.is_locked = false;
+            locked.status = "discovered";
+            unlocked.push({
+              id: locked.id,
+              name: locked.name,
+              reason: `Unlocked after confirming evidence: ${clue.title}`,
+            });
+            bundle.events.push({
+              id: mockId(),
+              mission_id: missionId,
+              type: "location_unlocked",
+              payload: { name: locked.name, reason: unlocked[0].reason },
+              created_at: now(),
+            });
+          }
+          bundle.events.push({
+            id: mockId(),
+            mission_id: missionId,
+            type: "evidence_confirmed",
+            payload: { title: clue.title, clue_id: clue.id },
+            created_at: now(),
+          });
+        }
+        return out({
+          message: already ? "This evidence is already confirmed." : "Evidence confirmed.",
+          state_changes: already
+            ? []
+            : [{ entity: "clue", id: clue.id, from: "discovered", to: "confirmed" }],
+          timeline_events: already ? [] : ["evidence_confirmed"],
+          unlocked_locations: unlocked,
+          next_recommended_actions: [],
+        });
       }
       if (cl[2] === "/inspect" && method === "POST") {
         const cost = charge("clue_inspect", missionId);

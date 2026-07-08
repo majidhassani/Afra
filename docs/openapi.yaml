@@ -497,6 +497,58 @@ paths:
                 type: object
                 properties:
                   clue: { $ref: "#/components/schemas/PublicClue" }
+  /api/v1/missions/{missionID}/clues/{clueID}/confirm:
+    post:
+      tags: [Clues]
+      summary: Confirm a discovered clue as evidence
+      description: >
+        Promotes a discovered/inspected clue to confirmed (evidence lifecycle),
+        emits an evidence_confirmed timeline event, and runs the deterministic
+        unlock engine — a confirmation may open the next locked location.
+        Idempotent: confirming an already-confirmed clue does not unlock again.
+        Free (a player decision, not an AI call). No hidden truth is exposed.
+      parameters: [ { $ref: "#/components/parameters/MissionID" }, { $ref: "#/components/parameters/ClueID" } ]
+      responses:
+        "200":
+          description: Progression envelope
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProgressionEnvelope" }
+  /api/v1/missions/{missionID}/hypothesis:
+    post:
+      tags: [Missions]
+      summary: Submit a mid-mission working theory (checkpoint)
+      description: >
+        Returns a deterministic verdict from confirmed-evidence coverage
+        (too_early | unsupported | partially_correct) plus feedback and next
+        actions. Never claims correct/wrong (that is the final decision) and
+        never reveals hidden truth. The AI does not mutate state here.
+      parameters: [ { $ref: "#/components/parameters/MissionID" } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [answer]
+              properties:
+                answer: { type: string, maxLength: 2000 }
+                clue_ids:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Hypothesis checkpoint result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  verdict: { type: string, enum: [too_early, unsupported, partially_correct] }
+                  feedback: { type: string }
+                  needs_more_evidence: { type: boolean }
+                  confirmed_count: { type: integer }
+                  progression: { $ref: "#/components/schemas/ProgressionEnvelope" }
   /api/v1/missions/{missionID}/clues:
     get:
       tags: [Clues]
@@ -695,6 +747,38 @@ components:
           properties:
             code: { type: string }
             message: { type: string }
+    ProgressionEnvelope:
+      type: object
+      description: Uniform result of every state-changing progression action.
+      properties:
+        message: { type: string }
+        state_changes:
+          type: array
+          items:
+            type: object
+            properties:
+              entity: { type: string, enum: [clue, location, mission] }
+              id: { type: string }
+              from: { type: string }
+              to: { type: string }
+        timeline_events:
+          type: array
+          items: { type: string }
+        unlocked_locations:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string, format: uuid }
+              name: { type: string }
+              reason: { type: string }
+        next_recommended_actions:
+          type: array
+          items:
+            type: object
+            properties:
+              type: { type: string }
+              title: { type: string }
     Profile:
       type: object
       properties:

@@ -57,6 +57,7 @@ import (
 	"casemind/internal/missiontimeline"
 	"casemind/internal/notes"
 	"casemind/internal/notification"
+	"casemind/internal/progression"
 	"casemind/internal/platform/database"
 	httpserver "casemind/internal/platform/http"
 	"casemind/internal/platform/logger"
@@ -281,6 +282,7 @@ func main() {
 	journalService := journal.NewService(journalRepo, missionService)
 	missionTimelineService := missiontimeline.NewService(missionEventRepo, missionService)
 	visualAssetService := visualasset.NewService(characterRepo, clueRepo, avatarService, missionService, log)
+	progressionService := progression.NewService(clueRepo, mapRepo, missionRecorder, missionService, log)
 
 	// HTTP layer.
 	handlers := httpserver.Handlers{
@@ -292,6 +294,7 @@ func main() {
 		Missions:        mission.NewHandler(missionService, bus),
 		MissionComplete: missioncomplete.NewHandler(missionCompleteService),
 		MissionTimeline: missiontimeline.NewHandler(missionTimelineService),
+		Progression:     progression.NewHandler(progressionService),
 		Characters:      character.NewHandler(characterService),
 		Clues:           clue.NewHandler(clueService),
 		VisualAsset:     visualasset.NewHandler(visualAssetService),

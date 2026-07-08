@@ -19,15 +19,15 @@ const (
 )
 
 type Location struct {
-	ID               uuid.UUID       `json:"id"`
-	MissionID        uuid.UUID       `json:"mission_id"`
-	Name             string          `json:"name"`
-	Type             string          `json:"type"`
-	Latitude         float64         `json:"latitude"`
-	Longitude        float64         `json:"longitude"`
-	Status           string          `json:"status"`
-	RiskLevel        int             `json:"risk_level"`
-	Description      string          `json:"description"`
+	ID          uuid.UUID `json:"id"`
+	MissionID   uuid.UUID `json:"mission_id"`
+	Name        string    `json:"name"`
+	Type        string    `json:"type"`
+	Latitude    float64   `json:"latitude"`
+	Longitude   float64   `json:"longitude"`
+	Status      string    `json:"status"`
+	RiskLevel   int       `json:"risk_level"`
+	Description string    `json:"description"`
 	// VisualPrompt is an image-generation input; never serialized to clients.
 	VisualPrompt     string          `json:"-"`
 	AvailableActions json.RawMessage `json:"available_actions"`

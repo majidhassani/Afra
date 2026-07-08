@@ -92,6 +92,10 @@ func (r *fakeClues) AdjustReliability(context.Context, uuid.UUID, int) error { r
 func (r *fakeClues) UpdateImage(context.Context, uuid.UUID, string, string) error {
 	return nil
 }
+func (r *fakeClues) SetStatus(context.Context, uuid.UUID, string) error { return nil }
+func (r *fakeClues) CountConfirmed(context.Context, uuid.UUID) (int, error) {
+	return 0, nil
+}
 func (r *fakeClues) Counts(context.Context, uuid.UUID) (int, int, error) {
 	return r.discovered, r.total, nil
 }
@@ -104,6 +108,9 @@ type fakeLocations struct{ visited, total int }
 
 func (r *fakeLocations) Create(context.Context, *gamemap.Location) error { return nil }
 func (r *fakeLocations) GetByID(context.Context, uuid.UUID, uuid.UUID) (*gamemap.Location, error) {
+	return nil, nil
+}
+func (r *fakeLocations) ListLocked(context.Context, uuid.UUID) ([]gamemap.Location, error) {
 	return nil, nil
 }
 func (r *fakeLocations) ListByMission(context.Context, uuid.UUID) ([]gamemap.Location, error) {

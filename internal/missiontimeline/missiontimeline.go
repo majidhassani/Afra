@@ -23,6 +23,8 @@ const (
 	TypeLocationVisited        = "location_visited"
 	TypeClueDiscovered         = "clue_discovered"
 	TypeClueInspected          = "clue_inspected"
+	TypeEvidenceConfirmed      = "evidence_confirmed"
+	TypeHypothesisSubmitted    = "hypothesis_submitted"
 	TypeCharacterTalked        = "character_talked"
 	TypeAIGuidanceReceived     = "ai_guidance_received"
 	TypeTimeAdvanced           = "time_advanced"
@@ -170,6 +172,15 @@ func curateOne(ev *missionevent.Event) (Item, bool) {
 		item.Title = p.Title
 		item.RelatedClueID = p.ClueID
 		item.Importance = ImportanceLow
+	case "evidence_confirmed":
+		item.Type = TypeEvidenceConfirmed
+		item.Title = p.Title
+		item.RelatedClueID = p.ClueID
+		item.Importance = ImportanceHigh
+	case "hypothesis_submitted":
+		item.Type = TypeHypothesisSubmitted
+		item.Title = firstNonEmpty(p.Summary, p.Title)
+		item.Importance = ImportanceMedium
 	case "dialogue":
 		item.Type = TypeCharacterTalked
 		item.Title = firstNonEmpty(p.CharacterName, p.Name)

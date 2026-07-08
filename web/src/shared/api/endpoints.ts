@@ -14,6 +14,8 @@ import type {
   ClueInspectResult,
   CompletionCheck,
   CreateMissionRequest,
+  HypothesisResult,
+  ProgressionEnvelope,
   GuidanceContext,
   GuidanceResult,
   HistoryEntry,
@@ -238,6 +240,19 @@ export const cluesApi = {
       `${V1}/missions/${missionId}/clues/${clueId}/image`,
       { method: "POST" },
     ).then((r) => r.clue),
+  confirm: (missionId: string, clueId: string) =>
+    apiRequest<ProgressionEnvelope>(
+      `${V1}/missions/${missionId}/clues/${clueId}/confirm`,
+      { method: "POST" },
+    ),
+};
+
+export const progressionApi = {
+  hypothesis: (missionId: string, answer: string, clueIds: string[] = []) =>
+    apiRequest<HypothesisResult>(`${V1}/missions/${missionId}/hypothesis`, {
+      method: "POST",
+      body: withLocale({ answer, clue_ids: clueIds }),
+    }),
 };
 
 export const guidanceApi = {
