@@ -20,7 +20,11 @@ import {
 import { useI18n } from "@/shared/i18n";
 import { useAuthStore, getRefreshToken } from "@/features/auth/authStore";
 import { authApi, missionsApi } from "@/shared/api/endpoints";
-import { useEnvironmentTheme, environmentFor } from "@/shared/theme/environment";
+import {
+  useEnvironmentTheme,
+  environmentFor,
+  useWorldModifiers,
+} from "@/shared/theme/environment";
 import { LanguageSwitcher } from "@/shared/ui/LanguageSwitcher";
 import { WalletChip, HealthIndicator } from "@/shared/ui/badges";
 import { useKeyboardInset } from "@/shared/ui/useKeyboardInset";
@@ -49,6 +53,8 @@ export function AppShell() {
   useEnvironmentTheme(
     missionId && missionEnv.data ? environmentFor(missionEnv.data.mission) : null,
   );
+  // Living world: layer weather / night / danger over the biome theme.
+  useWorldModifiers(missionId ? missionEnv.data?.world_state : null);
 
   const logout = async () => {
     const refreshToken = getRefreshToken();
@@ -136,9 +142,10 @@ export function AppShell() {
 
   return (
     <div className="shell">
-      {/* Environment-tinted cinematic backdrop + ambient layer (via [data-env]). */}
+      {/* Environment-tinted cinematic backdrop + ambient + weather layers. */}
       <div className="env-backdrop" aria-hidden />
       <div className="env-atmosphere" aria-hidden />
+      <div className="env-weather" aria-hidden />
       <nav className="sidenav" aria-label="Main">
         <div className="sidenav-brand">{t("common.appName")}</div>
         {mainNav.map((item) => (

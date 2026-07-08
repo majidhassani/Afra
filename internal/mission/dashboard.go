@@ -48,6 +48,7 @@ type MissionDashboard struct {
 	Locations       []gamemap.Marker            `json:"locations"`
 	TimelinePreview []missionevent.Event        `json:"timeline_preview"`
 	WalletBalance   int                         `json:"wallet_balance"`
+	WorldState      WorldState                  `json:"world_state"`
 	Result          json.RawMessage             `json:"result,omitempty"`
 }
 
@@ -237,7 +238,9 @@ func (s *Service) Dashboard(ctx context.Context, userID, missionID uuid.UUID) (*
 		Locations:              markers,
 		TimelinePreview:        timelinePreview,
 		WalletBalance:          walletBalance,
-		Result:                 m.Result,
+		WorldState: DeriveWorldState(m.PublicState, m.CurrentTime, BiomeForType(m.Type),
+			risk, progress, hasDeadline, deadlineApproaching(remaining, deadline)),
+		Result: m.Result,
 	}, nil
 }
 

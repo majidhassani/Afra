@@ -460,8 +460,23 @@ export interface MissionGuidanceSummary {
   recommended_actions?: RecommendedAction[];
 }
 
+/** Living-world snapshot that drives dynamic UI themes (weather/time/danger). */
+export interface WorldState {
+  mission_time: string;
+  weather: "clear" | "rain" | "snow" | "storm" | "fog";
+  time_of_day: "day" | "dusk" | "night";
+  visibility: "high" | "medium" | "low";
+  risk_score: number;
+  urgency: "calm" | "rising" | "critical";
+  world_phase: "opening" | "investigation" | "closing";
+  danger: boolean;
+  theme_id: string;
+  active_events: string[];
+}
+
 export interface MissionDashboard {
   mission: Mission;
+  world_state?: WorldState;
   mission_id?: string;
   title?: string;
   mission_status?: MissionStatus;

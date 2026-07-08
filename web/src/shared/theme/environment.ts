@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import type { Mission, MissionType } from "@/shared/types/api";
+import type { Mission, MissionType, WorldState } from "@/shared/types/api";
 
 /**
  * Environment theming — the game UI recolours itself to match the mission's
@@ -61,4 +61,36 @@ export function useEnvironmentTheme(env: Environment | null | undefined) {
       delete root.dataset.env;
     };
   }, [env]);
+}
+
+/**
+ * Applies the living-world modifiers (weather / time-of-day / danger) to the
+ * document root so the shell can layer rain, night darkening, and a danger
+ * pulse over the biome theme. Cleared when no world state is active.
+ */
+export function useWorldModifiers(world: WorldState | null | undefined) {
+  const weather = world?.weather ?? null;
+  const tod = world?.time_of_day ?? null;
+  const danger = world?.danger ?? false;
+  useEffect(() => {
+    const root = document.documentElement;
+    if (!world) {
+      delete root.dataset.weather;
+      delete root.dataset.tod;
+      delete root.dataset.danger;
+      return;
+    }
+    if (weather && weather !== "clear") root.dataset.weather = weather;
+    else delete root.dataset.weather;
+    if (tod) root.dataset.tod = tod;
+    else delete root.dataset.tod;
+    if (danger) root.dataset.danger = "true";
+    else delete root.dataset.danger;
+    return () => {
+      delete root.dataset.weather;
+      delete root.dataset.tod;
+      delete root.dataset.danger;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weather, tod, danger, !!world]);
 }

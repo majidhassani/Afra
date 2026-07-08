@@ -21,6 +21,54 @@ const MOCK_PORTRAIT =
     `<svg xmlns='http://www.w3.org/2000/svg' width='128' height='128'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#1a1f27'/><stop offset='1' stop-color='#2c3036'/></linearGradient></defs><rect width='128' height='128' fill='url(#g)'/><circle cx='64' cy='50' r='24' fill='#7dd3c7' opacity='0.7'/><rect x='28' y='82' width='72' height='40' rx='18' fill='#7dd3c7' opacity='0.5'/></svg>`,
   );
 
+/** Mirrors the backend DeriveWorldState so mock mode themes the shell too. */
+function deriveMockWorldState(bundle: MockMissionBundle) {
+  const ps = (bundle.mission.public_state ?? {}) as Record<string, unknown>;
+  const weatherText = String(ps.weather ?? ps["جو"] ?? "").toLowerCase();
+  const weather = /storm|طوفان/.test(weatherText)
+    ? "storm"
+    : /snow|برف/.test(weatherText)
+      ? "snow"
+      : /rain|بارانی|باران/.test(weatherText)
+        ? "rain"
+        : /fog|مه/.test(weatherText)
+          ? "fog"
+          : "clear";
+  const hourMatch = /(\d{1,2}):(\d{2})/.exec(bundle.mission.current_time);
+  const hour = hourMatch ? Number(hourMatch[1]) : 9;
+  const tod = hour >= 20 || hour < 5 ? "night" : hour >= 17 ? "dusk" : "day";
+  const biomeByType: Record<string, string> = {
+    wildlife_rescue: "forest",
+    exploration: "space",
+    survival: "snow",
+    disaster_response: "desert",
+    diplomacy: "city",
+    detective: "city",
+    medical_mystery: "horror",
+  };
+  const biome = biomeByType[bundle.mission.type] ?? "city";
+  const modifier =
+    weather === "rain" || weather === "storm"
+      ? "rain"
+      : weather === "snow"
+        ? "snow"
+        : tod === "night"
+          ? "night"
+          : "day";
+  return {
+    mission_time: bundle.mission.current_time,
+    weather,
+    time_of_day: tod,
+    visibility: weather === "clear" && tod === "day" ? "high" : "medium",
+    risk_score: 20,
+    urgency: "calm",
+    world_phase: "investigation",
+    danger: false,
+    theme_id: `${biome}_${modifier}`,
+    active_events: weather !== "clear" ? [`weather_${weather}`] : [],
+  };
+}
+
 class MockApiError extends Error {
   code: string;
   status: number;
@@ -386,6 +434,7 @@ export async function mockRequest<T>(
         locations: generating ? [] : bundle.markers,
         timeline_preview: [...bundle.events].reverse().slice(0, 5),
         wallet_balance: state.wallet.balance,
+        world_state: deriveMockWorldState(bundle),
         result: bundle.mission.result,
       });
     }
