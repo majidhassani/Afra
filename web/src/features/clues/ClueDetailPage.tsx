@@ -15,6 +15,7 @@ import { useLanguageGuard } from "@/shared/i18n/languageGuard";
 import { cluesApi, walletApi } from "@/shared/api/endpoints";
 import { errorKey } from "@/shared/api/client";
 import { toast } from "@/shared/ui/toast";
+import { assetUrl } from "@/shared/lib/assetUrl";
 import { ErrorState, SkeletonRows } from "@/shared/ui/states";
 import { CostBadge, Meter } from "@/shared/ui/badges";
 import { GuidancePanel } from "@/features/guidance/GuidancePanel";
@@ -180,9 +181,10 @@ export function ClueDetailPage() {
             {data.image_url ? (
               <figure className="evidence-photo">
                 <img
-                  src={data.image_url}
+                  src={assetUrl(data.image_url, data.image_version)}
                   alt={data.title}
                   loading="lazy"
+                  decoding="async"
                 />
               </figure>
             ) : (

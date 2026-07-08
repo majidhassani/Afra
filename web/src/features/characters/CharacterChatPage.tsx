@@ -159,6 +159,7 @@ export function CharacterChatPage() {
               name={character.name}
               category={character.category}
               imageUrl={character.avatar_url || undefined}
+              version={character.avatar_version}
               size="lg"
             />
             {!character.avatar_url && (

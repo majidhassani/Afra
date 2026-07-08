@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Shield, Radio, Skull, User } from "lucide-react";
+import { assetUrl } from "@/shared/lib/assetUrl";
 
 /**
  * Avatar renders a character portrait.
@@ -46,25 +47,37 @@ export function Avatar({
   category,
   size = "md",
   imageUrl,
+  version,
   glow,
 }: {
   name: string;
   category?: Category;
   size?: Size;
   imageUrl?: string | null;
+  /** Asset version for cache-busting regenerated portraits. */
+  version?: number;
   /** Add a subtle active glow (e.g. new dialogue available). */
   glow?: boolean;
 }) {
   const [broken, setBroken] = useState(false);
   const px = sizePx[size];
+  const src = assetUrl(imageUrl, version);
 
-  if (imageUrl && !broken) {
+  if (src && !broken) {
     return (
       <span
         className={`avatar avatar-img${glow ? " avatar-glow" : ""}`}
         style={{ width: px, height: px }}
       >
-        <img src={imageUrl} alt="" onError={() => setBroken(true)} />
+        <img
+          src={src}
+          alt=""
+          width={px}
+          height={px}
+          loading="lazy"
+          decoding="async"
+          onError={() => setBroken(true)}
+        />
       </span>
     );
   }

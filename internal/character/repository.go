@@ -27,14 +27,14 @@ func NewPGRepository(pool *pgxpool.Pool) *PGRepository { return &PGRepository{po
 
 const characterColumns = `id, mission_id, name, role, category, age, public_profile, personality,
 	current_location_id, trust_level, stress_level, mood, dialogue_style, avatar_prompt,
-	thumbnail_prompt, avatar_url, avatar_status, visual_style_tags, private_state, created_at, updated_at`
+	thumbnail_prompt, avatar_url, avatar_status, avatar_version, visual_style_tags, private_state, created_at, updated_at`
 
 func scanCharacter(row pgx.Row) (*Character, error) {
 	c := &Character{}
 	err := row.Scan(&c.ID, &c.MissionID, &c.Name, &c.Role, &c.Category, &c.Age, &c.PublicProfile,
 		&c.Personality, &c.CurrentLocationID, &c.TrustLevel, &c.StressLevel, &c.Mood,
 		&c.DialogueStyle, &c.AvatarPrompt, &c.ThumbnailPrompt, &c.AvatarURL, &c.AvatarStatus,
-		&c.VisualStyleTags, &c.PrivateState, &c.CreatedAt, &c.UpdatedAt)
+		&c.AvatarVersion, &c.VisualStyleTags, &c.PrivateState, &c.CreatedAt, &c.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -125,8 +125,12 @@ func (r *PGRepository) UpdateLocation(ctx context.Context, characterID uuid.UUID
 }
 
 func (r *PGRepository) UpdateAvatar(ctx context.Context, characterID uuid.UUID, url, status string) error {
+	// Bump the version only when a real image was produced, so the client can
+	// cache-bust regenerated portraits (unavailable attempts don't churn it).
 	_, err := r.pool.Exec(ctx,
-		`UPDATE characters SET avatar_url = $2, avatar_status = $3, updated_at = now() WHERE id = $1`,
+		`UPDATE characters SET avatar_url = $2, avatar_status = $3,
+		     avatar_version = avatar_version + CASE WHEN $2 <> '' THEN 1 ELSE 0 END,
+		     updated_at = now() WHERE id = $1`,
 		characterID, url, status)
 	if err != nil {
 		return apperrors.Internal(err, "update character avatar")

@@ -56,6 +56,7 @@ export function CharactersPage() {
                 name={c.name}
                 category={c.category}
                 imageUrl={c.avatar_url || undefined}
+                version={c.avatar_version}
                 size="lg"
               />
               <div className="grow" style={{ minWidth: 0 }}>

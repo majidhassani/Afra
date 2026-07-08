@@ -38,8 +38,9 @@ type Clue struct {
 
 	// Visual asset delivered to clients. The generation prompt below must
 	// never cross the public boundary.
-	ImageURL    string
-	ImageStatus string // none | pending | ready | unavailable
+	ImageURL     string
+	ImageStatus  string // none | pending | ready | unavailable
+	ImageVersion int    // bumped on each successful (re)generation
 
 	// Internal only — generation inputs and Truth Layer.
 	AvatarOrThumbnailPrompt string
@@ -61,6 +62,7 @@ type PublicClue struct {
 	VisualDescription   string          `json:"visual_description"`
 	ImageURL            string          `json:"image_url"`
 	ImageStatus         string          `json:"image_status"`
+	ImageVersion        int             `json:"image_version"`
 	Discovered          bool            `json:"discovered"`
 	Status              string          `json:"status"`
 	Reliability         int             `json:"reliability"`
@@ -82,6 +84,7 @@ func (c *Clue) Public() PublicClue {
 		VisualDescription:   c.VisualDescription,
 		ImageURL:            c.ImageURL,
 		ImageStatus:         c.PublicImageStatus(),
+		ImageVersion:        c.ImageVersion,
 		Discovered:          c.Discovered,
 		Status:              c.LifecycleStatus(),
 		Reliability:         c.Reliability,

@@ -249,6 +249,7 @@ function SelectedMarkerPanel({
                           name={c.name}
                           category={c.category}
                           imageUrl={c.avatar_url || undefined}
+                          version={c.avatar_version}
                           size="sm"
                         />
                         {c.name}

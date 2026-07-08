@@ -38,8 +38,9 @@ type Character struct {
 
 	// Visual asset delivered to clients. AvatarPrompt/ThumbnailPrompt are
 	// generation inputs and must never cross the public boundary.
-	AvatarURL    string
-	AvatarStatus string // none | pending | ready | unavailable
+	AvatarURL     string
+	AvatarStatus  string // none | pending | ready | unavailable
+	AvatarVersion int    // bumped on each successful (re)generation
 
 	// Internal only — generation inputs and Truth Layer.
 	AvatarPrompt    string
@@ -65,6 +66,7 @@ type PublicCharacter struct {
 	Mood              string          `json:"mood"`
 	AvatarURL         string          `json:"avatar_url"`
 	AvatarStatus      string          `json:"avatar_status"`
+	AvatarVersion     int             `json:"avatar_version"`
 	VisualStyleTags   json.RawMessage `json:"visual_style_tags"`
 }
 
@@ -83,6 +85,7 @@ func (c *Character) Public() PublicCharacter {
 		Mood:              c.Mood,
 		AvatarURL:         c.AvatarURL,
 		AvatarStatus:      c.PublicAvatarStatus(),
+		AvatarVersion:     c.AvatarVersion,
 		VisualStyleTags:   c.VisualStyleTags,
 	}
 }

@@ -185,6 +185,7 @@ export interface PublicCharacter {
   /** Visual asset contract — generation prompts never cross this boundary. */
   avatar_url: string;
   avatar_status: "none" | "pending" | "ready" | "unavailable";
+  avatar_version?: number;
   visual_style_tags: unknown;
 }
 
@@ -214,6 +215,7 @@ export interface PublicClue {
   /** Visual asset contract — generation prompts never cross this boundary. */
   image_url: string;
   image_status: "none" | "pending" | "ready" | "unavailable";
+  image_version?: number;
   discovered: boolean;
   /** Evidence lifecycle stage (added by the gameplay-state fix). */
   status?: "discovered" | "inspected" | "confirmed";

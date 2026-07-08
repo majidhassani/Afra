@@ -649,6 +649,7 @@ export async function mockRequest<T>(
       if (ch[2] === "/avatar" && method === "POST") {
         character.avatar_url = MOCK_PORTRAIT;
         character.avatar_status = "ready";
+        character.avatar_version = (character.avatar_version ?? 0) + 1;
         return out({ character });
       }
       if (method === "POST") {
@@ -746,6 +747,7 @@ export async function mockRequest<T>(
       if (cl[2] === "/image" && method === "POST") {
         clue.image_url = MOCK_PORTRAIT;
         clue.image_status = "ready";
+        clue.image_version = (clue.image_version ?? 0) + 1;
         return out({ clue });
       }
       if (cl[2] === "/confirm" && method === "POST") {
