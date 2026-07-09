@@ -18,7 +18,15 @@ import { missionsApi, profileApi, walletApi } from "@/shared/api/endpoints";
 import { EmptyState, ErrorState, SkeletonRows } from "@/shared/ui/states";
 import { MissionRow } from "./MissionCard";
 import { MissionStatusBadge } from "@/shared/ui/badges";
-import { GameButton, WalletBalance } from "@/shared/ui/game";
+import { WalletBalance } from "@/shared/ui/game";
+import {
+  MissionMapPanel,
+  ProgressRing,
+  ResourceChip,
+  SelectedMissionBar,
+  StatusChip,
+  TacticalButton,
+} from "@/shared/ui/avds";
 import { useEnvironmentTheme, environmentFor } from "@/shared/theme/environment";
 import type { MissionType } from "@/shared/types/api";
 import type { TranslationKey } from "@/shared/i18n/en";
@@ -44,37 +52,44 @@ export function DashboardPage() {
   );
   const recent = (missions.data ?? []).slice(0, 5);
   const agentName = profile.data?.display_name ?? "";
+  const activeProgress =
+    active?.status === "completed" ? 100 : active?.status === "active" ? 32 : active ? 12 : 0;
+  const deployTarget = active ? `/app/missions/${active.id}` : "/app/missions/new";
 
   // The lobby wears the biome of the active operation.
   useEnvironmentTheme(active ? environmentFor(active) : null);
 
   return (
-    <div className="page stack" style={{ gap: 18 }}>
-      {/* Hero */}
-      <section className="hub-hero">
-        <div className="spread" style={{ alignItems: "flex-start", flexWrap: "wrap" }}>
-          <div className="stack" style={{ gap: 8, minWidth: 0 }}>
-            <span className="eyebrow row" style={{ gap: 6 }}>
-              <ShieldCheck size={13} aria-hidden />
-              {t("hub.agent")}
-            </span>
-            <h1>{t("hub.welcome", { name: agentName })}</h1>
-            <p className="muted" style={{ maxWidth: "56ch" }}>
-              {t("hub.tagline")}
-            </p>
-          </div>
-          <div className="stack" style={{ gap: 10, alignItems: "flex-end" }}>
-            <WalletBalance balance={wallet.data?.balance} />
-            <div className="row" style={{ gap: 6 }}>
-              <span className="status-chip cat-guide">
-                {t("hub.rank")}: {profile.data?.rank ?? "—"}
-              </span>
-              <span className="status-chip">
-                {t("hub.level")} {profile.data?.level ?? "—"}
-              </span>
-            </div>
-          </div>
+    <div className="page av-home-command stack" style={{ gap: 20 }}>
+      <section className="av-command-hero" aria-label={t("common.appName")}>
+        <div className="av-command-meta">
+          <ResourceChip
+            icon={<ShieldCheck size={14} aria-hidden />}
+            label={t("hub.rank")}
+            value={profile.data?.rank ?? "—"}
+            tone="green"
+          />
+          <ResourceChip
+            label={t("hub.level")}
+            value={profile.data?.level ?? "—"}
+            tone="cyan"
+          />
+          <ResourceChip value={<WalletBalance balance={wallet.data?.balance} />} tone="gold" />
         </div>
+
+        <div className="av-command-identity">
+          <span className="av-eyebrow">{t("hub.welcome", { name: agentName || t("hub.agent") })}</span>
+          <h1>{t("common.appName")}</h1>
+          <p>{t("hub.tagline")}</p>
+        </div>
+
+        <Link className="av-deploy-orb" to={deployTarget}>
+          <span className="av-deploy-mark" aria-hidden>
+            A
+          </span>
+          <strong>{active ? t("dash.enterMission") : t("dash.newMission")}</strong>
+          <em>{active ? t("hub.resume") : t("hub.deploy")}</em>
+        </Link>
       </section>
 
       {/* Active operation */}
@@ -98,36 +113,29 @@ export function DashboardPage() {
           </div>
         )}
         {active && (
-          <div className="tac-card" style={{ padding: 20 }}>
-            <div className="spread" style={{ flexWrap: "wrap", gap: 12 }}>
-              <div className="stack" style={{ gap: 6, minWidth: 0 }}>
-                <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-                  <span className="eyebrow">{t("hub.activeMission")}</span>
-                  <MissionStatusBadge status={active.status} />
-                </div>
-                <h2 style={{ fontSize: 20 }}>
-                  {active.title || t(`type.${active.type}` as TranslationKey)}
-                </h2>
-                <p className="muted" style={{ maxWidth: "64ch" }}>
-                  {active.summary}
-                </p>
-              </div>
-            </div>
-            <div className="row" style={{ marginTop: 16, flexWrap: "wrap", gap: 10 }}>
-              <Link to={`/app/missions/${active.id}`}>
-                <GameButton variant="primary">
+          <SelectedMissionBar
+            title={active.title || t(`type.${active.type}` as TranslationKey)}
+            meta={
+              <span className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+                <MissionStatusBadge status={active.status} />
+                <StatusChip tone="cyan">{active.region || t("mission.region")}</StatusChip>
+                <StatusChip tone="gold">{t(`difficulty.${active.difficulty}` as TranslationKey)}</StatusChip>
+              </span>
+            }
+            action={
+              <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+                <ProgressRing value={activeProgress} />
+                <TacticalButton to={`/app/missions/${active.id}`}>
                   <Rocket size={15} aria-hidden />
                   {t("hub.resume")}
-                </GameButton>
-              </Link>
-              <Link to={`/app/missions/${active.id}/map`}>
-                <GameButton variant="ghost">
+                </TacticalButton>
+                <TacticalButton to={`/app/missions/${active.id}/map`} variant="ghost">
                   <Map size={15} aria-hidden />
                   {t("nav.map")}
-                </GameButton>
-              </Link>
-            </div>
-          </div>
+                </TacticalButton>
+              </div>
+            }
+          />
         )}
       </section>
 
@@ -149,6 +157,11 @@ export function DashboardPage() {
           ))}
         </div>
       </section>
+
+      <MissionMapPanel
+        title={active?.region || t("nav.map")}
+        subtitle={active?.title || t("dash.noActiveMission")}
+      />
 
       {/* Recent operations */}
       <section className="panel" aria-label={t("hub.recent")}>

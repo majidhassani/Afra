@@ -54,6 +54,35 @@ func (s *Service) CompletionSnapshot(ctx context.Context, userID, missionID uuid
 	}, nil
 }
 
+// ReadinessOf reports whether the mission can be completed and what is still
+// missing — the same gate the completion flow uses, exposed for the report
+// center so a rejected final report can explain exactly what is lacking.
+func (s *Service) ReadinessOf(ctx context.Context, userID, missionID uuid.UUID) (bool, []string, error) {
+	snap, err := s.CompletionSnapshot(ctx, userID, missionID)
+	if err != nil {
+		return false, nil, err
+	}
+	discovered, _, err := s.clues.Counts(ctx, missionID)
+	if err != nil {
+		return false, nil, err
+	}
+	visited, _, err := s.locations.CountVisited(ctx, missionID)
+	if err != nil {
+		return false, nil, err
+	}
+	interacted, err := s.interactions.CountInteractedCharacters(ctx, missionID)
+	if err != nil {
+		return false, nil, err
+	}
+	can, missing := EvaluateReadiness(ReadinessInputs{
+		DiscoveredClues:    discovered,
+		InteractedChars:    interacted,
+		VisitedLocations:   visited,
+		RequiredClueTarget: snap.RequiredClueTarget,
+	})
+	return can, missing, nil
+}
+
 // StoredResult returns the persisted end-of-mission result document for a
 // completed or failed mission. It enforces ownership and reports a conflict
 // when the mission has not reached a terminal state yet (no result to show).

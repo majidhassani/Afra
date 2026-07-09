@@ -267,6 +267,130 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/MissionDashboard" }
         "404": { description: Not found or not owned }
+  /api/v1/missions/{missionID}/gameplay-status:
+    get:
+      tags: [Missions]
+      summary: Single HUD payload with stages, clue goal, suspect status, board art
+      description: >
+        Superset of the dashboard: mission stages (with derived requirement
+        progress), current stage, mission-wide clue goal, suspect status
+        (hidden/identified), next stage reward, report-pending flag for the
+        glowing report CTA, and generated board art. Runs a lazy, idempotent
+        stage-engine pass so transitions earned by any action surface here.
+      parameters: [ { $ref: "#/components/parameters/MissionID" } ]
+      responses:
+        "200":
+          description: Gameplay status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GameplayStatus" }
+        "404": { description: Not found or not owned }
+  /api/v1/missions/{missionID}/actions/preview:
+    post:
+      tags: [Missions]
+      summary: Preview an action's time/coin cost and risk before running it
+      parameters: [ { $ref: "#/components/parameters/MissionID" } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [travel, location_action, character_chat, clue_inspect, report_submit]
+                target_id: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Deterministic action preview (no state change)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ActionPreview" }
+        "400": { description: Unknown action }
+  /api/v1/missions/{missionID}/reports:
+    get:
+      tags: [Reports]
+      summary: Mission report history
+      parameters: [ { $ref: "#/components/parameters/MissionID" } ]
+      responses:
+        "200":
+          description: Reports, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reports:
+                    type: array
+                    items: { $ref: "#/components/schemas/MissionReport" }
+    post:
+      tags: [Reports]
+      summary: Submit a report to command
+      description: >
+        Deterministic backend validation — the AI never mutates state and
+        hidden truth is never consulted. Accepted reports advance stages,
+        unlock content, and cost mission time; rejections explain exactly
+        which requirements are missing. Types: clue_report, suspect_report,
+        progress_report, incident_report, final_report.
+      parameters: [ { $ref: "#/components/parameters/MissionID" } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type, summary]
+              properties:
+                type:
+                  type: string
+                  enum: [clue_report, suspect_report, progress_report, incident_report, final_report]
+                title: { type: string, maxLength: 200 }
+                summary: { type: string, maxLength: 4000 }
+                linked_clue_ids:
+                  type: array
+                  items: { type: string, format: uuid }
+                suspect_character_id: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Verdict plus every state change the submission caused
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReportResult" }
+        "409": { description: Mission not active }
+  /api/v1/missions/{missionID}/art/board/generate:
+    post:
+      tags: [Missions]
+      summary: Generate scenario board background art
+      description: >
+        Renders one board background (mission_board_background,
+        map_board_background, report_center_background, debrief_background,
+        loading_screen) from player-safe world state — mission type, region,
+        time of day, weather, risk mood — with HUD-safe empty areas and no
+        text/logos. Generation prompts never leave the server; a procedural
+        themed gradient is the guaranteed fallback.
+      parameters: [ { $ref: "#/components/parameters/MissionID" } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [board_type]
+              properties:
+                board_type:
+                  type: string
+                  enum: [mission_board_background, map_board_background, report_center_background, debrief_background, loading_screen]
+      responses:
+        "200":
+          description: Generated board (URL + status + version only)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  board: { $ref: "#/components/schemas/BoardImage" }
   /api/v1/missions/{missionID}/completion-check:
     get:
       tags: [Missions]
@@ -989,6 +1113,158 @@ components:
           items: {}
         wallet_balance: { type: integer }
         result: {}
+    Stage:
+      type: object
+      description: One visible level-segment of a mission; counters are derived.
+      properties:
+        id: { type: string, example: identify_suspect }
+        title: { type: string }
+        description: { type: string }
+        status: { type: string, enum: [locked, active, completed] }
+        progress: { type: integer, minimum: 0, maximum: 100 }
+        required_clue_count: { type: integer }
+        found_clue_count: { type: integer }
+        required_actions:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [visit_locations, find_clues, confirm_evidence, interview_characters, submit_report, final_decision]
+              report: { type: string, description: "For submit_report: the required report type" }
+              count: { type: integer }
+              done: { type: integer }
+        reward: { $ref: "#/components/schemas/StageReward" }
+        unlock_on_complete:
+          type: object
+          properties:
+            next_stage_id: { type: string }
+            unlock_location: { type: boolean }
+            reveal_suspect: { type: boolean }
+    StageReward:
+      type: object
+      properties:
+        xp: { type: integer }
+        coins: { type: integer }
+        badge: { type: string }
+    StageUpdate:
+      type: object
+      description: Everything one stage-engine pass changed (rewards granted exactly once).
+      properties:
+        stages:
+          type: array
+          items: { $ref: "#/components/schemas/Stage" }
+        current_stage: { $ref: "#/components/schemas/Stage" }
+        stage_index: { type: integer }
+        stage_count: { type: integer }
+        completed_stages:
+          type: array
+          items: { $ref: "#/components/schemas/Stage" }
+        activated_stage: { $ref: "#/components/schemas/Stage" }
+        rewards:
+          type: array
+          items: { $ref: "#/components/schemas/StageReward" }
+        unlocked_locations:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string, format: uuid }
+              name: { type: string }
+              reason: { type: string }
+        suspect_revealed: { type: boolean }
+        suspect: { $ref: "#/components/schemas/PublicCharacter" }
+        timeline_events:
+          type: array
+          items: { type: string }
+    TimeUpdate:
+      type: object
+      description: Time passed by an action plus any world events it triggered.
+      properties:
+        new_time: { type: string, example: "Day 1 - 09:20" }
+        minutes_advanced: { type: integer }
+        triggered_events:
+          type: array
+          items:
+            type: object
+            properties:
+              type: { type: string }
+              title: { type: string }
+              description: { type: string }
+    BoardImage:
+      type: object
+      properties:
+        board_type: { type: string }
+        url: { type: string, description: Data URL; prompts never leave the server }
+        status: { type: string, enum: [ready, unavailable] }
+        version: { type: integer }
+    GameplayStatus:
+      allOf:
+        - $ref: "#/components/schemas/MissionDashboard"
+        - type: object
+          properties:
+            stages:
+              type: array
+              items: { $ref: "#/components/schemas/Stage" }
+            current_stage: { $ref: "#/components/schemas/Stage" }
+            stage_index: { type: integer }
+            stage_count: { type: integer }
+            clue_goal: { type: integer }
+            clues_found: { type: integer }
+            suspect_status: { type: string, enum: [hidden, identified] }
+            suspect: { $ref: "#/components/schemas/PublicCharacter" }
+            next_reward: { $ref: "#/components/schemas/StageReward" }
+            report_pending: { type: boolean }
+            pending_report_type: { type: string }
+            board_art:
+              type: object
+              additionalProperties: { $ref: "#/components/schemas/BoardImage" }
+            stage_update: { $ref: "#/components/schemas/StageUpdate" }
+    ActionPreview:
+      type: object
+      properties:
+        action: { type: string }
+        time_cost_minutes: { type: integer }
+        coin_cost: { type: integer }
+        risk_note: { type: string }
+        new_time_if_done: { type: string }
+    MissionReport:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        mission_id: { type: string, format: uuid }
+        type: { type: string, enum: [clue_report, suspect_report, progress_report, incident_report, final_report] }
+        title: { type: string }
+        summary: { type: string }
+        linked_clue_ids:
+          type: array
+          items: { type: string, format: uuid }
+        suspect_character_id: { type: string, format: uuid }
+        verdict: { type: string, enum: [accepted, rejected] }
+        feedback: { type: string }
+        created_at: { type: string, format: date-time }
+    ReportResult:
+      type: object
+      properties:
+        verdict: { type: string, enum: [accepted, rejected] }
+        feedback: { type: string }
+        missing_requirements:
+          type: array
+          items: { type: string }
+        report: { $ref: "#/components/schemas/MissionReport" }
+        stage_update: { $ref: "#/components/schemas/StageUpdate" }
+        time_update: { $ref: "#/components/schemas/TimeUpdate" }
+        timeline_events:
+          type: array
+          items: { type: string }
+        next_recommended_actions:
+          type: array
+          items:
+            type: object
+            properties:
+              type: { type: string }
+              title: { type: string }
     CompletionCheck:
       type: object
       properties:

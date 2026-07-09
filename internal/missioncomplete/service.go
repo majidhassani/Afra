@@ -30,6 +30,7 @@ type MissionGateway interface {
 	CompletionSnapshot(ctx context.Context, userID, missionID uuid.UUID) (*mission.CompletionSnapshot, error)
 	Finish(ctx context.Context, userID, missionID uuid.UUID, result json.RawMessage, success bool, completedKeys map[string]bool) error
 	StoredResult(ctx context.Context, userID, missionID uuid.UUID) (json.RawMessage, string, error)
+	EvaluateStages(ctx context.Context, userID, missionID uuid.UUID) (*mission.StageUpdate, error)
 }
 
 // ProfileProgression is the slice of the player-profile module this service
@@ -266,6 +267,12 @@ func (s *Service) Complete(ctx context.Context, userID, missionID uuid.UUID, dec
 		"score": result.Score, "stars": result.Stars,
 		"xp_reward": result.XPReward, "coin_reward": result.CoinReward,
 	})
+
+	// Close out the stage track: the final decision completes the Final
+	// Report stage (and Debrief), with its own stage rewards and events.
+	if _, err := s.gateway.EvaluateStages(ctx, userID, missionID); err != nil {
+		s.log.Error("final stage evaluation", "error", err)
+	}
 
 	return result, nil, nil
 }

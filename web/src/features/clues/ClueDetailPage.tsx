@@ -19,6 +19,10 @@ import { assetUrl } from "@/shared/lib/assetUrl";
 import { ErrorState, SkeletonRows } from "@/shared/ui/states";
 import { CostBadge, Meter } from "@/shared/ui/badges";
 import { GuidancePanel } from "@/features/guidance/GuidancePanel";
+import {
+  announceStageUpdate,
+  announceTimeUpdate,
+} from "@/features/game/gameEvents";
 import { importanceChip, importanceLabel } from "./CluesPage";
 import type {
   ClueExplainResult,
@@ -52,9 +56,11 @@ export function ClueDetailPage() {
       guardLanguage(result.analysis);
       setInspectResult(result);
       setQuestion("");
+      announceTimeUpdate(result.time_update);
       void queryClient.invalidateQueries({
         queryKey: ["mission", missionId, "clue", clueId],
       });
+      void queryClient.invalidateQueries({ queryKey: ["gameplay-status", missionId] });
       void queryClient.invalidateQueries({ queryKey: ["wallet"] });
     },
   });
@@ -88,6 +94,9 @@ export function ClueDetailPage() {
       if (env.unlocked_locations.length === 0) {
         toast("success", t("clues.confirmed"));
       }
+      // A confirmation may also complete a stage (rewards, reveals, unlocks).
+      announceStageUpdate(env.stage_update);
+      void queryClient.invalidateQueries({ queryKey: ["gameplay-status", missionId] });
       void queryClient.invalidateQueries({ queryKey: ["mission", missionId] });
       void queryClient.invalidateQueries({
         queryKey: ["mission", missionId, "clue", clueId],

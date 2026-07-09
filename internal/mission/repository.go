@@ -21,6 +21,9 @@ type Repository interface {
 	UpdateStatus(ctx context.Context, missionID uuid.UUID, status string) error
 	SetGeneratedContent(ctx context.Context, m *Mission) error
 	UpdateObjectives(ctx context.Context, missionID uuid.UUID, objectives json.RawMessage) error
+	UpdateStages(ctx context.Context, missionID uuid.UUID, stages json.RawMessage) error
+	UpdateBoardArt(ctx context.Context, missionID uuid.UUID, boardArt json.RawMessage) error
+	CountAcceptedReports(ctx context.Context, missionID uuid.UUID, reportType string) (int, error)
 	UpdatePublicState(ctx context.Context, missionID uuid.UUID, state json.RawMessage) error
 	AdvanceMissionTime(ctx context.Context, missionID uuid.UUID, minutes int) (time.Time, error)
 	SetResult(ctx context.Context, missionID uuid.UUID, result json.RawMessage, status string) error
@@ -31,13 +34,13 @@ type PGRepository struct{ pool *pgxpool.Pool }
 func NewPGRepository(pool *pgxpool.Pool) *PGRepository { return &PGRepository{pool: pool} }
 
 const missionColumns = `id, user_id, type, title, status, difficulty, region, summary, briefing,
-	objectives, public_state, result, center_lat, center_lng, map_zoom, mission_time,
+	objectives, stages, public_state, board_art, result, center_lat, center_lng, map_zoom, mission_time,
 	created_at, updated_at, completed_at`
 
 func scanMission(row pgx.Row) (*Mission, error) {
 	m := &Mission{}
 	err := row.Scan(&m.ID, &m.UserID, &m.Type, &m.Title, &m.Status, &m.Difficulty, &m.Region,
-		&m.Summary, &m.Briefing, &m.Objectives, &m.PublicState, &m.Result, &m.CenterLat,
+		&m.Summary, &m.Briefing, &m.Objectives, &m.Stages, &m.PublicState, &m.BoardArt, &m.Result, &m.CenterLat,
 		&m.CenterLng, &m.MapZoom, &m.MissionTime, &m.CreatedAt, &m.UpdatedAt, &m.CompletedAt)
 	if err != nil {
 		return nil, err
@@ -131,11 +134,11 @@ func (r *PGRepository) UpdateStatus(ctx context.Context, missionID uuid.UUID, st
 func (r *PGRepository) SetGeneratedContent(ctx context.Context, m *Mission) error {
 	_, err := r.pool.Exec(ctx,
 		`UPDATE missions SET title = $2, summary = $3, briefing = $4, region = $5,
-		     objectives = $6, public_state = $7, center_lat = $8, center_lng = $9,
-		     map_zoom = $10, updated_at = now()
+		     objectives = $6, stages = $7, public_state = $8, center_lat = $9, center_lng = $10,
+		     map_zoom = $11, updated_at = now()
 		 WHERE id = $1`,
 		m.ID, m.Title, m.Summary, m.Briefing, m.Region,
-		orEmpty(m.Objectives, `[]`), orEmpty(m.PublicState, `{}`),
+		orEmpty(m.Objectives, `[]`), orEmpty(m.Stages, `[]`), orEmpty(m.PublicState, `{}`),
 		m.CenterLat, m.CenterLng, m.MapZoom)
 	if err != nil {
 		return apperrors.Internal(err, "set generated mission content")
@@ -151,6 +154,38 @@ func (r *PGRepository) UpdateObjectives(ctx context.Context, missionID uuid.UUID
 		return apperrors.Internal(err, "update mission objectives")
 	}
 	return nil
+}
+
+func (r *PGRepository) UpdateStages(ctx context.Context, missionID uuid.UUID, stages json.RawMessage) error {
+	_, err := r.pool.Exec(ctx,
+		`UPDATE missions SET stages = $2, updated_at = now() WHERE id = $1`,
+		missionID, orEmpty(stages, `[]`))
+	if err != nil {
+		return apperrors.Internal(err, "update mission stages")
+	}
+	return nil
+}
+
+func (r *PGRepository) UpdateBoardArt(ctx context.Context, missionID uuid.UUID, boardArt json.RawMessage) error {
+	_, err := r.pool.Exec(ctx,
+		`UPDATE missions SET board_art = $2, updated_at = now() WHERE id = $1`,
+		missionID, orEmpty(boardArt, `{}`))
+	if err != nil {
+		return apperrors.Internal(err, "update mission board art")
+	}
+	return nil
+}
+
+func (r *PGRepository) CountAcceptedReports(ctx context.Context, missionID uuid.UUID, reportType string) (int, error) {
+	var n int
+	err := r.pool.QueryRow(ctx,
+		`SELECT count(*) FROM mission_reports
+		 WHERE mission_id = $1 AND type = $2 AND verdict = 'accepted'`,
+		missionID, reportType).Scan(&n)
+	if err != nil {
+		return 0, apperrors.Internal(err, "count accepted reports")
+	}
+	return n, nil
 }
 
 func (r *PGRepository) UpdatePublicState(ctx context.Context, missionID uuid.UUID, state json.RawMessage) error {

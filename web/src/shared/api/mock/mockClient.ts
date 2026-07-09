@@ -6,7 +6,15 @@
  * ApiError like the real client. State lives in memory for the session.
  */
 import type { RequestOptions } from "../client";
-import type { Mission, Transaction, User, Wallet } from "@/shared/types/api";
+import type {
+  Mission,
+  MissionReport,
+  ReportType,
+  Stage,
+  Transaction,
+  User,
+  Wallet,
+} from "@/shared/types/api";
 import {
   buildMissionBundle,
   MOCK_PRICING,
@@ -117,6 +125,137 @@ const state: MockState = {
   generatingUntil: new Map(),
   adClaimedToday: false,
 };
+
+/** Per-mission report history for the mock report center. */
+const mockReports = new Map<string, MissionReport[]>();
+
+/** Fixed action time costs mirroring internal/mission/timecost.go. */
+const MOCK_TIME_COSTS: Record<string, number> = {
+  travel: 15,
+  location_action: 20,
+  character_chat: 10,
+  clue_inspect: 10,
+  report_submit: 15,
+};
+
+/**
+ * Deterministic mock stage list mirroring mission.DefaultStages, with
+ * statuses derived from the bundle's current counts (monotonic, like the
+ * backend engine).
+ */
+function mockStages(bundle: MockMissionBundle): Stage[] {
+  const found = bundle.clues.length;
+  const confirmed = bundle.clues.filter((c) => c.status === "confirmed").length;
+  const visited = bundle.markers.filter((m) => m.status === "visited").length;
+  const talked = bundle.events.filter((e) => e.type === "dialogue").length;
+  const accepted = (t: string) =>
+    (mockReports.get(bundle.mission.id) ?? []).filter(
+      (r) => r.type === t && r.verdict === "accepted",
+    ).length;
+  const finished =
+    bundle.mission.status === "completed" || bundle.mission.status === "failed";
+
+  const defs: Array<Omit<Stage, "status" | "progress" | "found_clue_count">> = [
+    {
+      id: "arrival",
+      title: "Arrival",
+      description: "Get on site: open the map and visit your first location.",
+      required_clue_count: 0,
+      required_actions: [{ type: "visit_locations", count: 1, done: Math.min(visited, 1) }],
+      reward: { xp: 25, coins: 10 },
+      unlock_on_complete: { next_stage_id: "first_clues" },
+    },
+    {
+      id: "first_clues",
+      title: "First Clues",
+      description: "Search the area and secure your first pieces of evidence.",
+      required_clue_count: 2,
+      required_actions: [{ type: "find_clues", count: 2, done: Math.min(found, 2) }],
+      reward: { xp: 50, coins: 15 },
+      unlock_on_complete: { next_stage_id: "identify_suspect", unlock_location: true },
+    },
+    {
+      id: "identify_suspect",
+      title: "Identify the Suspect",
+      description: "Gather enough clues and testimony to name a prime suspect.",
+      required_clue_count: 5,
+      required_actions: [
+        { type: "find_clues", count: 5, done: Math.min(found, 5) },
+        { type: "interview_characters", count: 2, done: Math.min(talked, 2) },
+        {
+          type: "submit_report",
+          report: "suspect_report",
+          count: 1,
+          done: Math.min(accepted("suspect_report"), 1),
+        },
+      ],
+      reward: { xp: 100, coins: 25, badge: "sharp_eye" },
+      unlock_on_complete: {
+        next_stage_id: "confirm_evidence",
+        unlock_location: true,
+        reveal_suspect: true,
+      },
+    },
+    {
+      id: "confirm_evidence",
+      title: "Confirm the Evidence",
+      description: "Inspect and confirm the evidence that carries your case.",
+      required_clue_count: 0,
+      required_actions: [
+        { type: "confirm_evidence", count: 3, done: Math.min(confirmed, 3) },
+      ],
+      reward: { xp: 100, coins: 25 },
+      unlock_on_complete: { next_stage_id: "final_report" },
+    },
+    {
+      id: "final_report",
+      title: "Final Report",
+      description: "You have what you need. Submit your final decision to command.",
+      required_clue_count: 0,
+      required_actions: [
+        { type: "final_decision", count: 1, done: finished ? 1 : 0 },
+      ],
+      reward: { xp: 150, coins: 50 },
+      unlock_on_complete: { next_stage_id: "debrief" },
+    },
+    {
+      id: "debrief",
+      title: "Debrief",
+      description: "Review the outcome, rewards, and what you missed.",
+      required_clue_count: 0,
+      required_actions: [],
+      reward: { xp: 0, coins: 0 },
+      unlock_on_complete: {},
+    },
+  ];
+
+  let gate = true; // stages before the gate-breaking one are completable
+  return defs.map((def) => {
+    const need = def.required_actions.reduce((s, a) => s + a.count, 0);
+    const done = def.required_actions.reduce((s, a) => s + a.done, 0);
+    const complete = need === 0 ? finished : done >= need;
+    let status: Stage["status"];
+    if (gate && complete) {
+      status = "completed";
+    } else if (gate) {
+      status = "active";
+      gate = false;
+    } else {
+      status = "locked";
+    }
+    return {
+      ...def,
+      status,
+      progress:
+        status === "completed"
+          ? 100
+          : status === "locked" || need === 0
+            ? 0
+            : Math.round((done / need) * 100),
+      found_clue_count: Math.min(found, def.required_clue_count),
+    };
+  });
+}
 
 // Seed one ready-to-play mission so every screen has content immediately.
 const seedId = "mock-mission-1";
@@ -436,6 +575,140 @@ export async function mockRequest<T>(
         wallet_balance: state.wallet.balance,
         world_state: deriveMockWorldState(bundle),
         result: bundle.mission.result,
+      });
+    }
+    if (rest === "/gameplay-status" && method === "GET") {
+      const stages = mockStages(bundle);
+      const current = stages.find((s) => s.status !== "completed") ?? null;
+      const identify = stages.find((s) => s.unlock_on_complete.reveal_suspect);
+      const suspectRevealed = identify?.status === "completed";
+      const suspect = suspectRevealed
+        ? (bundle.characters.find((c) => c.category === "antagonist") ??
+          bundle.characters.find((c) => c.category !== "guide") ??
+          null)
+        : null;
+      const pendingReport = current?.required_actions.find(
+        (a) =>
+          (a.type === "submit_report" || a.type === "final_decision") &&
+          a.done < a.count,
+      );
+      const dashboard = await mockRequest<Record<string, unknown>>(
+        `/api/v1/missions/${missionId}/dashboard`,
+        { method: "GET" },
+      );
+      return out({
+        ...dashboard,
+        stages,
+        current_stage: current,
+        stage_index: current ? stages.indexOf(current) + 1 : 0,
+        stage_count: stages.length,
+        clue_goal: 5,
+        clues_found: bundle.clues.length,
+        suspect_status: suspectRevealed ? "identified" : "hidden",
+        suspect,
+        next_reward: current?.reward ?? null,
+        report_pending: !!pendingReport,
+        pending_report_type:
+          pendingReport?.type === "final_decision"
+            ? "final_report"
+            : pendingReport?.report,
+        board_art: {},
+        stage_update: null,
+      });
+    }
+    if (rest === "/actions/preview" && method === "POST") {
+      const body = (opts.body ?? {}) as { action?: string };
+      const minutes = MOCK_TIME_COSTS[body.action ?? ""];
+      if (!minutes) {
+        throw new MockApiError("invalid_action", "unknown action", 400);
+      }
+      return out({
+        action: body.action,
+        time_cost_minutes: minutes,
+        coin_cost: MOCK_PRICING[body.action === "location_action" ? "location_search" : body.action ?? ""] ?? 0,
+        risk_note: "",
+        new_time_if_done: bundle.mission.current_time,
+      });
+    }
+    if (rest === "/reports" && method === "GET") {
+      return out({ reports: [...(mockReports.get(missionId) ?? [])].reverse() });
+    }
+    if (rest === "/reports" && method === "POST") {
+      guardGenerating();
+      const body = (opts.body ?? {}) as {
+        type?: ReportType;
+        title?: string;
+        summary?: string;
+        linked_clue_ids?: string[];
+        suspect_character_id?: string;
+      };
+      const linked = body.linked_clue_ids ?? [];
+      const confirmedLinked = linked.filter((id) =>
+        bundle.clues.some((c) => c.id === id && c.status === "confirmed"),
+      ).length;
+      let verdict: "accepted" | "rejected" = "accepted";
+      let feedback = "Report filed.";
+      const missing: string[] = [];
+      if (body.type === "clue_report" && linked.length === 0) {
+        verdict = "rejected";
+        missing.push("Link at least 1 discovered clue to the report");
+        feedback = "A clue report must document actual evidence.";
+      }
+      if (body.type === "suspect_report") {
+        if (!body.suspect_character_id) missing.push("Name a suspect character");
+        if (confirmedLinked < 2)
+          missing.push(`Link ${2 - confirmedLinked} more confirmed piece(s) of evidence`);
+        if (missing.length > 0) {
+          verdict = "rejected";
+          feedback = "A suspect report needs a named suspect backed by confirmed evidence.";
+        } else {
+          feedback = "Suspect report accepted. Your named suspect is now the official line of investigation.";
+        }
+      }
+      const report: MissionReport = {
+        id: mockId(),
+        mission_id: missionId,
+        type: body.type ?? "progress_report",
+        title: body.title ?? "",
+        summary: body.summary ?? "",
+        linked_clue_ids: linked,
+        suspect_character_id: body.suspect_character_id ?? null,
+        verdict,
+        feedback,
+        created_at: now(),
+      };
+      mockReports.set(missionId, [...(mockReports.get(missionId) ?? []), report]);
+      bundle.events.push({
+        id: mockId(),
+        mission_id: missionId,
+        type: verdict === "accepted" ? "report_accepted" : "report_rejected",
+        payload: { type: report.type },
+        created_at: now(),
+      });
+      return out({
+        verdict,
+        feedback,
+        missing_requirements: missing,
+        report,
+        stage_update: null,
+        time_update: {
+          new_time: bundle.mission.current_time,
+          minutes_advanced: 15,
+          triggered_events: [],
+        },
+        timeline_events: ["report_submitted"],
+        next_recommended_actions: [],
+      });
+    }
+    if (rest === "/art/board/generate" && method === "POST") {
+      const body = (opts.body ?? {}) as { board_type?: string };
+      return out({
+        board: {
+          board_type: body.board_type ?? "mission_board_background",
+          url: MOCK_PORTRAIT,
+          status: "ready",
+          version: 1,
+        },
       });
     }
     if (rest === "/archive" && method === "POST") {

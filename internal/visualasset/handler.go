@@ -1,9 +1,11 @@
 package visualasset
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"casemind/internal/httpx"
+	apperrors "casemind/pkg/errors"
 	"casemind/pkg/response"
 )
 
@@ -32,6 +34,32 @@ func (h *Handler) GenerateCharacterAvatar(w http.ResponseWriter, r *http.Request
 		return
 	}
 	response.JSON(w, http.StatusOK, map[string]any{"character": c})
+}
+
+// GenerateBoard handles
+// POST /api/v1/missions/{missionID}/art/board/generate.
+func (h *Handler) GenerateBoard(w http.ResponseWriter, r *http.Request) {
+	userID, ok := httpx.RequestUser(w, r)
+	if !ok {
+		return
+	}
+	missionID, ok := httpx.PathUUID(w, r, "missionID")
+	if !ok {
+		return
+	}
+	var req struct {
+		BoardType string `json:"board_type"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.Err(w, apperrors.Invalid("invalid_body", "invalid JSON body"))
+		return
+	}
+	board, err := h.svc.Board(r.Context(), userID, missionID, req.BoardType)
+	if err != nil {
+		response.Err(w, err)
+		return
+	}
+	response.JSON(w, http.StatusOK, map[string]any{"board": board})
 }
 
 // GenerateClueImage handles

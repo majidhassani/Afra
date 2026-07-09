@@ -27,6 +27,7 @@ import (
 	"casemind/internal/notes"
 	"casemind/internal/progression"
 	"casemind/internal/playerprofile"
+	"casemind/internal/report"
 	"casemind/internal/solve"
 	"casemind/internal/suspect"
 	"casemind/internal/timeengine"
@@ -47,6 +48,7 @@ type Handlers struct {
 	MissionComplete *missioncomplete.Handler
 	MissionTimeline *missiontimeline.Handler
 	Progression     *progression.Handler
+	Reports         *report.Handler
 	Characters      *character.Handler
 	Clues           *clue.Handler
 	VisualAsset     *visualasset.Handler
@@ -150,6 +152,11 @@ func NewRouter(
 	mux.Handle("GET /api/v1/missions", protected(h.Missions.List))
 	mux.Handle("GET /api/v1/missions/{missionID}", protected(h.Missions.Get))
 	mux.Handle("GET /api/v1/missions/{missionID}/dashboard", protected(h.Missions.Dashboard))
+	mux.Handle("GET /api/v1/missions/{missionID}/gameplay-status", protected(h.Missions.GameplayStatus))
+	mux.Handle("POST /api/v1/missions/{missionID}/actions/preview", protected(h.Missions.PreviewAction))
+	mux.Handle("POST /api/v1/missions/{missionID}/reports", protected(h.Reports.Submit))
+	mux.Handle("GET /api/v1/missions/{missionID}/reports", protected(h.Reports.List))
+	mux.Handle("POST /api/v1/missions/{missionID}/art/board/generate", protected(h.VisualAsset.GenerateBoard, agentLimit))
 	mux.Handle("GET /api/v1/missions/{missionID}/completion-check", protected(h.MissionComplete.Check))
 	mux.Handle("POST /api/v1/missions/{missionID}/complete", protected(h.MissionComplete.Complete, agentLimit))
 	mux.Handle("GET /api/v1/missions/{missionID}/result", protected(h.MissionComplete.Result))

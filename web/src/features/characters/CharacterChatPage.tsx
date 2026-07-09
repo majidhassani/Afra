@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, SendHorizonal, ImagePlus } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
 import { useLanguageGuard } from "@/shared/i18n/languageGuard";
+import { announceTimeUpdate } from "@/features/game/gameEvents";
 import { charactersApi, walletApi } from "@/shared/api/endpoints";
 import { errorKey } from "@/shared/api/client";
 import { ErrorState, SkeletonRows } from "@/shared/ui/states";
@@ -111,7 +112,10 @@ export function CharacterChatPage() {
           result,
         },
       ]);
+      // Talking costs mission time; the interview may also advance a stage.
+      announceTimeUpdate(result.time_update);
       void queryClient.invalidateQueries({ queryKey: ["wallet"] });
+      void queryClient.invalidateQueries({ queryKey: ["gameplay-status", missionId] });
       void queryClient.invalidateQueries({
         queryKey: ["mission", missionId, "character", characterId],
       });

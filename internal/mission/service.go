@@ -14,12 +14,15 @@ import (
 	"casemind/internal/interaction"
 	"casemind/internal/missionevent"
 	"casemind/internal/wallet"
+	"casemind/internal/worldbible"
 	apperrors "casemind/pkg/errors"
 )
 
 // ProfileCounter is the slice of the player profile module this service uses.
+// ApplyMissionResult with completed=false is a pure XP grant (stage rewards).
 type ProfileCounter interface {
 	IncrementTotalMissions(ctx context.Context, userID uuid.UUID) error
+	ApplyMissionResult(ctx context.Context, userID uuid.UUID, completed bool, xpDelta int) error
 }
 
 type Service struct {
@@ -29,9 +32,12 @@ type Service struct {
 	locations    gamemap.Repository
 	interactions interaction.Repository
 	events       missionevent.Repository
+	bibles       worldbible.Repository
 	generator    *Generator
 	wallet       *wallet.Guard
+	walletSvc    *wallet.Service
 	profiles     ProfileCounter
+	recorder     *missionevent.Recorder
 	log          *slog.Logger
 }
 
@@ -42,15 +48,18 @@ func NewService(
 	locations gamemap.Repository,
 	interactions interaction.Repository,
 	events missionevent.Repository,
+	bibles worldbible.Repository,
 	generator *Generator,
 	walletGuard *wallet.Guard,
+	walletSvc *wallet.Service,
 	profiles ProfileCounter,
+	recorder *missionevent.Recorder,
 	log *slog.Logger,
 ) *Service {
 	return &Service{
 		repo: repo, characters: characters, clues: clues, locations: locations,
-		interactions: interactions, events: events, generator: generator,
-		wallet: walletGuard, profiles: profiles, log: log,
+		interactions: interactions, events: events, bibles: bibles, generator: generator,
+		wallet: walletGuard, walletSvc: walletSvc, profiles: profiles, recorder: recorder, log: log,
 	}
 }
 

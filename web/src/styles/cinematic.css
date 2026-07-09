@@ -171,9 +171,25 @@
   .env-atmosphere { animation: none !important; }
 }
 /* Keep app content above the backdrop + atmosphere + weather layers. */
-.shell > *:not(.env-backdrop):not(.env-atmosphere):not(.env-weather) {
+.shell > *:not(.env-backdrop):not(.env-atmosphere):not(.env-weather):not(.board-backdrop) {
   position: relative;
   z-index: 1;
+}
+
+/* AI-generated scenario board art: layered between the biome wash and the
+   atmosphere so weather/night modifiers still read on top of it. */
+.board-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.5;
+  filter: saturate(0.9);
+  transition: opacity 900ms var(--av-ease-out, ease);
+  -webkit-mask-image: radial-gradient(120% 100% at 50% 0%, black 40%, transparent 100%);
+  mask-image: radial-gradient(120% 100% at 50% 0%, black 40%, transparent 100%);
 }
 
 /* ============================================================

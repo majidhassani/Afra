@@ -16,6 +16,7 @@ import (
 	"casemind/internal/avatar"
 	"casemind/internal/character"
 	"casemind/internal/clue"
+	"casemind/internal/llm"
 )
 
 // Asset statuses shared by characters and clues.
@@ -36,15 +37,17 @@ type Ownership interface {
 }
 
 type Service struct {
-	chars character.Repository
-	clues clue.Repository
-	gen   Generator
-	owner Ownership
-	log   *slog.Logger
+	chars    character.Repository
+	clues    clue.Repository
+	gen      Generator
+	owner    Ownership
+	boards   BoardGateway
+	imageAPI llm.ImageGenerator // nil when no image API is configured
+	log      *slog.Logger
 }
 
-func NewService(chars character.Repository, clues clue.Repository, gen Generator, owner Ownership, log *slog.Logger) *Service {
-	return &Service{chars: chars, clues: clues, gen: gen, owner: owner, log: log}
+func NewService(chars character.Repository, clues clue.Repository, gen Generator, owner Ownership, boards BoardGateway, imageAPI llm.ImageGenerator, log *slog.Logger) *Service {
+	return &Service{chars: chars, clues: clues, gen: gen, owner: owner, boards: boards, imageAPI: imageAPI, log: log}
 }
 
 // CharacterAvatar generates (or regenerates) a character's avatar and persists

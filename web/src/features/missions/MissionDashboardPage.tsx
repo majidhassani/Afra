@@ -34,11 +34,22 @@ import {
   LoadingScreen,
   WalletBalance,
 } from "@/shared/ui/game";
+import {
+  HudPanel,
+  MissionMapPanel,
+  ProgressRing,
+  ResourceChip,
+  StatusChip,
+  TacticalButton,
+  TimelineRail,
+} from "@/shared/ui/avds";
 import { GuidancePanel } from "@/features/guidance/GuidancePanel";
 import { TimelineLog } from "./TimelineLog";
 import { NextActionCard } from "./NextActionCard";
 import { MissionResultModal } from "./MissionResultModal";
 import { useMissionDashboard } from "./missionQueries";
+import { StageTracker } from "@/features/game/StageTracker";
+import { useGameplayStatus } from "@/features/game/useGameplayStatus";
 import { deriveHud } from "./hud";
 import { toast } from "@/shared/ui/toast";
 import type { MissionResult, Objective } from "@/shared/types/api";
@@ -50,6 +61,7 @@ export function MissionDashboardPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const dashboard = useMissionDashboard(missionId);
+  const gameplay = useGameplayStatus(missionId);
   const [resultModal, setResultModal] = useState<MissionResult | null>(null);
 
   const events = useQuery({
@@ -178,53 +190,48 @@ export function MissionDashboardPage() {
 
   return (
     <div className="page">
-      {/* ---- Cinematic Mission Command Center (environment-themed HUD) ---- */}
-      <section className="cmd-hero frame" aria-label={mission.title}>
-        <span className="frame-brackets" aria-hidden />
-
-        {/* Top resource strip */}
-        <div className="cmd-topbar">
-          <span className="cmd-res coin">
-            <Coins size={14} className="r-ico" aria-hidden />
-            <WalletBalance balance={data.wallet_balance} />
-          </span>
-          <span className="cmd-res">
-            <Clock3 size={14} className="r-ico" aria-hidden />
-            <span className="mono-num">{mission.current_time}</span>
-          </span>
-          <DifficultyBadge difficulty={mission.difficulty} />
+      <section className="av-active-hud" aria-label={mission.title}>
+        <div className="av-active-resources">
+          <ResourceChip
+            icon={<Coins size={14} aria-hidden />}
+            value={<WalletBalance balance={data.wallet_balance} />}
+            tone="gold"
+          />
+          <ResourceChip
+            icon={<Clock3 size={14} aria-hidden />}
+            value={data.time_remaining || mission.current_time}
+            tone={riskBand === "high" ? "red" : "green"}
+          />
           <MissionStatusBadge status={mission.status} />
-          <span className="cmd-res-spacer" />
+          <DifficultyBadge difficulty={mission.difficulty} />
           {mission.region && (
-            <span className="cmd-region">
-              <MapPin size={14} aria-hidden />
+            <StatusChip tone="cyan">
+              <MapPin size={12} aria-hidden />
               {mission.region}
-            </span>
+            </StatusChip>
           )}
         </div>
 
-        {/* Center: mission briefing panel + tactical rail */}
-        <div className="cmd-body">
-          <div className="cmd-mission">
-            <div className="cmd-eyebrow">
-              {t(`type.${mission.type}` as TranslationKey)}
-            </div>
-            <h1 className="cmd-title">{mission.title}</h1>
-            <div className="cmd-objective" style={{ unicodeBidi: "plaintext" }}>
+        <div className="av-active-grid">
+          <HudPanel
+            className="av-active-brief"
+            eyebrow={t(`type.${mission.type}` as TranslationKey)}
+            title={mission.title}
+          >
+            <div className="av-active-objective" style={{ unicodeBidi: "plaintext" }}>
               {primaryObjective ? primaryObjective.title : t("hud.noObjective")}
             </div>
-
-            <div className="cmd-meters">
-              <div className="cmd-meter">
-                <div className="m-label">
-                  <span>{t("hud.progress")}</span>
+            <div className="av-active-meters">
+              <div>
+                <div className="spread">
+                  <span className="av-eyebrow">{t("hud.progress")}</span>
                   <span className="mono-num">{progress}%</span>
                 </div>
                 <ObjectiveProgress value={progress} />
               </div>
-              <div className="cmd-meter">
-                <div className="m-label">
-                  <span>{t("hud.risk")}</span>
+              <div>
+                <div className="spread">
+                  <span className="av-eyebrow">{t("hud.risk")}</span>
                   <span
                     className="mono-num"
                     style={{
@@ -242,74 +249,72 @@ export function MissionDashboardPage() {
                 <RiskMeter value={risk} />
               </div>
             </div>
-
-            <div className={`cmd-timer${riskBand === "high" ? " danger" : ""}`}>
-              <Clock3 size={15} aria-hidden />
-              {data.time_remaining || mission.current_time}
+            <div className="av-active-stats">
+              <StatusChip tone="green">{t("mission.clues")}: {clues.length}</StatusChip>
+              <StatusChip tone="cyan">{t("mission.characters")}: {characters.length}</StatusChip>
+              <StatusChip tone="gold">{t("mission.locations")}: {locations.length}</StatusChip>
             </div>
-          </div>
+          </HudPanel>
 
-          {/* Tactical rail — quick jump to the mission surfaces */}
-          <nav className="cmd-rail" aria-label={t("nav.mission")}>
-            <Link to={`/app/missions/${mission.id}/map`} title={t("nav.map")}>
-              <Map size={19} aria-hidden />
-            </Link>
-            <Link
-              to={`/app/missions/${mission.id}/characters`}
-              title={t("nav.characters")}
-            >
-              <Users size={19} aria-hidden />
-              {characters.length > 0 && (
-                <span className="rail-badge">{characters.length}</span>
-              )}
-            </Link>
-            <Link
-              to={`/app/missions/${mission.id}/clues`}
-              title={t("nav.clues")}
-            >
-              <Search size={19} aria-hidden />
-              {clues.length > 0 && (
-                <span className="rail-badge">{clues.length}</span>
-              )}
-            </Link>
-            <Link
-              to={`/app/missions/${mission.id}/ai`}
-              title={t("nav.ai")}
-            >
-              <Sparkles size={19} aria-hidden />
-            </Link>
-            <Link
-              to={`/app/missions/${mission.id}/timeline`}
-              title={t("nav.timeline")}
-            >
-              <Radio size={19} aria-hidden />
-            </Link>
-          </nav>
+          <MissionMapPanel
+            title={mission.region || t("map.title")}
+            subtitle={recommendedLocation?.name || primaryObjective?.title}
+            markers={Math.max(3, Math.min(5, locations.length || 5))}
+          />
+
+          <HudPanel className="av-active-timeline" eyebrow={t("mission.currentTime")} title={mission.current_time}>
+            <div className="av-stage-code">
+              <ProgressRing value={progress} />
+              <div>
+                <span className="av-eyebrow">{t("game.stages")}</span>
+                <strong>{gameplay.data?.current_stage?.title ?? t("nav.overview")}</strong>
+              </div>
+            </div>
+            <TimelineRail
+              items={(timeline.data?.items ?? []).slice(-4).reverse().map((item) => ({
+                time: item.mission_time,
+                title: item.title,
+                body: item.description,
+                tone:
+                  item.importance === "high"
+                    ? "red"
+                    : item.importance === "medium"
+                      ? "gold"
+                      : "green",
+              }))}
+            />
+          </HudPanel>
         </div>
 
-        {/* Bottom action bar */}
-        <div className="cmd-actions">
-          <Link to={`/app/missions/${mission.id}/map`} className="cmd-action primary">
+        <div className="av-active-actions">
+          <TacticalButton to={`/app/missions/${mission.id}/map`}>
             <Map size={16} aria-hidden />
             {t("hud.openMap")}
-          </Link>
-          <Link to={`/app/missions/${mission.id}/ai`} className="cmd-action">
+          </TacticalButton>
+          <TacticalButton to={`/app/missions/${mission.id}/ai`} variant="ghost">
             <Sparkles size={16} aria-hidden />
             {t("guidance.title")}
-          </Link>
-          <Link to={`/app/missions/${mission.id}/time`} className="cmd-action">
+          </TacticalButton>
+          <TacticalButton to={`/app/missions/${mission.id}/clues`} variant="ghost">
+            <Search size={16} aria-hidden />
+            {t("nav.clues")}
+          </TacticalButton>
+          <TacticalButton to={`/app/missions/${mission.id}/characters`} variant="ghost">
+            <Users size={16} aria-hidden />
+            {t("nav.characters")}
+          </TacticalButton>
+          <TacticalButton to={`/app/missions/${mission.id}/time`} variant="ghost">
             <Clock3 size={16} aria-hidden />
             {t("time.title")}
-          </Link>
-          <button
-            className="cmd-action"
+          </TacticalButton>
+          <TacticalButton
+            variant="danger"
             onClick={() => archive.mutate()}
             disabled={archive.isPending}
-            title={t("missions.archive")}
           >
             <Archive size={16} aria-hidden />
             {t("missions.archive")}
-          </button>
+          </TacticalButton>
         </div>
       </section>
 
@@ -348,6 +353,11 @@ export function MissionDashboardPage() {
             </GameButton>
           </Link>
         </section>
+      )}
+
+      {/* The visible game-level structure: stages, requirements, rewards. */}
+      {gameplay.data && gameplay.data.stages.length > 0 && (
+        <StageTracker stages={gameplay.data.stages} />
       )}
 
       <div className="dash-grid">

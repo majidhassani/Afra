@@ -2,8 +2,15 @@ import { apiRequest } from "./client";
 import { env } from "@/shared/config/env";
 import { withLocale } from "@/shared/i18n/locale";
 import type {
+  ActionPreview,
   ActionResult,
   AuthResponse,
+  BoardImage,
+  BoardType,
+  GameplayStatus,
+  MissionReport,
+  ReportResult,
+  ReportType,
   AvatarOptions,
   AvatarSpec,
   ChatResult,
@@ -245,6 +252,42 @@ export const cluesApi = {
       `${V1}/missions/${missionId}/clues/${clueId}/confirm`,
       { method: "POST" },
     ),
+};
+
+export const gameplayApi = {
+  status: (missionId: string) =>
+    apiRequest<GameplayStatus>(`${V1}/missions/${missionId}/gameplay-status`),
+  previewAction: (missionId: string, action: string, targetId?: string) =>
+    apiRequest<ActionPreview>(`${V1}/missions/${missionId}/actions/preview`, {
+      method: "POST",
+      body: { action, ...(targetId ? { target_id: targetId } : {}) },
+    }),
+  generateBoard: (missionId: string, boardType: BoardType) =>
+    apiRequest<{ board: BoardImage & { board_type: string } }>(
+      `${V1}/missions/${missionId}/art/board/generate`,
+      { method: "POST", body: { board_type: boardType } },
+    ).then((r) => r.board),
+};
+
+export const reportsApi = {
+  list: (missionId: string, limit = 50) =>
+    apiRequest<{ reports: MissionReport[] }>(
+      `${V1}/missions/${missionId}/reports?limit=${limit}`,
+    ).then((r) => r.reports),
+  submit: (
+    missionId: string,
+    input: {
+      type: ReportType;
+      title?: string;
+      summary: string;
+      linked_clue_ids?: string[];
+      suspect_character_id?: string;
+    },
+  ) =>
+    apiRequest<ReportResult>(`${V1}/missions/${missionId}/reports`, {
+      method: "POST",
+      body: withLocale({ ...input }),
+    }),
 };
 
 export const progressionApi = {

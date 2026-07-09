@@ -43,6 +43,9 @@ func (g *fakeGateway) Finish(_ context.Context, _, _ uuid.UUID, result json.RawM
 	g.resultJSON = result
 	return nil
 }
+func (g *fakeGateway) EvaluateStages(_ context.Context, _, _ uuid.UUID) (*mission.StageUpdate, error) {
+	return &mission.StageUpdate{}, nil
+}
 func (g *fakeGateway) StoredResult(_ context.Context, _, _ uuid.UUID) (json.RawMessage, string, error) {
 	if len(g.resultJSON) == 0 {
 		return nil, "active", nil

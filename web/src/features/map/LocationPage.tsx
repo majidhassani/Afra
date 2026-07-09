@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -19,6 +19,8 @@ import { CostBadge } from "@/shared/ui/badges";
 import { Analyzing } from "@/shared/ui/game";
 import { Avatar } from "@/shared/ui/Avatar";
 import { GuidancePanel } from "@/features/guidance/GuidancePanel";
+import { ActionTimePreview } from "@/features/game/ActionTimePreview";
+import { announceTimeUpdate } from "@/features/game/gameEvents";
 import type { ActionResult } from "@/shared/types/api";
 import type { TranslationKey } from "@/shared/i18n/en";
 
@@ -48,6 +50,7 @@ export function LocationPage() {
   const guardLanguage = useLanguageGuard();
   const queryClient = useQueryClient();
   const [lastResult, setLastResult] = useState<ActionResult | null>(null);
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
 
   const detail = useQuery({
     queryKey: ["mission", missionId, "location", locationId],
@@ -55,12 +58,21 @@ export function LocationPage() {
     enabled: !!missionId && !!locationId,
   });
 
+  // First visits cost travel time — surface it once when the detail loads.
+  const visitTime = detail.data?.time_update;
+  useEffect(() => {
+    if (visitTime) announceTimeUpdate(visitTime);
+  }, [visitTime]);
+
   const runAction = useMutation({
     mutationFn: (action: string) => mapApi.runAction(missionId!, locationId!, action),
     onSuccess: (result) => {
       guardLanguage(result.narrative);
       setLastResult(result);
+      announceTimeUpdate(result.time_update);
       void queryClient.invalidateQueries({ queryKey: ["mission", missionId] });
+      void queryClient.invalidateQueries({ queryKey: ["gameplay-status", missionId] });
+      void queryClient.invalidateQueries({ queryKey: ["timeline", missionId] });
       void queryClient.invalidateQueries({ queryKey: ["wallet"] });
     },
   });
@@ -123,7 +135,7 @@ export function LocationPage() {
                     key={action}
                     className="game-btn game-btn-ghost sm"
                     disabled={runAction.isPending}
-                    onClick={() => runAction.mutate(action)}
+                    onClick={() => setPendingAction(action)}
                   >
                     <Icon size={14} aria-hidden />
                     {actionLabel(t, action)}
@@ -131,6 +143,19 @@ export function LocationPage() {
                 );
               })}
             </div>
+            {/* Time-cost confirmation: every action shows its price first. */}
+            {pendingAction && (
+              <ActionTimePreview
+                missionId={missionId!}
+                action="location_action"
+                targetId={locationId}
+                onConfirm={() => {
+                  runAction.mutate(pendingAction);
+                  setPendingAction(null);
+                }}
+                onCancel={() => setPendingAction(null)}
+              />
+            )}
             {runAction.isPending && <Analyzing label={t("loading.analyzing")} />}
             {runAction.isError && (
               <p className="field-error" role="alert" style={{ marginTop: 12 }}>

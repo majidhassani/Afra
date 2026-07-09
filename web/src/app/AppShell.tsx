@@ -1,5 +1,6 @@
-import { NavLink, Outlet, useMatch, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
+import { Outlet, useMatch, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard,
   Rocket,
@@ -15,11 +16,12 @@ import {
   Radio,
   Clock3,
   Sparkles,
+  FileText,
   LogOut,
 } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
 import { useAuthStore, getRefreshToken } from "@/features/auth/authStore";
-import { authApi, missionsApi } from "@/shared/api/endpoints";
+import { authApi, gameplayApi } from "@/shared/api/endpoints";
 import {
   useEnvironmentTheme,
   environmentFor,
@@ -27,8 +29,13 @@ import {
 } from "@/shared/theme/environment";
 import { LanguageSwitcher } from "@/shared/ui/LanguageSwitcher";
 import { WalletChip, HealthIndicator } from "@/shared/ui/badges";
+import { GameBottomNav, GameTopBar, type GameNavItem } from "@/shared/ui/avds";
 import { useKeyboardInset } from "@/shared/ui/useKeyboardInset";
 import { env } from "@/shared/config/env";
+import { useGameplayStatus } from "@/features/game/useGameplayStatus";
+import { MissionHUD } from "@/features/game/MissionHUD";
+import { GameEffectsLayer } from "@/features/game/GameEffectsLayer";
+import { ScrollableTimeline } from "@/features/game/ScrollableTimeline";
 
 export function AppShell() {
   const { t } = useI18n();
@@ -42,19 +49,36 @@ export function AppShell() {
       ? undefined
       : missionMatch?.params.missionId;
 
-  // Tint the whole shell (backdrop + accents) to the active mission's
-  // environment, so every mission sub-page shares the biome look. Reuses the
-  // cached dashboard query so it costs no extra request.
-  const missionEnv = useQuery({
-    queryKey: ["mission", missionId],
-    queryFn: () => missionsApi.dashboard(missionId!),
-    enabled: !!missionId,
-  });
+  // The gameplay-status query is the shell's single source of truth: it
+  // themes the backdrop, feeds the always-on HUD, and carries the board art.
+  const gameplay = useGameplayStatus(missionId);
   useEnvironmentTheme(
-    missionId && missionEnv.data ? environmentFor(missionEnv.data.mission) : null,
+    missionId && gameplay.data ? environmentFor(gameplay.data.mission) : null,
   );
   // Living world: layer weather / night / danger over the biome theme.
-  useWorldModifiers(missionId ? missionEnv.data?.world_state : null);
+  useWorldModifiers(missionId ? gameplay.data?.world_state : null);
+
+  // Scenario board art: use the AI-generated mission board as the scene
+  // backdrop; generate it once (best effort) when an active mission has none.
+  const qc = useQueryClient();
+  const boardRequested = useRef<string | null>(null);
+  const board = gameplay.data?.board_art?.mission_board_background;
+  const missionActive =
+    gameplay.data?.mission.status === "active" ||
+    gameplay.data?.mission.status === "ready";
+  useEffect(() => {
+    if (!missionId || !gameplay.data || !missionActive) return;
+    if (board?.url || boardRequested.current === missionId) return;
+    boardRequested.current = missionId;
+    gameplayApi
+      .generateBoard(missionId, "mission_board_background")
+      .then(() =>
+        qc.invalidateQueries({ queryKey: ["gameplay-status", missionId] }),
+      )
+      .catch(() => {
+        // Board art is a flourish — the themed gradient backdrop remains.
+      });
+  }, [missionId, gameplay.data, board?.url, missionActive, qc]);
 
   const logout = async () => {
     const refreshToken = getRefreshToken();
@@ -67,20 +91,13 @@ export function AppShell() {
     navigate("/login");
   };
 
-  interface NavEntry {
-    to: string;
-    icon: typeof Map;
-    label: string;
-    end?: boolean;
-  }
-
-  const mainNav: NavEntry[] = [
+  const mainNav: GameNavItem[] = [
     { to: "/app/dashboard", icon: LayoutDashboard, label: t("nav.dashboard") },
     { to: "/app/missions", icon: Rocket, label: t("nav.missions"), end: false },
     { to: "/app/wallet", icon: Wallet, label: t("nav.wallet") },
   ];
 
-  const missionNav: NavEntry[] = missionId
+  const missionNav: GameNavItem[] = missionId
     ? [
         { to: `/app/missions/${missionId}`, icon: Rocket, label: t("nav.overview") },
         { to: `/app/missions/${missionId}/map`, icon: Map, label: t("nav.map") },
@@ -107,6 +124,11 @@ export function AppShell() {
           label: t("nav.journal"),
         },
         {
+          to: `/app/missions/${missionId}/report`,
+          icon: FileText,
+          label: t("nav.report"),
+        },
+        {
           to: `/app/missions/${missionId}/timeline`,
           icon: Radio,
           label: t("nav.timeline"),
@@ -119,7 +141,7 @@ export function AppShell() {
       ]
     : [];
 
-  const accountNav: NavEntry[] = [
+  const accountNav: GameNavItem[] = [
     { to: "/app/profile", icon: UserRound, label: t("nav.profile") },
     { to: "/app/history", icon: History, label: t("nav.history") },
     { to: "/app/settings", icon: Settings, label: t("nav.settings") },
@@ -128,104 +150,77 @@ export function AppShell() {
       : []),
   ];
 
-  // Mobile bottom nav follows the game layout: Mission | Map | AI | Clues |
-  // Profile in a mission; the lobby essentials otherwise. Wallet stays in HUD.
-  const mobileNav = missionId
+  const tacticalNav: GameNavItem[] = missionId
     ? [
-        missionNav[0], // Mission
-        missionNav[1], // Map
-        missionNav[2], // AI
-        missionNav[4], // Clues
-        accountNav[0], // Profile
-      ]
-    : [...mainNav, accountNav[0], accountNav[1]];
+        missionNav[0],
+        missionNav[1],
+        missionNav[2],
+        missionNav[3],
+        missionNav[4],
+        missionNav[6],
+        missionNav[7],
+        accountNav[0],
+        mainNav[2],
+      ].filter((item): item is GameNavItem => Boolean(item))
+    : [...mainNav, accountNav[0], accountNav[1], accountNav[2]];
 
   return (
     <div className="shell">
       {/* Environment-tinted cinematic backdrop + ambient + weather layers. */}
       <div className="env-backdrop" aria-hidden />
+      {/* AI-generated scenario board art layered over the gradient backdrop. */}
+      {board?.url && (
+        <div
+          className="board-backdrop"
+          style={{ backgroundImage: `url(${board.url})` }}
+          aria-hidden
+        />
+      )}
       <div className="env-atmosphere" aria-hidden />
       <div className="env-weather" aria-hidden />
-      <nav className="sidenav" aria-label="Main">
-        <div className="sidenav-brand">{t("common.appName")}</div>
-        {mainNav.map((item) => (
-          <NavItem key={item.to} {...item} />
-        ))}
-        {missionNav.length > 0 && (
+      <GameTopBar
+        brand={t("common.appName")}
+        userLabel={user?.display_name}
+        resources={
           <>
-            <div className="sidenav-section">{t("nav.mission")}</div>
-            {missionNav.map((item) => (
-              <NavItem key={item.to} {...item} />
-            ))}
+            <HealthIndicator />
+            <WalletChip />
+            {env.enableMocks && (
+              <span className="chip chip-rare">{t("common.mockMode")}</span>
+            )}
           </>
-        )}
-        <div className="sidenav-section">{t("nav.account")}</div>
-        {accountNav.map((item) => (
-          <NavItem key={item.to} {...item} />
-        ))}
-        <div style={{ flex: 1 }} />
-        <button className="navlink" onClick={logout}>
-          <LogOut size={16} aria-hidden />
-          {t("nav.logout")}
-        </button>
-      </nav>
-
-      <header className="topbar">
-        <div className="row" style={{ minWidth: 0 }}>
-          <span className="muted" style={{ fontSize: 13 }}>
-            {user?.display_name}
-          </span>
-          {env.enableMocks && (
-            <span className="chip chip-rare">{t("common.mockMode")}</span>
-          )}
-        </div>
-        <div className="row">
-          <HealthIndicator />
-          <WalletChip />
-          <LanguageSwitcher />
-        </div>
-      </header>
+        }
+        actions={
+          <>
+            <LanguageSwitcher />
+            <button className="navlink" onClick={logout} title={t("nav.logout")}>
+              <LogOut size={16} aria-hidden />
+              <span>{t("nav.logout")}</span>
+            </button>
+          </>
+        }
+      />
 
       <main className="main">
+        {/* Always-on game HUD: stage, progress, clues, suspect, time, report. */}
+        {missionId && gameplay.data && (
+          <MissionHUD missionId={missionId} status={gameplay.data} />
+        )}
         <Outlet />
       </main>
 
-      <nav className="mobilenav" aria-label="Mobile">
-        {mobileNav.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.end !== false}
-            className={({ isActive }) => (isActive ? "active" : "")}
-          >
-            <item.icon size={18} aria-hidden />
-            <span>{item.label}</span>
-          </NavLink>
-        ))}
-      </nav>
-    </div>
-  );
-}
+      {/* Unity-style popups (rewards, stage banners, suspect reveal). */}
+      <GameEffectsLayer />
 
-function NavItem({
-  to,
-  icon: Icon,
-  label,
-  end,
-}: {
-  to: string;
-  icon: typeof Map;
-  label: string;
-  end?: boolean;
-}) {
-  return (
-    <NavLink
-      to={to}
-      end={end !== false}
-      className={({ isActive }) => `navlink${isActive ? " active" : ""}`}
-    >
-      <Icon size={16} aria-hidden />
-      {label}
-    </NavLink>
+      {/* The everywhere-timeline drawer. */}
+      {missionId && (
+        <ScrollableTimeline
+          missionId={missionId}
+          currentTime={gameplay.data?.current_time ?? gameplay.data?.mission.current_time}
+        />
+      )}
+
+      <GameBottomNav items={tacticalNav} />
+    </div>
   );
 }

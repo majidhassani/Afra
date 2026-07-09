@@ -9,6 +9,7 @@ import (
 
 	"casemind/internal/clue"
 	"casemind/internal/gamemap"
+	"casemind/internal/mission"
 	"casemind/internal/missionevent"
 	"casemind/internal/notification"
 )
@@ -103,6 +104,10 @@ func (r *fakeLocRepo) CountVisited(context.Context, uuid.UUID) (int, int, error)
 type fakeOwner struct{}
 
 func (fakeOwner) EnsureOwnedActive(context.Context, uuid.UUID, uuid.UUID) error { return nil }
+
+func (fakeOwner) EvaluateStages(context.Context, uuid.UUID, uuid.UUID) (*mission.StageUpdate, error) {
+	return &mission.StageUpdate{}, nil
+}
 
 func newTestService(clues *fakeClueRepo, locs *fakeLocRepo) *Service {
 	rec := missionevent.NewRecorder(&nullEventRepo{}, notification.NewBus(), slog.Default())

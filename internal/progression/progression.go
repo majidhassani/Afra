@@ -18,23 +18,27 @@ import (
 
 	"casemind/internal/clue"
 	"casemind/internal/gamemap"
+	"casemind/internal/mission"
 	"casemind/internal/missionevent"
 	apperrors "casemind/pkg/errors"
 	"casemind/pkg/validator"
 )
 
-// Ownership guards mission access. Implemented by mission.Service.
+// Ownership guards mission access and exposes the stage engine so a confirm
+// can advance the mission's stages. Implemented by mission.Service.
 type Ownership interface {
 	EnsureOwnedActive(ctx context.Context, userID, missionID uuid.UUID) error
+	EvaluateStages(ctx context.Context, userID, missionID uuid.UUID) (*mission.StageUpdate, error)
 }
 
 // Envelope is the uniform result of every state-changing progression action.
 type Envelope struct {
-	Message                string           `json:"message"`
-	StateChanges           []StateChange    `json:"state_changes"`
-	TimelineEvents         []string         `json:"timeline_events"`
-	UnlockedLocations      []UnlockedLoc    `json:"unlocked_locations"`
-	NextRecommendedActions []RecommendedAct `json:"next_recommended_actions"`
+	Message                string               `json:"message"`
+	StateChanges           []StateChange        `json:"state_changes"`
+	TimelineEvents         []string             `json:"timeline_events"`
+	UnlockedLocations      []UnlockedLoc        `json:"unlocked_locations"`
+	NextRecommendedActions []RecommendedAct     `json:"next_recommended_actions"`
+	StageUpdate            *mission.StageUpdate `json:"stage_update,omitempty"`
 }
 
 type StateChange struct {
@@ -130,6 +134,16 @@ func (s *Service) ConfirmEvidence(ctx context.Context, userID, missionID, clueID
 
 	// Unlock engine: confirming a piece of evidence opens the next locked spot.
 	s.unlockNext(ctx, missionID, "Unlocked after confirming evidence: "+c.Title, env)
+
+	// Stage engine: a confirmation may complete the active stage.
+	if su, err := s.owner.EvaluateStages(ctx, userID, missionID); err == nil {
+		if su.Changed() {
+			env.StageUpdate = su
+			env.TimelineEvents = append(env.TimelineEvents, su.TimelineEvents...)
+		}
+	} else {
+		s.log.Error("confirm stage evaluation", "error", err)
+	}
 
 	s.appendNextActions(ctx, missionID, env)
 	env.Message = "Evidence confirmed."

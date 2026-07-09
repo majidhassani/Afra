@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/google/uuid"
+
 	"casemind/internal/httpx"
 	"casemind/internal/notification"
 	apperrors "casemind/pkg/errors"
@@ -91,6 +93,68 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	response.JSON(w, http.StatusOK, dashboard)
+}
+
+// GameplayStatus serves the single HUD payload (stages, clue goal, suspect
+// status, next reward, report CTA, board art) with a lazy stage evaluation.
+func (h *Handler) GameplayStatus(w http.ResponseWriter, r *http.Request) {
+	userID, ok := httpx.RequestUser(w, r)
+	if !ok {
+		return
+	}
+	missionID, ok := httpx.PathUUID(w, r, "missionID")
+	if !ok {
+		return
+	}
+	status, err := h.svc.GameplayStatus(r.Context(), userID, missionID)
+	if err != nil {
+		response.Err(w, err)
+		return
+	}
+	response.JSON(w, http.StatusOK, status)
+}
+
+type previewActionRequest struct {
+	Action   string `json:"action"`
+	TargetID string `json:"target_id"`
+}
+
+// PreviewAction answers "what will this action cost" (time, coins, risk)
+// without changing anything.
+func (h *Handler) PreviewAction(w http.ResponseWriter, r *http.Request) {
+	userID, ok := httpx.RequestUser(w, r)
+	if !ok {
+		return
+	}
+	missionID, ok := httpx.PathUUID(w, r, "missionID")
+	if !ok {
+		return
+	}
+	var req previewActionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.Err(w, apperrors.Invalid("invalid_body", "invalid JSON body"))
+		return
+	}
+	if TimeCostOf(req.Action) == 0 {
+		response.Err(w, apperrors.Invalid("invalid_action",
+			"action must be one of: travel, location_action, character_chat, clue_inspect, report_submit"))
+		return
+	}
+	var targetID *uuid.UUID
+	if req.TargetID != "" {
+		id, err := uuid.Parse(req.TargetID)
+		if err != nil {
+			response.Err(w, apperrors.Invalid("invalid_target", "target_id must be a UUID"))
+			return
+		}
+		targetID = &id
+	}
+	preview, err := h.svc.PreviewAction(r.Context(), userID, missionID, req.Action, targetID)
+	if err != nil {
+		response.Err(w, err)
+		return
+	}
+	response.JSON(w, http.StatusOK, preview)
 }
 
 func (h *Handler) Archive(w http.ResponseWriter, r *http.Request) {

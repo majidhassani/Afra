@@ -271,6 +271,8 @@ export interface LocationDetail {
   location: LocationEntity;
   characters: PublicCharacter[];
   discovered_clues: PublicClue[];
+  /** Set when this call was a first visit (travel costs mission time). */
+  time_update?: TimeUpdate | null;
 }
 
 export interface ActionResult {
@@ -278,6 +280,7 @@ export interface ActionResult {
   discovered_clues: PublicClue[];
   new_facts: string[];
   cost: Cost;
+  time_update?: TimeUpdate | null;
 }
 
 export interface ChatResult {
@@ -290,6 +293,7 @@ export interface ChatResult {
   unlocked_clues: PublicClue[];
   new_facts: string[];
   cost: Cost;
+  time_update?: TimeUpdate | null;
 }
 
 export interface ClueInspectResult {
@@ -297,6 +301,7 @@ export interface ClueInspectResult {
   new_facts: string[];
   clue: PublicClue;
   cost: Cost;
+  time_update?: TimeUpdate | null;
 }
 
 export interface ClueExplainResult {
@@ -431,6 +436,7 @@ export interface ProgressionEnvelope {
   timeline_events: string[];
   unlocked_locations: Array<{ id: string; name: string; reason: string }>;
   next_recommended_actions: Array<{ type: string; title: string }>;
+  stage_update?: StageUpdate | null;
 }
 
 export type HypothesisVerdict =
@@ -537,4 +543,147 @@ export interface GeneratedAvatar {
   mime: string;
   provider: string;
   style: string;
+}
+
+/* --- Playable mission: stages, reports, time costs, board art --- */
+
+export type StageStatus = "locked" | "active" | "completed";
+
+export type StageActionType =
+  | "visit_locations"
+  | "find_clues"
+  | "confirm_evidence"
+  | "interview_characters"
+  | "submit_report"
+  | "final_decision";
+
+export interface StageAction {
+  type: StageActionType;
+  report?: string;
+  count: number;
+  done: number;
+}
+
+export interface StageReward {
+  xp: number;
+  coins: number;
+  badge?: string;
+}
+
+export interface StageUnlock {
+  next_stage_id?: string;
+  unlock_location?: boolean;
+  reveal_suspect?: boolean;
+}
+
+export interface Stage {
+  id: string;
+  title: string;
+  description: string;
+  status: StageStatus;
+  progress: number;
+  required_clue_count: number;
+  found_clue_count: number;
+  required_actions: StageAction[];
+  reward: StageReward;
+  unlock_on_complete: StageUnlock;
+}
+
+/** Everything a stage-engine pass changed (drives popups/reveals). */
+export interface StageUpdate {
+  stages: Stage[];
+  current_stage?: Stage | null;
+  stage_index: number;
+  stage_count: number;
+  completed_stages: Stage[];
+  activated_stage?: Stage | null;
+  rewards: StageReward[];
+  unlocked_locations: Array<{ id: string; name: string; reason: string }>;
+  suspect_revealed: boolean;
+  suspect?: PublicCharacter | null;
+  timeline_events: string[];
+}
+
+/** Time passed + any world events the passage of time triggered. */
+export interface TimeUpdate {
+  new_time: string;
+  minutes_advanced: number;
+  triggered_events: Array<{
+    type: string;
+    title: string;
+    description?: string;
+  }>;
+}
+
+export interface BoardImage {
+  url: string;
+  status: string;
+  version: number;
+}
+
+export type BoardType =
+  | "mission_board_background"
+  | "map_board_background"
+  | "report_center_background"
+  | "debrief_background"
+  | "loading_screen";
+
+export type SuspectStatus = "hidden" | "identified";
+
+/** GET /missions/{id}/gameplay-status — the single payload the HUD lives on. */
+export interface GameplayStatus extends MissionDashboard {
+  stages: Stage[];
+  current_stage?: Stage | null;
+  stage_index: number;
+  stage_count: number;
+  clue_goal: number;
+  clues_found: number;
+  suspect_status: SuspectStatus;
+  suspect?: PublicCharacter | null;
+  next_reward?: StageReward | null;
+  report_pending: boolean;
+  pending_report_type?: string;
+  board_art: Record<string, BoardImage>;
+  stage_update?: StageUpdate | null;
+}
+
+export interface ActionPreview {
+  action: string;
+  time_cost_minutes: number;
+  coin_cost: number;
+  risk_note: string;
+  new_time_if_done: string;
+}
+
+export type ReportType =
+  | "clue_report"
+  | "suspect_report"
+  | "progress_report"
+  | "incident_report"
+  | "final_report";
+
+export type ReportVerdict = "accepted" | "rejected";
+
+export interface MissionReport {
+  id: string;
+  mission_id: string;
+  type: ReportType;
+  title: string;
+  summary: string;
+  linked_clue_ids: string[] | null;
+  suspect_character_id?: string | null;
+  verdict: ReportVerdict;
+  feedback: string;
+  created_at: string;
+}
+
+export interface ReportResult {
+  verdict: ReportVerdict;
+  feedback: string;
+  missing_requirements: string[];
+  report: MissionReport;
+  stage_update?: StageUpdate | null;
+  time_update?: TimeUpdate | null;
+  timeline_events: string[];
+  next_recommended_actions: Array<{ type: string; title: string }>;
 }

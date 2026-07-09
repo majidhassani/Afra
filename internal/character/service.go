@@ -26,6 +26,7 @@ type MissionGateway interface {
 	EnsureOwnedActive(ctx context.Context, userID, missionID uuid.UUID) error
 	SummaryOf(ctx context.Context, userID, missionID uuid.UUID) (string, error)
 	ClockOf(ctx context.Context, userID, missionID uuid.UUID) (string, error)
+	ApplyActionTime(ctx context.Context, missionID uuid.UUID, action string) (*missionevent.TimeUpdate, error)
 }
 
 // ProfileCounter is the slice of the player profile module this service uses.
@@ -111,6 +112,7 @@ type ChatResult struct {
 	UnlockedClues []clue.PublicClue `json:"unlocked_clues"`
 	NewFacts      []string          `json:"new_facts"`
 	Cost          wallet.Cost       `json:"cost"`
+	TimeUpdate    *missionevent.TimeUpdate `json:"time_update,omitempty"`
 }
 
 // Chat runs one paid dialogue exchange with an NPC through the DialogueAgent.
@@ -229,7 +231,16 @@ func (s *Service) Chat(ctx context.Context, userID, missionID, characterID uuid.
 		s.log.Error("profile counter", "error", err)
 	}
 
+	// Talking costs mission time and may trigger world events.
+	var timeUpdate *missionevent.TimeUpdate
+	if tu, err := s.guard.ApplyActionTime(ctx, missionID, "character_chat"); err == nil {
+		timeUpdate = tu
+	} else {
+		s.log.Error("chat time cost", "error", err)
+	}
+
 	return &ChatResult{
+		TimeUpdate:    timeUpdate,
 		Message:       out.Reply,
 		Emotion:       out.Emotion,
 		Mood:          mood,

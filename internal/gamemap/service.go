@@ -25,6 +25,9 @@ type MissionGateway interface {
 	SummaryOf(ctx context.Context, userID, missionID uuid.UUID) (string, error)
 	ClockOf(ctx context.Context, userID, missionID uuid.UUID) (string, error)
 	MapCenterOf(ctx context.Context, userID, missionID uuid.UUID) (lat, lng float64, zoom int, err error)
+	// ApplyActionTime charges the fixed mission-time cost of an action and
+	// returns the clock update plus any world events time triggered.
+	ApplyActionTime(ctx context.Context, missionID uuid.UUID, action string) (*missionevent.TimeUpdate, error)
 }
 
 // ProfileCounter is the slice of the player profile module this service uses.
@@ -141,6 +144,8 @@ type LocationDetail struct {
 	Location   *Location                   `json:"location"`
 	Characters []character.PublicCharacter `json:"characters"`
 	Clues      []clue.PublicClue           `json:"discovered_clues"`
+	// TimeUpdate is set when this call was a first visit (travel costs time).
+	TimeUpdate *missionevent.TimeUpdate `json:"time_update,omitempty"`
 }
 
 func (s *Service) Detail(ctx context.Context, userID, missionID, locationID uuid.UUID) (*LocationDetail, error) {
@@ -164,6 +169,7 @@ func (s *Service) Detail(ctx context.Context, userID, missionID, locationID uuid
 		return nil, err
 	}
 	// Visiting a location marks it visited (first tap on a discovered spot).
+	var timeUpdate *missionevent.TimeUpdate
 	if l.Status == StatusDiscovered {
 		if err := s.repo.UpdateStatus(ctx, locationID, StatusVisited); err != nil {
 			s.log.Error("mark location visited", "error", err)
@@ -175,17 +181,24 @@ func (s *Service) Detail(ctx context.Context, userID, missionID, locationID uuid
 			if err := s.profiles.AddCounters(ctx, userID, 0, 0, 1); err != nil {
 				s.log.Error("profile counter", "error", err)
 			}
+			// Traveling to a new spot costs mission time.
+			if tu, err := s.guard.ApplyActionTime(ctx, missionID, "travel"); err == nil {
+				timeUpdate = tu
+			} else {
+				s.log.Error("travel time cost", "error", err)
+			}
 		}
 	}
-	return &LocationDetail{Location: l, Characters: character.PublicList(characters), Clues: clue.PublicList(discovered)}, nil
+	return &LocationDetail{Location: l, Characters: character.PublicList(characters), Clues: clue.PublicList(discovered), TimeUpdate: timeUpdate}, nil
 }
 
 // ActionResult is the player-safe outcome of a paid location action.
 type ActionResult struct {
-	Narrative       string            `json:"narrative"`
-	DiscoveredClues []clue.PublicClue `json:"discovered_clues"`
-	NewFacts        []string          `json:"new_facts"`
-	Cost            wallet.Cost       `json:"cost"`
+	Narrative       string                   `json:"narrative"`
+	DiscoveredClues []clue.PublicClue        `json:"discovered_clues"`
+	NewFacts        []string                 `json:"new_facts"`
+	Cost            wallet.Cost              `json:"cost"`
+	TimeUpdate      *missionevent.TimeUpdate `json:"time_update,omitempty"`
 }
 
 // Action executes a location action (search/inspect/scan) through the
@@ -281,11 +294,20 @@ func (s *Service) Action(ctx context.Context, userID, missionID, locationID uuid
 		s.log.Error("profile counter", "error", err)
 	}
 
+	// Searching a location costs mission time and may trigger world events.
+	var timeUpdate *missionevent.TimeUpdate
+	if tu, err := s.guard.ApplyActionTime(ctx, missionID, "location_action"); err == nil {
+		timeUpdate = tu
+	} else {
+		s.log.Error("location action time cost", "error", err)
+	}
+
 	return &ActionResult{
 		Narrative:       out.Narrative,
 		DiscoveredClues: discovered,
 		NewFacts:        out.NewFacts,
 		Cost:            wallet.Cost{CoinsCharged: charged},
+		TimeUpdate:      timeUpdate,
 	}, nil
 }
 

@@ -326,6 +326,23 @@ func (g *Generator) generate(ctx context.Context, m *Mission, language string) (
 	m.Region = plan.Region
 	m.Objectives = mustJSONRaw(objectives, `[]`)
 
+	// Stage template: the visible game-level structure, scaled to the real
+	// generated content (clue counts, characters, locations).
+	nonGuideChars := 0
+	for _, gc := range chars.Characters {
+		if gc.Category != character.CategoryGuide {
+			nonGuideChars++
+		}
+	}
+	m.Stages = mustJSONRaw(DefaultStages(DefaultStageInputs{
+		MissionType:    m.Type,
+		Difficulty:     m.Difficulty,
+		TotalClues:     len(generatedClues.Clues),
+		ClueTarget:     MandatoryClueTarget(objectives),
+		TotalChars:     nonGuideChars,
+		TotalLocations: len(worldMap.Locations),
+	}), `[]`)
+
 	// Fold the player-safe win/loss hints and the mission deadline into the
 	// public state so the dashboard and completion checks can read them
 	// without touching the private World Bible.

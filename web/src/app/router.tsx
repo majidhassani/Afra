@@ -16,6 +16,7 @@ import { CluesPage } from "@/features/clues/CluesPage";
 import { GuidancePage } from "@/features/guidance/GuidancePage";
 import { ClueDetailPage } from "@/features/clues/ClueDetailPage";
 import { JournalPage } from "@/features/journal/JournalPage";
+import { ReportTerminalPage } from "@/features/reports/ReportTerminalPage";
 import { EventsPage } from "@/features/events/EventsPage";
 import { TimelinePage } from "@/features/missions/TimelinePage";
 import { TimePage } from "@/features/time/TimePage";
@@ -70,6 +71,7 @@ export const router = createBrowserRouter([
       { path: "missions/:missionId/ai", element: <GuidancePage /> },
       { path: "missions/:missionId/clues", element: <CluesPage /> },
       { path: "missions/:missionId/clues/:clueId", element: <ClueDetailPage /> },
+      { path: "missions/:missionId/report", element: <ReportTerminalPage /> },
       { path: "missions/:missionId/journal", element: <JournalPage /> },
       { path: "missions/:missionId/timeline", element: <TimelinePage /> },
       { path: "missions/:missionId/events", element: <EventsPage /> },

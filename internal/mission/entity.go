@@ -104,7 +104,9 @@ type Mission struct {
 	Summary     string          `json:"summary"`
 	Briefing    string          `json:"briefing"`
 	Objectives  json.RawMessage `json:"objectives"`
+	Stages      json.RawMessage `json:"stages"`
 	PublicState json.RawMessage `json:"public_state"`
+	BoardArt    json.RawMessage `json:"board_art,omitempty"`
 	Result      json.RawMessage `json:"result,omitempty"`
 	CenterLat   float64         `json:"center_lat"`
 	CenterLng   float64         `json:"center_lng"`

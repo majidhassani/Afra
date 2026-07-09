@@ -58,6 +58,7 @@ import (
 	"casemind/internal/notes"
 	"casemind/internal/notification"
 	"casemind/internal/progression"
+	"casemind/internal/report"
 	"casemind/internal/platform/database"
 	httpserver "casemind/internal/platform/http"
 	"casemind/internal/platform/logger"
@@ -265,7 +266,8 @@ func main() {
 	missionGenerator := mission.NewGenerator(orch, missionRepo, worldBibleRepo, mapRepo,
 		characterRepo, clueRepo, missionRecorder, walletGuard, log)
 	missionService := mission.NewService(missionRepo, characterRepo, clueRepo, mapRepo,
-		interactionRepo, missionEventRepo, missionGenerator, walletGuard, playerProfileService, log)
+		interactionRepo, missionEventRepo, worldBibleRepo, missionGenerator, walletGuard,
+		walletService, playerProfileService, missionRecorder, log)
 	characterService := character.NewService(characterRepo, missionService, walletGuard, orch,
 		interactionRepo, clueRepo, missionEventRepo, missionRecorder, playerProfileService, log)
 	clueService := clue.NewService(clueRepo, missionService, walletGuard, orch,
@@ -281,8 +283,11 @@ func main() {
 		worldBibleRepo, clueRepo, mapRepo, interactionRepo, missionEventRepo, missionRecorder, log)
 	journalService := journal.NewService(journalRepo, missionService)
 	missionTimelineService := missiontimeline.NewService(missionEventRepo, missionService)
-	visualAssetService := visualasset.NewService(characterRepo, clueRepo, avatarService, missionService, log)
+	visualAssetService := visualasset.NewService(characterRepo, clueRepo, avatarService,
+		missionService, missionService, imageAPI, log)
 	progressionService := progression.NewService(clueRepo, mapRepo, missionRecorder, missionService, log)
+	reportRepo := report.NewPGRepository(pool)
+	reportService := report.NewService(reportRepo, clueRepo, missionService, missionRecorder, log)
 
 	// HTTP layer.
 	handlers := httpserver.Handlers{
@@ -295,6 +300,7 @@ func main() {
 		MissionComplete: missioncomplete.NewHandler(missionCompleteService),
 		MissionTimeline: missiontimeline.NewHandler(missionTimelineService),
 		Progression:     progression.NewHandler(progressionService),
+		Reports:         report.NewHandler(reportService),
 		Characters:      character.NewHandler(characterService),
 		Clues:           clue.NewHandler(clueService),
 		VisualAsset:     visualasset.NewHandler(visualAssetService),

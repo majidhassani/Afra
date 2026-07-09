@@ -15,6 +15,8 @@ import {
 import { useI18n, type TranslationKey } from "@/shared/i18n";
 import { missionsApi } from "@/shared/api/endpoints";
 import { ErrorState, SkeletonRows } from "@/shared/ui/states";
+import { StageTracker } from "@/features/game/StageTracker";
+import { useGameplayStatus } from "@/features/game/useGameplayStatus";
 import type { MissionResult } from "@/shared/types/api";
 
 /** prefers-reduced-motion check so count-ups/reveals respect accessibility. */
@@ -64,6 +66,8 @@ export function MissionResultPage() {
     queryFn: () => missionsApi.result(missionId!),
     enabled: !!missionId,
   });
+  // Debrief stage recap: how the level was actually played, stage by stage.
+  const gameplay = useGameplayStatus(missionId);
 
   if (query.isPending) {
     return (
@@ -88,6 +92,9 @@ export function MissionResultPage() {
   return (
     <div className="page result-page">
       <ResultReport result={query.data.result} success={query.data.result.success} />
+      {gameplay.data && gameplay.data.stages.length > 0 && (
+        <StageTracker stages={gameplay.data.stages} />
+      )}
     </div>
   );
 }

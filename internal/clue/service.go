@@ -22,6 +22,7 @@ type MissionGateway interface {
 	EnsureOwnedActive(ctx context.Context, userID, missionID uuid.UUID) error
 	SummaryOf(ctx context.Context, userID, missionID uuid.UUID) (string, error)
 	ObjectiveTitles(ctx context.Context, userID, missionID uuid.UUID) ([]string, error)
+	ApplyActionTime(ctx context.Context, missionID uuid.UUID, action string) (*missionevent.TimeUpdate, error)
 }
 
 // ProfileCounter is the slice of the player profile module this service uses.
@@ -87,10 +88,11 @@ func (s *Service) Get(ctx context.Context, userID, missionID, clueID uuid.UUID) 
 
 // InspectResult is the player-safe outcome of a paid clue inspection.
 type InspectResult struct {
-	Analysis string      `json:"analysis"`
-	NewFacts []string    `json:"new_facts"`
-	Clue     PublicClue  `json:"clue"`
-	Cost     wallet.Cost `json:"cost"`
+	Analysis   string                   `json:"analysis"`
+	NewFacts   []string                 `json:"new_facts"`
+	Clue       PublicClue               `json:"clue"`
+	Cost       wallet.Cost              `json:"cost"`
+	TimeUpdate *missionevent.TimeUpdate `json:"time_update,omitempty"`
 }
 
 func (s *Service) Inspect(ctx context.Context, userID, missionID, clueID uuid.UUID, question, language string) (*InspectResult, error) {
@@ -166,12 +168,21 @@ func (s *Service) Inspect(ctx context.Context, userID, missionID, clueID uuid.UU
 		s.log.Error("profile counter", "error", err)
 	}
 
+	// Inspecting evidence costs mission time.
+	var timeUpdate *missionevent.TimeUpdate
+	if tu, err := s.guard.ApplyActionTime(ctx, missionID, "clue_inspect"); err == nil {
+		timeUpdate = tu
+	} else {
+		s.log.Error("inspect time cost", "error", err)
+	}
+
 	pub := c.Public()
 	return &InspectResult{
-		Analysis: out.Analysis,
-		NewFacts: out.NewFacts,
-		Clue:     pub,
-		Cost:     wallet.Cost{CoinsCharged: charged},
+		Analysis:   out.Analysis,
+		NewFacts:   out.NewFacts,
+		Clue:       pub,
+		Cost:       wallet.Cost{CoinsCharged: charged},
+		TimeUpdate: timeUpdate,
 	}, nil
 }
 
