@@ -112,7 +112,8 @@ func boardPrompt(boardType, missionType, region, weather, timeOfDay string, risk
 		BoardLoading: "atmospheric wide vista of the mission region",
 	}[boardType]
 	parts := []string{
-		strings.ReplaceAll(missionType, "_", " ") + " mission scenario game background",
+		"Premium cinematic mission board for AgentVerse",
+		strings.ReplaceAll(missionType, "_", " ") + " mission scenario",
 		scene,
 	}
 	if region != "" {
@@ -120,9 +121,10 @@ func boardPrompt(boardType, missionType, region, weather, timeOfDay string, risk
 	}
 	parts = append(parts,
 		timeOfDay, weather+" weather", mood+" mood",
-		"cinematic lighting, painterly game art style",
+		"high-fidelity realistic game concept art, graphite and deep emerald palette, restrained cyan practical light",
+		"consistent tactical investigation art direction, sharp atmospheric depth, 1024px source image",
 		"large empty sky and foreground areas kept clear for HUD overlays",
-		"no text, no logos, no UI labels, no watermarks, no people in focus",
+		"no pixel art, no text, no logos, no UI labels, no watermarks, no people in focus",
 	)
 	return strings.Join(parts, ", ")
 }

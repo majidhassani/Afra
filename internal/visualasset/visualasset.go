@@ -66,6 +66,8 @@ func (s *Service) CharacterAvatar(ctx context.Context, userID, missionID, charac
 		Style:    "semi-realistic",
 		AgeGroup: ageBand(c.Age),
 		Seed:     c.ID.String(),
+		Subject:  c.AvatarPrompt,
+		Size:     1024,
 	})
 	status := StatusReady
 	if !ok {
@@ -91,9 +93,11 @@ func (s *Service) ClueImage(ctx context.Context, userID, missionID, clueID uuid.
 		return nil, err
 	}
 	dataURL, ok := s.render(ctx, avatar.Spec{
-		Style: "realistic",
-		Seed:  c.ID.String(),
-		Size:  512,
+		Style:     "realistic",
+		Seed:      c.ID.String(),
+		Subject:   c.AvatarOrThumbnailPrompt,
+		AssetType: "evidence",
+		Size:      1024,
 	})
 	status := StatusReady
 	if !ok {

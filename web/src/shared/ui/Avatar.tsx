@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Shield, Radio, Skull, User } from "lucide-react";
 import { assetUrl } from "@/shared/lib/assetUrl";
 
@@ -63,6 +63,10 @@ export function Avatar({
   const px = sizePx[size];
   const src = assetUrl(imageUrl, version);
 
+  // A regenerated portrait changes its cache version. Let the fresh source
+  // retry even if the previous URL had failed to load.
+  useEffect(() => setBroken(false), [src]);
+
   if (src && !broken) {
     return (
       <span
@@ -76,6 +80,9 @@ export function Avatar({
           height={px}
           loading="lazy"
           decoding="async"
+          fetchPriority="low"
+          draggable={false}
+          style={{ objectFit: "cover", objectPosition: "center 22%" }}
           onError={() => setBroken(true)}
         />
       </span>

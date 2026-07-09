@@ -22,11 +22,15 @@ import {
   type MockMissionBundle,
 } from "./mockData";
 
-/** Tiny SVG data-URL portrait used by the mock avatar/clue image endpoints. */
+/**
+ * Crisp vector stand-in used only in mock mode. Production portraits come
+ * from the configured image provider at 1024px; this prevents the mock path
+ * from masquerading as a low-resolution generated asset during UI review.
+ */
 const MOCK_PORTRAIT =
   "data:image/svg+xml;utf8," +
   encodeURIComponent(
-    `<svg xmlns='http://www.w3.org/2000/svg' width='128' height='128'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#1a1f27'/><stop offset='1' stop-color='#2c3036'/></linearGradient></defs><rect width='128' height='128' fill='url(#g)'/><circle cx='64' cy='50' r='24' fill='#7dd3c7' opacity='0.7'/><rect x='28' y='82' width='72' height='40' rx='18' fill='#7dd3c7' opacity='0.5'/></svg>`,
+    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'><defs><radialGradient id='b' cx='.4' cy='.18'><stop stop-color='#163942'/><stop offset='1' stop-color='#03090c'/></radialGradient><linearGradient id='s' x1='0' y1='0' x2='1' y2='1'><stop stop-color='#d5ad8d'/><stop offset='1' stop-color='#795044'/></linearGradient></defs><rect width='1024' height='1024' fill='url(#b)'/><path d='M240 1024c28-231 158-335 272-335s244 104 272 335' fill='#142a2d'/><ellipse cx='512' cy='430' rx='204' ry='259' fill='url(#s)'/><path d='M306 428c0-219 108-335 208-335 174 0 218 167 205 327-70-48-151-66-241-51-45 8-99 27-172 59z' fill='#182d31'/><path d='M390 466h76M558 466h76' stroke='#061012' stroke-width='22' stroke-linecap='round'/><path d='M456 585c37 21 76 21 112 0' fill='none' stroke='#522d2d' stroke-width='15' stroke-linecap='round'/><circle cx='838' cy='174' r='34' fill='#38f28b'/></svg>`,
   );
 
 /** Mirrors the backend DeriveWorldState so mock mode themes the shell too. */

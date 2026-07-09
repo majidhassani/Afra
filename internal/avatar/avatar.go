@@ -37,7 +37,14 @@ type Spec struct {
 	// Seed makes generation deterministic for the same subject (e.g. a
 	// character ID or username). Optional.
 	Seed string `json:"seed"`
-	// Size in pixels (square). Defaults to 512, capped at 1024.
+	// Subject is a public, visible-only character description used by the
+	// image model. It must never contain mission truth or private state.
+	Subject string `json:"-"`
+	// AssetType selects the shared visual-art template. Supported values are
+	// portrait and evidence; unknown values safely use portrait.
+	AssetType string `json:"-"`
+	// Size in pixels (square). Originals are generated at 1024px; clients
+	// render smaller framed variants without ever upscaling a thumbnail.
 	Size int `json:"size"`
 }
 
@@ -68,7 +75,7 @@ func (s *Spec) normalize() error {
 		return apperrors.Invalid("invalid_ethnicity", "ethnicity must be at most 60 characters")
 	}
 	if s.Size <= 0 {
-		s.Size = 512
+		s.Size = 1024
 	}
 	if s.Size > 1024 {
 		s.Size = 1024
@@ -79,7 +86,21 @@ func (s *Spec) normalize() error {
 // Prompt builds a compact, non-redundant image prompt for API providers.
 // Kept short deliberately: image prompts are billed like any other tokens.
 func (s Spec) Prompt() string {
-	parts := []string{s.Style, "style avatar portrait"}
+	if s.AssetType == "evidence" {
+		return evidencePrompt(s)
+	}
+	parts := []string{
+		"Premium cinematic game character portrait for AgentVerse",
+		"high-fidelity realistic digital photography, finely detailed skin, hair, fabric, and facial features",
+		"head and shoulders, centered subject, eye-level camera, 1:1 composition",
+		"restrained emerald rim light and graphite environmental backdrop, elegant tactical investigation aesthetic",
+		"sharp focus on eyes, natural depth of field, clean silhouette, production-quality 1024px source image",
+		"no pixel art, no low resolution, no blur, no stretched face, no text, no watermark, no logo, no UI",
+	}
+	if subject := strings.TrimSpace(s.Subject); subject != "" {
+		parts = append(parts, subject)
+	}
+	parts = append(parts, s.Style+" visual treatment")
 	if s.Gender != "unspecified" {
 		parts = append(parts, s.Gender)
 	}
@@ -87,7 +108,20 @@ func (s Spec) Prompt() string {
 	if s.Ethnicity != "" {
 		parts = append(parts, s.Ethnicity)
 	}
-	parts = append(parts, "head and shoulders, centered, square, transparent background, no backdrop, high quality")
+	return strings.Join(parts, ", ")
+}
+
+func evidencePrompt(s Spec) string {
+	parts := []string{
+		"Premium cinematic evidence still for AgentVerse",
+		"high-fidelity realistic investigative photography, graphite and deep emerald palette, restrained cyan practical light",
+		"single clear evidence subject, deliberate centered composition, sharp material detail, clean readable silhouette",
+		"production-quality 1024px source image, consistent tactical investigation art direction",
+		"no pixel art, no low resolution, no blur, no text, no watermark, no logo, no UI",
+	}
+	if subject := strings.TrimSpace(s.Subject); subject != "" {
+		parts = append(parts, subject)
+	}
 	return strings.Join(parts, ", ")
 }
 
@@ -117,7 +151,9 @@ func (s *Service) Generate(ctx context.Context, spec Spec) (*Result, error) {
 		png, err := s.imageAPI.GenerateImage(ctx, llm.ImageRequest{
 			Prompt:      spec.Prompt(),
 			Size:        fmt.Sprintf("%dx%d", spec.Size, spec.Size),
-			Transparent: true,
+			// Portraits use a deliberate dark backdrop; transparency can create
+			// jagged hair edges and inconsistent crops across image providers.
+			Transparent: false,
 		})
 		if err == nil {
 			s.log.Info("avatar generated", "provider", s.imageAPI.Name(),

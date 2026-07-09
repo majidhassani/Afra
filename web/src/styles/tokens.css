@@ -41,8 +41,37 @@
   --accent-rare-dim: rgba(168, 155, 255, 0.12);
 
   /* Typography */
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-  --font-fa: "Vazirmatn", "Inter", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-fa: "Vazirmatn", system-ui, sans-serif;
+  --font-display: "Rajdhani", "Inter", system-ui, sans-serif;
+  --font-display-fa: "Vazirmatn", "Inter", system-ui, sans-serif;
+
+  /* AVDS semantic type scale */
+  --type-display: clamp(2rem, 3vw, 3.5rem);
+  --type-mission: clamp(1.5rem, 2vw, 2.35rem);
+  --type-section: 1rem;
+  --type-panel: 0.875rem;
+  --type-hud: 0.75rem;
+  --type-body: 0.9rem;
+  --type-caption: 0.7rem;
+
+  /* AVDS space, icon, avatar, and breakpoint contract */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --icon-sm: 14px;
+  --icon-md: 18px;
+  --icon-lg: 24px;
+  --avatar-sm: 36px;
+  --avatar-md: 48px;
+  --avatar-lg: 72px;
+  --avatar-xl: 112px;
+  --bp-phone: 620px;
+  --bp-tablet: 980px;
 
   /* Geometry */
   --radius-sm: 4px;
@@ -67,6 +96,7 @@
 
 [dir="rtl"] {
   --font-sans: var(--font-fa);
+  --font-display: var(--font-display-fa);
 }
 
 @media (prefers-reduced-motion: reduce) {

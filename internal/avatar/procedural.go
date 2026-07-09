@@ -5,6 +5,7 @@ import (
 	"hash/fnv"
 	"image"
 	"image/color"
+	"image/draw"
 	"image/png"
 )
 
@@ -22,9 +23,9 @@ var stylePalettes = map[string][3]color.NRGBA{
 	"cyberpunk":      {{0xff, 0x2e, 0x88, 0xff}, {0x2e, 0xe6, 0xff, 0xff}, {0x38, 0x12, 0x54, 0xff}},
 }
 
-// Procedural renders a deterministic identicon-style avatar: a square
-// transparent PNG with a circular mirrored pattern derived from the spec.
-// It needs no external service, making avatars always available.
+// Procedural renders a deterministic, smooth tactical portrait placeholder.
+// It needs no external service, making avatars always available without
+// presenting pixel-art geometry as a generated portrait.
 func Procedural(spec Spec) ([]byte, error) {
 	size := spec.Size
 	if size <= 0 {
@@ -39,26 +40,25 @@ func Procedural(spec Spec) ([]byte, error) {
 	if !ok {
 		palette = stylePalettes["modern-minimal"]
 	}
+	// Preserve the palette identity while introducing a deterministic tonal
+	// variation so different seeds never collapse into the same placeholder.
+	palette[1].R ^= byte(bits >> 8)
+	palette[1].G ^= byte(bits >> 16)
+	palette[1].B ^= byte(bits >> 24)
 
-	const grid = 8 // 8x8 cells, left half mirrored to the right
 	img := image.NewNRGBA(image.Rect(0, 0, size, size))
-	cell := size / grid
-	cx, cy := size/2, size/2
-	radius := size / 2
-
-	for row := 0; row < grid; row++ {
-		for col := 0; col < grid/2; col++ {
-			bitIndex := uint(row*(grid/2) + col)
-			// Two bits per cell: off / palette[0..2].
-			v := (bits >> ((bitIndex * 2) % 62)) & 0b11
-			if v == 0 {
-				continue
-			}
-			c := palette[v-1]
-			fillCell(img, col, row, cell, c, cx, cy, radius)
-			fillCell(img, grid-1-col, row, cell, c, cx, cy, radius) // mirror
-		}
-	}
+	cx := size / 2
+	face := size * 29 / 100
+	shoulder := size * 46 / 100
+	variant := int(bits % 13)
+	fillCircle(img, cx, size*42/100, face, palette[1])
+	fillCircle(img, cx, size*25/100, face*62/100, palette[2])
+	fillCircle(img, cx-face/2, size*42/100, face*16/100, palette[0])
+	fillCircle(img, cx+face/2, size*42/100, face*16/100, palette[0])
+	fillEllipse(img, cx, size*91/100, shoulder+(shoulder*variant/130), shoulder*42/100, palette[0])
+	fillEllipse(img, cx, size*98/100, shoulder*72/100, shoulder*18/100, palette[2])
+	// A quiet rim light keeps the placeholder legible inside dark HUD panels.
+	fillCircle(img, cx, size*42/100, face*102/100, color.NRGBA{0x5f, 0xff, 0xb2, 0x22})
 	var buf bytes.Buffer
 	if err := png.Encode(&buf, img); err != nil {
 		return nil, err
@@ -68,13 +68,24 @@ func Procedural(spec Spec) ([]byte, error) {
 
 // fillCell paints one grid cell, clipped to the avatar's circular mask so
 // the corners of the square canvas stay fully transparent.
-func fillCell(img *image.NRGBA, col, row, cell int, c color.NRGBA, cx, cy, radius int) {
-	r2 := radius * radius
-	for y := row * cell; y < (row+1)*cell; y++ {
-		for x := col * cell; x < (col+1)*cell; x++ {
-			dx, dy := x-cx, y-cy
-			if dx*dx+dy*dy <= r2 {
-				img.SetNRGBA(x, y, c)
+func fillCircle(img *image.NRGBA, cx, cy, radius int, c color.NRGBA) {
+	fillEllipse(img, cx, cy, radius, radius, c)
+}
+
+func fillEllipse(img *image.NRGBA, cx, cy, rx, ry int, c color.NRGBA) {
+	if rx <= 0 || ry <= 0 {
+		return
+	}
+	for y := cy - ry; y <= cy+ry; y++ {
+		for x := cx - rx; x <= cx+rx; x++ {
+			dx := float64(x-cx) / float64(rx)
+			dy := float64(y-cy) / float64(ry)
+			if dx*dx+dy*dy <= 1 {
+				if c.A == 0xff {
+					img.SetNRGBA(x, y, c)
+				} else {
+					draw.Draw(img, image.Rect(x, y, x+1, y+1), image.NewUniform(c), image.Point{}, draw.Over)
+				}
 			}
 		}
 	}

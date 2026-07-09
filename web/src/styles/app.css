@@ -37,6 +37,104 @@
   line-height: 1.2;
 }
 
+/* AVDS must win over the legacy app-shell rules declared above. Keeping this
+   compact cascade here prevents the old dashboard grid from reclaiming the
+   desktop canvas after AVDS has been imported. */
+.shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: var(--topbar-height) minmax(0, 1fr);
+  grid-template-areas: "topbar" "main";
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+.main {
+  width: 100%;
+  margin-inline-start: var(--av-rail-width);
+  padding-bottom: var(--space-6);
+  overflow-x: clip;
+}
+
+.game-topbar {
+  min-height: var(--topbar-height);
+  padding-inline-start: calc(var(--av-rail-width) + var(--space-5));
+  padding-inline-end: var(--space-5);
+}
+
+.game-bottom-nav {
+  position: fixed;
+  inset-block: var(--topbar-height) 0;
+  inset-inline-start: 0;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: var(--av-rail-width);
+  min-width: var(--av-rail-width);
+  padding: var(--space-2) 0;
+  overflow-y: auto;
+  border: 0;
+  border-inline-end: 1px solid rgba(95, 255, 178, 0.18);
+  background: linear-gradient(180deg, rgba(3, 10, 13, 0.98), rgba(2, 6, 8, 0.94));
+}
+
+.game-nav-slot,
+.mobilenav a {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  min-height: 58px;
+  padding: var(--space-2) var(--space-1);
+  border: 0;
+  border-inline-start: 2px solid transparent;
+  clip-path: none;
+}
+
+.game-nav-slot.active {
+  color: var(--av-green-soft);
+  border-inline-start-color: var(--av-green);
+  background: linear-gradient(90deg, rgba(56, 242, 139, 0.17), transparent);
+}
+
+.page,
+.map-layout,
+.report-terminal,
+.chat-layout {
+  width: min(100%, var(--av-content-width));
+  margin-inline: auto;
+}
+
+.page {
+  max-width: var(--av-content-width);
+  min-height: 100%;
+  padding: var(--space-5) clamp(var(--space-4), 2.5vw, var(--space-6));
+}
+
+@media (max-width: 980px) {
+  .shell {
+    grid-template-rows: var(--topbar-height) minmax(0, 1fr) 74px;
+    grid-template-areas: "topbar" "main" "mobilenav";
+  }
+
+  .main { width: 100%; margin-inline-start: 0; padding-bottom: var(--space-2); }
+  .game-topbar { padding-inline: var(--space-4); }
+  .game-bottom-nav {
+    position: relative;
+    inset: auto;
+    grid-area: mobilenav;
+    flex-direction: row;
+    width: 100%;
+    min-width: 0;
+    padding: var(--space-2);
+    overflow-x: auto;
+    border-inline-end: 0;
+    border-top: 1px solid rgba(95, 255, 178, 0.18);
+  }
+  .game-nav-slot { flex: 1 0 72px; min-height: 55px; }
+}
+
 .auth-form-wrap {
   display: flex;
   align-items: center;
@@ -711,4 +809,34 @@ code {
   padding: 2px 6px;
   border-radius: var(--radius-sm);
   overflow-wrap: anywhere;
+}
+
+/* The legacy selectors above are intentionally kept for feature coverage;
+   AVDS owns the final shell geometry. */
+.shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: var(--topbar-height) minmax(0, 1fr);
+  grid-template-areas: "topbar" "main";
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+.main { width: calc(100% - var(--av-rail-width)); margin-inline-start: var(--av-rail-width); padding-bottom: var(--space-6); overflow-x: clip; }
+.game-topbar { min-height: var(--topbar-height); padding-inline-start: calc(var(--av-rail-width) + var(--space-5)); padding-inline-end: var(--space-5); }
+.game-bottom-nav { position: fixed; inset-block: var(--topbar-height) 0; inset-inline-start: 0; grid-area: auto; z-index: 8; display: flex; flex-direction: column; align-items: stretch; width: var(--av-rail-width); min-width: var(--av-rail-width); padding: var(--space-2) 0; overflow-y: auto; border: 0; border-inline-end: 1px solid rgba(95, 255, 178, 0.18); background: linear-gradient(180deg, rgba(3, 10, 13, 0.98), rgba(2, 6, 8, 0.94)); }
+.game-nav-slot, .mobilenav a { display: grid; flex: 0 0 auto; place-items: center; min-height: 58px; padding: var(--space-2) var(--space-1); border: 0; border-inline-start: 2px solid transparent; clip-path: none; }
+.game-nav-slot.active { color: var(--av-green-soft); border-inline-start-color: var(--av-green); background: linear-gradient(90deg, rgba(56, 242, 139, 0.17), transparent); }
+.page, .map-layout, .report-terminal, .chat-layout { width: min(100%, var(--av-content-width)); margin-inline: auto; }
+.page { max-width: var(--av-content-width); min-height: 100%; padding: var(--space-5) clamp(var(--space-4), 2.5vw, var(--space-6)); }
+/* Fixed overlays must never become implicit shell-grid rows. */
+.shell > .timeline-drawer,
+.shell > .game-effects,
+.shell > .game-bottom-nav { position: fixed !important; grid-area: auto !important; }
+@media (max-width: 980px) {
+  .shell { grid-template-rows: var(--topbar-height) minmax(0, 1fr) 74px; grid-template-areas: "topbar" "main" "mobilenav"; }
+  .main { width: 100%; margin-inline-start: 0; padding-bottom: var(--space-2); }
+  .game-topbar { padding-inline: var(--space-4); }
+  .shell > .game-bottom-nav { position: relative !important; inset: auto; grid-area: mobilenav !important; flex-direction: row; width: 100%; min-width: 0; padding: var(--space-2); overflow-x: auto; border-inline-end: 0; border-top: 1px solid rgba(95, 255, 178, 0.18); }
+  .game-nav-slot { flex: 1 0 72px; min-height: 55px; }
 }

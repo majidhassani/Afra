@@ -166,17 +166,15 @@ export function CharacterChatPage() {
               version={character.avatar_version}
               size="lg"
             />
-            {!character.avatar_url && (
-              <button
-                className="portrait-gen"
-                title={t("chars.portrait.generate")}
-                disabled={generateAvatar.isPending}
-                onClick={() => generateAvatar.mutate()}
-                aria-label={t("chars.portrait.generate")}
-              >
-                <ImagePlus size={12} aria-hidden />
-              </button>
-            )}
+            <button
+              className="portrait-gen"
+              title={t("chars.portrait.generate")}
+              disabled={generateAvatar.isPending}
+              onClick={() => generateAvatar.mutate()}
+              aria-label={t("chars.portrait.generate")}
+            >
+              <ImagePlus size={12} aria-hidden />
+            </button>
           </div>
           <div className="grow" style={{ minWidth: 0 }}>
             <h2>{character.name}</h2>
