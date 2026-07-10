@@ -1,70 +1,24 @@
 /* ============================================================
-   AVDS — AgentVerse Dark Sci-Fi HUD System
-   Final visual layer: tokens, CSS tactical background, components,
-   and shared primitive overrides.
+   AVDS — AgentVerse mission-command HUD layer.
+   Structural/component layer: tactical background, HUD chrome, and
+   shared primitive overrides. All design tokens now live solely in
+   tokens.css — see the Phase 1 migration plan for why this file
+   used to redefine them (and shadow the muted palette with a neon
+   one via cascade order) and why that's been removed.
    ============================================================ */
-
-:root {
-  --av-bg: #05090d;
-  --av-bg-deep: #020508;
-  --av-surface: rgba(7, 14, 18, 0.82);
-  --av-surface-strong: rgba(9, 18, 24, 0.94);
-  --av-line: rgba(95, 255, 178, 0.24);
-  --av-line-strong: rgba(95, 255, 178, 0.58);
-  --av-green: #38f28b;
-  --av-green-soft: #5fffb2;
-  --av-cyan: #55dfff;
-  --av-gold: #f7c84b;
-  --av-red: #ff4b5f;
-  --av-orange: #ffb340;
-  --av-text: #f4f7f5;
-  --av-text-muted: #8f9c98;
-  --av-glow-green: 0 0 24px rgba(56, 242, 139, 0.28);
-  --av-glow-cyan: 0 0 24px rgba(85, 223, 255, 0.24);
-  --av-panel-shadow: 0 18px 50px rgba(0, 0, 0, 0.52);
-  --av-font-display: var(--font-display);
-  --av-font-body: var(--font-sans);
-
-  --bg-base: var(--av-bg);
-  --bg-panel: var(--av-surface);
-  --bg-elevated: rgba(17, 31, 36, 0.84);
-  --bg-hover: rgba(28, 56, 58, 0.68);
-  --glass-bg: var(--av-surface);
-  --glass-border: var(--av-line);
-  --text-primary: var(--av-text);
-  --text-secondary: #bdc8c2;
-  --text-faint: var(--av-text-muted);
-  --border-subtle: var(--av-line);
-  --border-strong: var(--av-line-strong);
-  --accent-ai: var(--av-cyan);
-  --accent-ai-dim: rgba(85, 223, 255, 0.12);
-  --accent-mission: var(--av-green);
-  --accent-mission-dim: rgba(56, 242, 139, 0.12);
-  --accent-wallet: var(--av-gold);
-  --accent-wallet-dim: rgba(247, 200, 75, 0.12);
-  --accent-danger: var(--av-red);
-  --accent-danger-dim: rgba(255, 75, 95, 0.12);
-  --accent-rare: #9a7cff;
-  --accent-rare-dim: rgba(154, 124, 255, 0.12);
-  --radius-sm: 2px;
-  --radius-md: 4px;
-  --radius-lg: 6px;
-  --radius-xl: 8px;
-  --topbar-height: 76px;
-}
 
 html,
 body,
 #root {
-  background: var(--av-bg-deep);
+  background: var(--bg-base);
 }
 
 body {
   font-family: var(--av-font-body);
   letter-spacing: 0;
   background:
-    radial-gradient(circle at 50% 26%, rgba(56, 242, 139, 0.1), transparent 27%),
-    radial-gradient(circle at 84% 14%, rgba(85, 223, 255, 0.07), transparent 24%),
+    radial-gradient(circle at 50% 26%, rgba(155, 191, 106, 0.1), transparent 27%),
+    radial-gradient(circle at 84% 14%, rgba(125, 211, 199, 0.07), transparent 24%),
     linear-gradient(180deg, #061014 0%, #020508 100%);
 }
 
@@ -81,41 +35,33 @@ body {
   min-height: 100%;
   overflow: hidden;
   background:
-    radial-gradient(circle at 50% 36%, rgba(56, 242, 139, 0.09), transparent 28%),
-    radial-gradient(circle at 20% 18%, rgba(85, 223, 255, 0.06), transparent 26%),
+    radial-gradient(circle at 50% 36%, rgba(155, 191, 106, 0.09), transparent 28%),
+    radial-gradient(circle at 20% 18%, rgba(125, 211, 199, 0.06), transparent 26%),
     linear-gradient(180deg, rgba(6, 16, 20, 0.96), rgba(2, 5, 8, 0.98));
 }
 
-.shell::before,
+/* The persistent CRT scanline/grid-drift overlay that used to render on
+   .shell::before at all times, on every screen, has been removed — it was
+   exactly the "decorative animation competing with content" the
+   cinematic-noir direction calls out. The atmospheric vignette below
+   (.shell::after) is kept: it reads as depth/mood rather than a sci-fi HUD
+   effect, and is static (no animation) so it doesn't need a
+   prefers-reduced-motion guard. Strong scanline/CRT treatment is intended
+   to come back only as a deliberate, rare, component-scoped moment
+   (mission activation, evidence scan, AI analysis, victory/failure) —
+   wiring those triggers touches interaction/business logic and is
+   out of scope for this design-foundation pass; see the Phase 1 report. */
 .shell::after {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
-}
-
-.shell::before {
-  background:
-    linear-gradient(rgba(95, 255, 178, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(95, 255, 178, 0.035) 1px, transparent 1px),
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 5px);
-  background-size: 54px 54px, 54px 54px, 100% 5px;
-  mask-image: radial-gradient(ellipse at 50% 42%, #000 24%, transparent 84%);
-  animation: av-scan-drift 10s linear infinite;
-}
-
-.shell::after {
   background:
     radial-gradient(120% 80% at 50% -10%, transparent 56%, rgba(0, 0, 0, 0.52)),
     radial-gradient(100% 90% at 50% 112%, transparent 58%, rgba(0, 0, 0, 0.68)),
-    repeating-radial-gradient(ellipse at 62% 44%, transparent 0 25px, rgba(95, 255, 178, 0.028) 26px 27px, transparent 28px 54px);
-  opacity: 0.9;
-}
-
-@keyframes av-scan-drift {
-  from { background-position: 0 0, 0 0, 0 0; }
-  to { background-position: 54px 54px, 54px 54px, 0 80px; }
+    repeating-radial-gradient(ellipse at 62% 44%, transparent 0 25px, rgba(155, 191, 106, 0.02) 26px 27px, transparent 28px 54px);
+  opacity: 0.8;
 }
 
 .main {
@@ -141,33 +87,18 @@ body {
   min-width: 0;
 }
 
+/* .page-header renders above literally every screen (Wallet, Profile,
+   Settings included) — a permanent olive bracket flourish here was the
+   textbook "sci-fi chrome on ordinary forms" this pass removes. Kept as a
+   plain neutral divider; the bracket-corner detail is reserved for
+   genuinely HUD/mission-context chrome (.frame/.frame-brackets, still
+   tactical, still used on HudPanel/SelectedMissionBar). */
 .page-header {
   position: relative;
   align-items: end;
   margin-bottom: 18px;
   padding-block: 6px 12px;
-  border-bottom: 1px solid rgba(95, 255, 178, 0.18);
-}
-
-.page-header::before,
-.page-header::after {
-  content: "";
-  position: absolute;
-  bottom: -1px;
-  width: 34px;
-  height: 14px;
-  border-bottom: 1px solid var(--av-line-strong);
-  pointer-events: none;
-}
-
-.page-header::before {
-  inset-inline-start: 0;
-  border-inline-start: 1px solid var(--av-line-strong);
-}
-
-.page-header::after {
-  inset-inline-end: 0;
-  border-inline-end: 1px solid var(--av-line-strong);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 h1,
@@ -180,7 +111,8 @@ h3,
 .game-nav-slot span,
 .btn,
 .game-btn,
-.av-tactical-button {
+.av-tactical-button,
+.ui-btn {
   font-family: var(--av-font-display);
   text-transform: uppercase;
 }
@@ -195,7 +127,8 @@ h3,
 [dir="rtl"] .game-nav-slot span,
 [dir="rtl"] .btn,
 [dir="rtl"] .game-btn,
-[dir="rtl"] .av-tactical-button {
+[dir="rtl"] .av-tactical-button,
+[dir="rtl"] .ui-btn {
   font-family: var(--font-display-fa);
   letter-spacing: 0;
   text-transform: none;
@@ -236,10 +169,10 @@ h3 {
   gap: 16px;
   min-width: 0;
   padding: 12px clamp(14px, 2vw, 28px);
-  border-bottom: 1px solid rgba(95, 255, 178, 0.18);
+  border-bottom: 1px solid rgba(155, 191, 106, 0.18);
   background:
     linear-gradient(180deg, rgba(2, 5, 8, 0.88), rgba(4, 10, 13, 0.7)),
-    linear-gradient(90deg, rgba(56, 242, 139, 0.08), transparent 36%, rgba(85, 223, 255, 0.06));
+    linear-gradient(90deg, rgba(155, 191, 106, 0.08), transparent 36%, rgba(125, 211, 199, 0.06));
   backdrop-filter: blur(14px);
 }
 
@@ -288,7 +221,7 @@ h3 {
   margin-inline-end: 7px;
   border-radius: 50%;
   background: var(--av-green);
-  box-shadow: 0 0 10px rgba(56, 242, 139, 0.8);
+  box-shadow: 0 0 10px rgba(155, 191, 106, 0.8);
 }
 
 .game-compass {
@@ -296,7 +229,7 @@ h3 {
   grid-template-columns: repeat(5, minmax(30px, 1fr));
   gap: 24px;
   min-width: 0;
-  color: rgba(244, 247, 245, 0.42);
+  color: rgba(245, 243, 238, 0.42);
   font-family: var(--av-font-display);
   letter-spacing: 0.18em;
   text-align: center;
@@ -313,7 +246,7 @@ h3 {
   inset-inline: 50%;
   width: 1px;
   height: 6px;
-  background: rgba(95, 255, 178, 0.28);
+  background: rgba(155, 191, 106, 0.28);
 }
 
 .game-topbar-right,
@@ -354,10 +287,10 @@ h3 {
   min-width: 0;
   overflow-x: auto;
   padding: 10px clamp(12px, 2vw, 28px);
-  border-top: 1px solid rgba(95, 255, 178, 0.22);
+  border-top: 1px solid rgba(155, 191, 106, 0.22);
   background:
     linear-gradient(180deg, rgba(3, 9, 12, 0.72), rgba(2, 5, 8, 0.92)),
-    linear-gradient(90deg, transparent, rgba(56, 242, 139, 0.08), transparent);
+    linear-gradient(90deg, transparent, rgba(155, 191, 106, 0.08), transparent);
   backdrop-filter: blur(16px);
   scrollbar-width: thin;
 }
@@ -373,8 +306,8 @@ h3 {
   justify-content: center;
   gap: 6px;
   padding: 8px 12px;
-  color: rgba(244, 247, 245, 0.68);
-  border: 1px solid rgba(95, 255, 178, 0.12);
+  color: rgba(245, 243, 238, 0.68);
+  border: 1px solid rgba(155, 191, 106, 0.12);
   border-inline-end: none;
   background: rgba(5, 12, 15, 0.52);
   clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
@@ -384,7 +317,7 @@ h3 {
 
 .game-nav-slot:last-child,
 .mobilenav a:last-child {
-  border-inline-end: 1px solid rgba(95, 255, 178, 0.12);
+  border-inline-end: 1px solid rgba(155, 191, 106, 0.12);
 }
 
 .game-nav-slot.active,
@@ -392,11 +325,11 @@ h3 {
 .mobilenav a.active,
 .mobilenav a:hover {
   color: var(--av-green-soft);
-  border-color: rgba(95, 255, 178, 0.46);
+  border-color: rgba(155, 191, 106, 0.46);
   background:
-    radial-gradient(circle at 50% 0, rgba(56, 242, 139, 0.22), transparent 60%),
+    radial-gradient(circle at 50% 0, rgba(155, 191, 106, 0.22), transparent 60%),
     rgba(9, 24, 23, 0.74);
-  box-shadow: inset 0 1px 0 rgba(95, 255, 178, 0.35), 0 0 22px rgba(56, 242, 139, 0.14);
+  box-shadow: inset 0 1px 0 rgba(155, 191, 106, 0.35), 0 0 22px rgba(155, 191, 106, 0.14);
 }
 
 .game-nav-slot em {
@@ -415,7 +348,10 @@ h3 {
   font-weight: 800;
 }
 
-.av-hud-panel,
+/* Generic content containers: restrained by default (neutral border, plain
+   dark glass) — no accent tint. Tactical accent is reserved for elements
+   that represent an actual gameplay/HUD state (.av-hud-panel below, plus
+   the mission-HUD/dossier/map rules further down this file). */
 .panel,
 .glass,
 .tac-card,
@@ -424,30 +360,42 @@ h3 {
 .wallet-balance-card,
 .wallet-reward-card,
 .report-form,
-.report-history {
+.report-history,
+.report-verdict,
+.map-side,
+.chat-layout .band {
   position: relative;
   overflow: hidden;
   border-radius: var(--radius-lg);
-  border: 1px solid rgba(95, 255, 178, 0.22);
+  border: 1px solid var(--border-subtle);
+  background: linear-gradient(180deg, rgba(8, 18, 22, 0.88), rgba(3, 7, 10, 0.9));
+  box-shadow: var(--av-panel-shadow);
+  backdrop-filter: blur(12px);
+}
+
+/* HUD-specific panel: the one place a tactical accent border is the
+   deliberate default, since it always represents live mission context. */
+.av-hud-panel {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(155, 191, 106, 0.22);
   background:
-    linear-gradient(135deg, rgba(95, 255, 178, 0.055), transparent 34%),
+    linear-gradient(135deg, rgba(155, 191, 106, 0.055), transparent 34%),
     linear-gradient(180deg, rgba(8, 18, 22, 0.88), rgba(3, 7, 10, 0.9));
   box-shadow: var(--av-panel-shadow);
   backdrop-filter: blur(12px);
 }
 
 .av-hud-panel::before,
-.panel::before,
-.tac-card::before,
-.char-card::before,
-.archive-card::before {
+.tac-card::before {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(rgba(95, 255, 178, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(95, 255, 178, 0.025) 1px, transparent 1px);
+    linear-gradient(rgba(155, 191, 106, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(155, 191, 106, 0.025) 1px, transparent 1px);
   background-size: 28px 28px;
   opacity: 0.5;
   mask-image: linear-gradient(180deg, #000, transparent 75%);
@@ -459,11 +407,22 @@ h3 {
   padding: 16px 18px 0;
 }
 
-.av-eyebrow,
+/* Section labels/eyebrows/field-labels: neutral muted by default (these
+   render on every form and section across the whole app, including plain
+   forms — a permanent accent tint here was exactly the "sci-fi chrome on
+   ordinary forms" this pass removes). .av-eyebrow keeps a slightly stronger
+   weight since it's used specifically inside HUD/mission-context panels. */
 .eyebrow,
 .band-title,
 .field-label,
 .report-label {
+  color: var(--text-faint);
+  font-size: 11px;
+  letter-spacing: 0.13em;
+  font-weight: 700;
+}
+
+.av-eyebrow {
   color: var(--av-green-soft);
   font-size: 11px;
   letter-spacing: 0.13em;
@@ -473,115 +432,182 @@ h3 {
 .band {
   position: relative;
   z-index: 1;
-  border-bottom-color: rgba(95, 255, 178, 0.16);
+  border-bottom-color: var(--border-subtle);
 }
 
 .item-row {
   position: relative;
   z-index: 1;
-  border-bottom-color: rgba(95, 255, 178, 0.13);
+  border-bottom-color: var(--border-subtle);
 }
 
 a.item-row:hover,
 button.item-row:hover,
 .item-row:hover {
-  background: rgba(56, 242, 139, 0.07);
+  background: var(--bg-hover);
 }
 
-.btn,
+/* IMPORTANT — base.css already owns a complete, correct, restrained
+   .btn/.btn-primary/.btn-secondary/.btn-ghost/.btn-danger system and a
+   complete .chip/.chip-ai/.chip-mission/.chip-wallet/.chip-danger/.chip-rare
+   system. Those bare classes are what Login, Register, Journal, Profile,
+   Wallet, Settings, and most status badges across the app actually use
+   directly (verified by grep — not through GameButton/TacticalButton).
+   This file previously redefined the *same* bare classes again with a
+   permanent tactical-green treatment, which — because this file loads
+   after base.css — silently overrode base.css's already-good neutral
+   design on every ordinary form in the app. That duplication is removed
+   below: this file now only styles the AVDS-specific class names
+   (.game-btn*, .av-tactical-button*, .status-chip*, .av-*-chip*), which
+   have no definition anywhere else and are only ever used inside
+   mission/map gameplay screens (verified by grep of every call site of
+   GameButton/TacticalButton). */
+
+/* .ui-btn* are the canonical classes emitted by the new Button primitive
+   (shared/ui/Button.tsx). GameButton and TacticalButton are now thin
+   wrappers around Button and additionally emit their own historical
+   .game-btn*/.av-tactical-button* class names for safety — every rule
+   below lists both so either wrapper (or new code using Button directly)
+   renders identically. */
 .game-btn,
-.av-tactical-button {
+.av-tactical-button,
+.ui-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   min-height: 42px;
   padding: 9px 16px;
-  border-radius: 0;
-  border: 1px solid rgba(95, 255, 178, 0.28);
-  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
-  letter-spacing: 0.08em;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  letter-spacing: 0.02em;
 }
 
-.btn-primary,
-.game-btn-primary,
+/* Restrained neutral action — Button's own "default" variant (new call
+   sites only; GameButton/TacticalButton never use this one, they already
+   have their own primary treatment below). */
+.ui-btn-default {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+/* Mission-context buttons keep the angular tactical cut and accent glow —
+   an explicit opt-in for genuine gameplay actions (accept mission, confirm
+   objective), not the default shape of every button in the app. */
 .game-btn-mission,
-.av-tactical-button.primary {
+.ui-btn-mission {
+  border-radius: 0;
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+  letter-spacing: 0.08em;
   background:
-    linear-gradient(90deg, rgba(56, 242, 139, 0.18), rgba(56, 242, 139, 0.42)),
+    linear-gradient(90deg, rgba(155, 191, 106, 0.18), rgba(155, 191, 106, 0.42)),
     rgba(7, 24, 18, 0.96);
   color: var(--av-green-soft);
-  border-color: rgba(95, 255, 178, 0.7);
+  border-color: rgba(155, 191, 106, 0.7);
   box-shadow: var(--av-glow-green);
 }
 
-.btn-secondary,
+/* GameButton/TacticalButton's "primary" (Button's "tactical" variant) is
+   only ever used inside Map and Mission-Dashboard screens (inspect area,
+   complete mission) — a restrained teal/cyan accent here is a legitimate
+   semantic match ("active intelligence/navigation"), not chrome bleeding
+   onto ordinary UI. */
+.game-btn-primary,
+.av-tactical-button.primary,
+.ui-btn-tactical {
+  background: linear-gradient(135deg, var(--accent-ai), #5bb3a6);
+  color: #06110f;
+  box-shadow: var(--glow-ai);
+}
+
+/* Reward accent — claiming rewards / wallet-adjacent gameplay actions. */
+.ui-btn-reward {
+  background: linear-gradient(135deg, var(--accent-wallet), #f0c877);
+  color: #1a1204;
+  box-shadow: 0 0 0 1px rgba(227, 179, 95, 0.35), 0 0 22px -6px rgba(227, 179, 95, 0.55);
+}
+
 .game-btn-ghost,
 .av-tactical-button.secondary,
-.av-tactical-button.ghost {
+.av-tactical-button.ghost,
+.ui-btn-ghost {
   color: var(--av-text);
   background: rgba(7, 14, 18, 0.74);
 }
 
-.btn-danger,
-.av-tactical-button.danger {
+.av-tactical-button.danger,
+.ui-btn-danger {
   color: var(--av-red);
-  border-color: rgba(255, 75, 95, 0.52);
+  border-color: rgba(229, 107, 111, 0.52);
   background: rgba(55, 9, 15, 0.65);
 }
 
-.btn:hover:not(:disabled),
 .game-btn:hover:not(:disabled),
-.av-tactical-button:hover:not(:disabled) {
+.av-tactical-button:hover:not(:disabled),
+.ui-btn:hover:not(:disabled) {
   transform: translateY(-1px);
+  border-color: var(--border-strong);
+}
+
+.game-btn-mission:hover:not(:disabled),
+.ui-btn-mission:hover:not(:disabled) {
   border-color: var(--av-green-soft);
   box-shadow: var(--av-glow-green);
 }
 
-.chip,
+.game-btn-primary:hover:not(:disabled),
+.av-tactical-button.primary:hover:not(:disabled),
+.ui-btn-tactical:hover:not(:disabled) {
+  box-shadow: 0 0 0 1px rgba(125, 211, 199, 0.4), 0 0 30px -4px rgba(125, 211, 199, 0.6);
+}
+
+.ui-btn-reward:hover:not(:disabled) {
+  box-shadow: 0 0 0 1px rgba(227, 179, 95, 0.5), 0 0 26px -4px rgba(227, 179, 95, 0.7);
+}
+
+/* HUD-context status/resource chips: neutral rounded pill by default.
+   Color remains the semantic signal (AI=cyan, mission=green, wallet=gold,
+   danger=red). The bare .chip/.chip-* system (base.css) is left alone —
+   it's what Wallet, Profile, Events, character badges etc. use directly. */
 .status-chip,
 .av-status-chip,
 .av-resource-chip {
-  border-radius: 0;
-  border: 1px solid rgba(95, 255, 178, 0.25);
-  background: rgba(5, 12, 15, 0.72);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
   color: var(--av-text-muted);
-  clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%);
 }
 
-.chip-ai,
 .status-chip.cat-guide,
 .av-status-chip.cyan,
 .av-resource-chip.cyan {
   color: var(--av-cyan);
-  border-color: rgba(85, 223, 255, 0.42);
-  background: rgba(85, 223, 255, 0.1);
+  border-color: rgba(125, 211, 199, 0.42);
+  background: rgba(125, 211, 199, 0.1);
 }
 
-.chip-mission,
 .status-chip.cat-field,
 .av-status-chip.green,
 .av-resource-chip.green {
   color: var(--av-green-soft);
-  border-color: rgba(95, 255, 178, 0.42);
-  background: rgba(56, 242, 139, 0.1);
+  border-color: rgba(155, 191, 106, 0.42);
+  background: rgba(155, 191, 106, 0.1);
 }
 
-.chip-wallet,
 .av-status-chip.gold,
 .av-resource-chip.gold {
   color: var(--av-gold);
-  border-color: rgba(247, 200, 75, 0.45);
-  background: rgba(247, 200, 75, 0.1);
+  border-color: rgba(227, 179, 95, 0.45);
+  background: rgba(227, 179, 95, 0.1);
 }
 
-.chip-danger,
 .status-chip.cat-antagonist,
 .av-status-chip.red,
 .av-resource-chip.red {
   color: var(--av-red);
-  border-color: rgba(255, 75, 95, 0.46);
-  background: rgba(255, 75, 95, 0.1);
+  border-color: rgba(229, 107, 111, 0.46);
+  background: rgba(229, 107, 111, 0.1);
 }
 
 .av-resource-chip {
@@ -610,8 +636,8 @@ button.item-row:hover,
   border-radius: 50%;
   background:
     radial-gradient(circle, rgba(5, 9, 13, 0.96) 55%, transparent 57%),
-    conic-gradient(var(--av-green-soft) var(--progress), rgba(95, 255, 178, 0.14) 0);
-  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.62), 0 0 18px rgba(56, 242, 139, 0.16);
+    conic-gradient(var(--av-green-soft) var(--progress), rgba(155, 191, 106, 0.14) 0);
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.62), 0 0 18px rgba(155, 191, 106, 0.16);
   color: var(--av-text);
   font-family: var(--av-font-display);
   font-weight: 800;
@@ -621,19 +647,19 @@ button.item-row:hover,
 .av-progress-ring.cyan {
   background:
     radial-gradient(circle, rgba(5, 9, 13, 0.96) 55%, transparent 57%),
-    conic-gradient(var(--av-cyan) var(--progress), rgba(85, 223, 255, 0.13) 0);
+    conic-gradient(var(--av-cyan) var(--progress), rgba(125, 211, 199, 0.13) 0);
 }
 
 .av-progress-ring.gold {
   background:
     radial-gradient(circle, rgba(5, 9, 13, 0.96) 55%, transparent 57%),
-    conic-gradient(var(--av-gold) var(--progress), rgba(247, 200, 75, 0.13) 0);
+    conic-gradient(var(--av-gold) var(--progress), rgba(227, 179, 95, 0.13) 0);
 }
 
 .av-progress-ring.red {
   background:
     radial-gradient(circle, rgba(5, 9, 13, 0.96) 55%, transparent 57%),
-    conic-gradient(var(--av-red) var(--progress), rgba(255, 75, 95, 0.13) 0);
+    conic-gradient(var(--av-red) var(--progress), rgba(229, 107, 111, 0.13) 0);
 }
 
 @keyframes av-ring-enter {
@@ -649,10 +675,10 @@ button.item-row:hover,
   gap: 18px;
   padding: 22px;
   overflow: hidden;
-  border: 1px solid rgba(95, 255, 178, 0.28);
+  border: 1px solid rgba(155, 191, 106, 0.28);
   background:
-    radial-gradient(circle at 100% 0, rgba(56, 242, 139, 0.11), transparent 36%),
-    repeating-radial-gradient(ellipse at 80% 16%, transparent 0 18px, rgba(95, 255, 178, 0.035) 19px 20px, transparent 21px 42px),
+    radial-gradient(circle at 100% 0, rgba(155, 191, 106, 0.11), transparent 36%),
+    repeating-radial-gradient(ellipse at 80% 16%, transparent 0 18px, rgba(155, 191, 106, 0.035) 19px 20px, transparent 21px 42px),
     linear-gradient(180deg, rgba(7, 16, 19, 0.94), rgba(3, 7, 10, 0.96));
   color: inherit;
   clip-path: polygon(18px 0, calc(100% - 18px) 0, 100% 18px, 100% calc(100% - 18px), calc(100% - 18px) 100%, 18px 100%, 0 calc(100% - 18px), 0 18px);
@@ -676,7 +702,7 @@ button.item-row:hover,
   min-width: 148px;
   padding: 10px 16px;
   color: var(--av-text-muted);
-  border: 1px solid rgba(95, 255, 178, 0.17);
+  border: 1px solid rgba(155, 191, 106, 0.17);
   background: rgba(3, 9, 12, 0.72);
   clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
   font-family: var(--av-font-display);
@@ -688,9 +714,9 @@ button.item-row:hover,
 .av-filter-rail button[aria-pressed="true"],
 .av-filter-rail button:hover {
   color: var(--av-green-soft);
-  border-color: rgba(95, 255, 178, 0.62);
+  border-color: rgba(155, 191, 106, 0.62);
   background:
-    radial-gradient(circle at 0 50%, rgba(56, 242, 139, 0.16), transparent 70%),
+    radial-gradient(circle at 0 50%, rgba(155, 191, 106, 0.16), transparent 70%),
     rgba(5, 18, 17, 0.88);
 }
 
@@ -704,24 +730,24 @@ button.item-row:hover,
 .av-dossier-card:hover,
 .av-dossier-card.selected {
   transform: translateY(-4px);
-  border-color: rgba(95, 255, 178, 0.78);
+  border-color: rgba(155, 191, 106, 0.78);
   box-shadow: var(--av-glow-green), var(--av-panel-shadow);
 }
 
 .av-dossier-card.cyan {
-  border-color: rgba(85, 223, 255, 0.28);
+  border-color: rgba(125, 211, 199, 0.28);
   background:
-    radial-gradient(circle at 100% 0, rgba(85, 223, 255, 0.12), transparent 36%),
-    repeating-linear-gradient(90deg, rgba(85, 223, 255, 0.025) 0 1px, transparent 1px 12px),
+    radial-gradient(circle at 100% 0, rgba(125, 211, 199, 0.12), transparent 36%),
+    repeating-linear-gradient(90deg, rgba(125, 211, 199, 0.025) 0 1px, transparent 1px 12px),
     linear-gradient(180deg, rgba(7, 16, 19, 0.94), rgba(3, 7, 10, 0.96));
 }
 
 .av-dossier-card.gold {
-  border-color: rgba(247, 200, 75, 0.32);
+  border-color: rgba(227, 179, 95, 0.32);
 }
 
 .av-dossier-card.red {
-  border-color: rgba(255, 75, 95, 0.34);
+  border-color: rgba(229, 107, 111, 0.34);
 }
 
 .av-dossier-top,
@@ -770,7 +796,7 @@ button.item-row:hover,
 .av-dossier-stats {
   flex-wrap: wrap;
   padding-top: 12px;
-  border-top: 1px solid rgba(95, 255, 178, 0.15);
+  border-top: 1px solid rgba(155, 191, 106, 0.15);
 }
 
 .av-dossier-action .av-tactical-button,
@@ -819,18 +845,18 @@ button.item-row:hover,
   flex: 0 0 17px;
   margin-top: 2px;
   border-radius: 50%;
-  border: 1px solid rgba(95, 255, 178, 0.72);
+  border: 1px solid rgba(155, 191, 106, 0.72);
   background: var(--av-green);
-  box-shadow: 0 0 16px rgba(56, 242, 139, 0.52);
+  box-shadow: 0 0 16px rgba(155, 191, 106, 0.52);
 }
 
 .av-timeline-rail .gold .av-timeline-node {
-  border-color: rgba(247, 200, 75, 0.72);
+  border-color: rgba(227, 179, 95, 0.72);
   background: var(--av-gold);
 }
 
 .av-timeline-rail .red .av-timeline-node {
-  border-color: rgba(255, 75, 95, 0.72);
+  border-color: rgba(229, 107, 111, 0.72);
   background: var(--av-red);
 }
 
@@ -849,7 +875,7 @@ button.item-row:hover,
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   overflow: hidden;
-  border: 1px solid rgba(95, 255, 178, 0.24);
+  border: 1px solid rgba(155, 191, 106, 0.24);
   background: rgba(2, 7, 9, 0.72);
 }
 
@@ -859,7 +885,7 @@ button.item-row:hover,
   justify-content: space-between;
   gap: 12px;
   padding: 16px 18px;
-  border-bottom: 1px solid rgba(95, 255, 178, 0.16);
+  border-bottom: 1px solid rgba(155, 191, 106, 0.16);
   color: var(--av-green-soft);
   font-family: var(--av-font-display);
   letter-spacing: 0.1em;
@@ -880,10 +906,10 @@ button.item-row:hover,
   overflow: hidden;
   min-height: 360px;
   background:
-    radial-gradient(circle at 50% 52%, rgba(56, 242, 139, 0.16), transparent 14%),
-    repeating-radial-gradient(ellipse at 50% 52%, transparent 0 42px, rgba(95, 255, 178, 0.05) 43px 45px, transparent 46px 82px),
-    linear-gradient(rgba(95, 255, 178, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(95, 255, 178, 0.045) 1px, transparent 1px),
+    radial-gradient(circle at 50% 52%, rgba(155, 191, 106, 0.16), transparent 14%),
+    repeating-radial-gradient(ellipse at 50% 52%, transparent 0 42px, rgba(155, 191, 106, 0.05) 43px 45px, transparent 46px 82px),
+    linear-gradient(rgba(155, 191, 106, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(155, 191, 106, 0.045) 1px, transparent 1px),
     #02080a;
   background-size: auto, auto, 44px 44px, 44px 44px, auto;
 }
@@ -892,9 +918,9 @@ button.item-row:hover,
   content: "";
   position: absolute;
   inset: 12%;
-  border: 1px dashed rgba(95, 255, 178, 0.22);
+  border: 1px dashed rgba(155, 191, 106, 0.22);
   border-radius: 50%;
-  filter: drop-shadow(0 0 18px rgba(56, 242, 139, 0.18));
+  filter: drop-shadow(0 0 18px rgba(155, 191, 106, 0.18));
 }
 
 .av-map-marker,
@@ -906,10 +932,10 @@ button.item-row:hover,
   width: 42px;
   height: 42px;
   color: var(--av-green-soft);
-  border: 1px solid rgba(95, 255, 178, 0.52);
+  border: 1px solid rgba(155, 191, 106, 0.52);
   border-radius: 50%;
   background: rgba(3, 11, 12, 0.82);
-  box-shadow: 0 0 22px rgba(56, 242, 139, 0.22);
+  box-shadow: 0 0 22px rgba(155, 191, 106, 0.22);
   animation: av-marker-pulse 2.2s ease-in-out infinite;
 }
 
@@ -925,22 +951,22 @@ button.item-row:hover,
 }
 
 .av-map-marker.marker-1 { inset: 22% auto auto 16%; }
-.av-map-marker.marker-2 { inset: 28% 18% auto auto; color: var(--av-gold); border-color: rgba(247, 200, 75, 0.5); }
+.av-map-marker.marker-2 { inset: 28% 18% auto auto; color: var(--av-gold); border-color: rgba(227, 179, 95, 0.5); }
 .av-map-marker.marker-3 { inset: auto 26% 20% auto; }
-.av-map-marker.marker-4 { inset: auto auto 26% 22%; color: var(--av-cyan); border-color: rgba(85, 223, 255, 0.5); }
-.av-map-marker.marker-5 { inset: 44% auto auto 68%; color: var(--av-red); border-color: rgba(255, 75, 95, 0.46); }
+.av-map-marker.marker-4 { inset: auto auto 26% 22%; color: var(--av-cyan); border-color: rgba(125, 211, 199, 0.5); }
+.av-map-marker.marker-5 { inset: 44% auto auto 68%; color: var(--av-red); border-color: rgba(229, 107, 111, 0.46); }
 
 @keyframes av-marker-pulse {
-  0%, 100% { box-shadow: 0 0 12px rgba(56, 242, 139, 0.18); }
-  50% { box-shadow: 0 0 28px rgba(56, 242, 139, 0.48); }
+  0%, 100% { box-shadow: 0 0 12px rgba(155, 191, 106, 0.18); }
+  50% { box-shadow: 0 0 28px rgba(155, 191, 106, 0.48); }
 }
 
 .av-selected-mission-bar {
   justify-content: space-between;
   padding: 22px 28px;
-  border-color: rgba(95, 255, 178, 0.32);
+  border-color: rgba(155, 191, 106, 0.32);
   background:
-    radial-gradient(circle at 78% 50%, rgba(56, 242, 139, 0.13), transparent 24%),
+    radial-gradient(circle at 78% 50%, rgba(155, 191, 106, 0.13), transparent 24%),
     rgba(3, 9, 12, 0.88);
 }
 
@@ -957,6 +983,10 @@ button.item-row:hover,
   color: var(--av-text-muted);
 }
 
+/* Loading/empty/error state boxes render on every screen while data is
+   in flight — they're the most-seen "component" in the app, so they get
+   the neutral cinematic treatment, not a tactical glow. The icon stays
+   neutral by default; only the genuine error state keeps semantic red. */
 .av-state,
 .state-box,
 .loading-screen {
@@ -971,10 +1001,8 @@ button.item-row:hover,
   padding: 42px 24px;
   text-align: center;
   color: var(--av-text-muted);
-  border: 1px solid rgba(95, 255, 178, 0.2);
-  background:
-    radial-gradient(circle at 50% 0, rgba(56, 242, 139, 0.12), transparent 42%),
-    rgba(3, 9, 12, 0.72);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
 }
 
 .av-state strong,
@@ -988,21 +1016,24 @@ button.item-row:hover,
 
 .av-state svg,
 .state-box svg {
-  color: var(--av-green-soft);
+  color: var(--text-secondary);
 }
 
 .av-state.error svg {
   color: var(--av-red);
 }
 
+/* Ordinary form fields (login, settings, report forms) — restrained
+   default chrome instead of the angular sci-fi border/0-radius treatment
+   that used to apply to every input in the app regardless of context. */
 .input,
 .textarea,
 .select,
 .report-form textarea,
 .report-form select {
-  border-radius: 0;
-  border: 1px solid rgba(95, 255, 178, 0.22);
-  background: rgba(2, 7, 9, 0.78);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
   color: var(--av-text);
 }
 
@@ -1011,23 +1042,23 @@ button.item-row:hover,
 .select:focus,
 .report-form textarea:focus,
 .report-form select:focus {
-  border-color: var(--av-green-soft);
-  box-shadow: 0 0 0 1px rgba(95, 255, 178, 0.18);
+  border-color: var(--accent-ai);
+  box-shadow: 0 0 0 1px rgba(125, 211, 199, 0.28);
 }
 
 .segmented {
-  border-radius: 0;
-  border-color: rgba(95, 255, 178, 0.22);
-  background: rgba(2, 7, 9, 0.72);
+  border-radius: var(--radius-md);
+  border-color: var(--border-subtle);
+  background: var(--bg-elevated);
 }
 
 .segmented button {
-  border-radius: 0;
+  border-radius: var(--radius-sm);
 }
 
 .segmented button[aria-pressed="true"] {
-  color: var(--av-green-soft);
-  background: rgba(56, 242, 139, 0.16);
+  color: var(--accent-ai);
+  background: rgba(125, 211, 199, 0.14);
 }
 
 .dash-grid {
@@ -1039,24 +1070,32 @@ button.item-row:hover,
   z-index: 1;
 }
 
+/* .stat-block renders generic numeric stats across Journal, Profile,
+   Wallet, Location and Mission-Dashboard/Clue pages — not exclusively
+   "success" data — so its value now reads as neutral high-contrast text
+   instead of a permanent green tint regardless of what the number means. */
 .stat-block .value {
-  color: var(--av-green-soft);
+  color: var(--text-primary);
   font-family: var(--av-font-display);
   font-size: 28px;
 }
 
-.meter,
-.obj-progress,
-.risk-meter {
-  background: rgba(95, 255, 178, 0.1);
-  border: 1px solid rgba(95, 255, 178, 0.13);
+/* .meter (badges.tsx) takes an explicit per-usage color prop and already
+   has a correct, neutral, color-agnostic base rule in app.css — this file
+   no longer duplicates/overrides it. .risk-meter already has a correct
+   neutral track + semantic red/gold/green band fills in game.css — same
+   reasoning, left uncontested here. .obj-progress (mission-objective
+   completion) is kept as a deliberate tactical/green track: it's the one
+   real match for "green = confirmed success / completed objectives". */
+.obj-progress {
+  background: rgba(155, 191, 106, 0.1);
+  border: 1px solid rgba(155, 191, 106, 0.13);
   box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.45);
 }
 
-.meter > span,
 .obj-progress > span {
   background: linear-gradient(90deg, var(--av-green), var(--av-green-soft));
-  box-shadow: 0 0 12px rgba(56, 242, 139, 0.42);
+  box-shadow: 0 0 12px rgba(155, 191, 106, 0.42);
 }
 
 .map-layout {
@@ -1067,25 +1106,25 @@ button.item-row:hover,
 
 .map-board-wrap,
 .map-side {
-  border: 1px solid rgba(95, 255, 178, 0.22);
+  border: 1px solid rgba(155, 191, 106, 0.22);
   background:
-    radial-gradient(circle at 50% 44%, rgba(56, 242, 139, 0.12), transparent 24%),
-    repeating-radial-gradient(ellipse at 50% 50%, transparent 0 40px, rgba(95, 255, 178, 0.04) 41px 43px, transparent 44px 80px),
-    linear-gradient(rgba(95, 255, 178, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(95, 255, 178, 0.05) 1px, transparent 1px),
+    radial-gradient(circle at 50% 44%, rgba(155, 191, 106, 0.12), transparent 24%),
+    repeating-radial-gradient(ellipse at 50% 50%, transparent 0 40px, rgba(155, 191, 106, 0.04) 41px 43px, transparent 44px 80px),
+    linear-gradient(rgba(155, 191, 106, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(155, 191, 106, 0.05) 1px, transparent 1px),
     rgba(2, 7, 9, 0.88);
   background-size: auto, auto, 48px 48px, 48px 48px, auto;
 }
 
 .marker-dot {
   background: rgba(3, 13, 14, 0.92);
-  border-color: rgba(95, 255, 178, 0.46);
+  border-color: rgba(155, 191, 106, 0.46);
   color: var(--av-green-soft);
-  box-shadow: 0 0 18px rgba(56, 242, 139, 0.14);
+  box-shadow: 0 0 18px rgba(155, 191, 106, 0.14);
 }
 
 .marker-label {
-  border: 1px solid rgba(95, 255, 178, 0.2);
+  border: 1px solid rgba(155, 191, 106, 0.2);
   border-radius: 0;
   background: rgba(2, 7, 9, 0.9);
   color: var(--av-text);
@@ -1095,17 +1134,17 @@ button.item-row:hover,
 .timeline-drawer,
 .time-preview-sheet,
 .toast {
-  border-color: rgba(95, 255, 178, 0.22);
+  border-color: rgba(155, 191, 106, 0.22);
   background: rgba(3, 9, 12, 0.9);
 }
 
 .data-table th,
 .data-table td {
-  border-bottom-color: rgba(95, 255, 178, 0.14);
+  border-bottom-color: rgba(155, 191, 106, 0.14);
 }
 
 .data-table tr:hover td {
-  background: rgba(56, 242, 139, 0.045);
+  background: rgba(155, 191, 106, 0.045);
 }
 
 .wallet-hud,
@@ -1121,15 +1160,6 @@ button.item-row:hover,
 .archive-card,
 .type-tile {
   border-radius: var(--radius-lg);
-}
-
-.cmd-hero,
-.hub-hero {
-  border-radius: var(--radius-lg);
-}
-
-.cmd-title {
-  letter-spacing: 0.13em;
 }
 
 .av-home-command {
@@ -1153,8 +1183,8 @@ button.item-row:hover,
   pointer-events: none;
   background:
     linear-gradient(180deg, transparent 66%, rgba(5, 9, 13, 0.9)),
-    radial-gradient(circle at 50% 46%, rgba(56, 242, 139, 0.14), transparent 23%),
-    repeating-radial-gradient(ellipse at 50% 52%, transparent 0 78px, rgba(95, 255, 178, 0.055) 79px 80px, transparent 81px 150px);
+    radial-gradient(circle at 50% 46%, rgba(155, 191, 106, 0.14), transparent 23%),
+    repeating-radial-gradient(ellipse at 50% 52%, transparent 0 78px, rgba(155, 191, 106, 0.055) 79px 80px, transparent 81px 150px);
 }
 
 .av-command-hero::after {
@@ -1163,7 +1193,7 @@ button.item-row:hover,
   inset-block-start: 6%;
   inset-inline: 0;
   z-index: -1;
-  color: rgba(95, 255, 178, 0.045);
+  color: rgba(155, 191, 106, 0.045);
   font-family: var(--av-font-display);
   font-size: clamp(280px, 48vw, 640px);
   font-weight: 900;
@@ -1194,11 +1224,11 @@ button.item-row:hover,
   font-size: clamp(42px, 8vw, 96px);
   letter-spacing: 0.32em;
   text-indent: 0.32em;
-  text-shadow: 0 0 28px rgba(244, 247, 245, 0.22);
+  text-shadow: 0 0 28px rgba(245, 243, 238, 0.22);
 }
 
 .av-command-identity p {
-  color: rgba(244, 247, 245, 0.62);
+  color: rgba(245, 243, 238, 0.62);
   font-family: var(--av-font-display);
   font-size: clamp(16px, 2vw, 24px);
   letter-spacing: 0.18em;
@@ -1219,8 +1249,8 @@ button.item-row:hover,
   border-radius: 50%;
   background:
     radial-gradient(circle, rgba(3, 9, 12, 0.94) 0 46%, transparent 47%),
-    conic-gradient(from 0deg, rgba(95, 255, 178, 0.16), rgba(95, 255, 178, 0.72), rgba(85, 223, 255, 0.2), rgba(95, 255, 178, 0.16));
-  box-shadow: 0 0 36px rgba(56, 242, 139, 0.2), inset 0 0 30px rgba(0, 0, 0, 0.5);
+    conic-gradient(from 0deg, rgba(155, 191, 106, 0.16), rgba(155, 191, 106, 0.72), rgba(125, 211, 199, 0.2), rgba(155, 191, 106, 0.16));
+  box-shadow: 0 0 36px rgba(155, 191, 106, 0.2), inset 0 0 30px rgba(0, 0, 0, 0.5);
   animation: av-orb-pulse 3.8s ease-in-out infinite;
 }
 
@@ -1234,15 +1264,15 @@ button.item-row:hover,
 
 .av-deploy-orb::before {
   inset: 10%;
-  border: 1px solid rgba(244, 247, 245, 0.22);
+  border: 1px solid rgba(245, 243, 238, 0.22);
 }
 
 .av-deploy-orb::after {
   inset: -15%;
-  border: 1px solid rgba(95, 255, 178, 0.18);
+  border: 1px solid rgba(155, 191, 106, 0.18);
   background:
-    linear-gradient(90deg, transparent 48%, rgba(95, 255, 178, 0.4) 49% 51%, transparent 52%),
-    linear-gradient(0deg, transparent 48%, rgba(95, 255, 178, 0.4) 49% 51%, transparent 52%);
+    linear-gradient(90deg, transparent 48%, rgba(155, 191, 106, 0.4) 49% 51%, transparent 52%),
+    linear-gradient(0deg, transparent 48%, rgba(155, 191, 106, 0.4) 49% 51%, transparent 52%);
   mask-image: radial-gradient(circle, transparent 58%, #000 59%, #000 61%, transparent 62%);
 }
 
@@ -1274,7 +1304,7 @@ button.item-row:hover,
 
 .mission-hud,
 .stage-tracker {
-  border-color: rgba(95, 255, 178, 0.25);
+  border-color: rgba(155, 191, 106, 0.25);
   background: rgba(3, 9, 12, 0.84);
 }
 
@@ -1316,7 +1346,7 @@ button.item-row:hover,
   margin: 18px;
   padding: 16px 0;
   color: var(--av-text);
-  border-block: 1px solid rgba(95, 255, 178, 0.14);
+  border-block: 1px solid rgba(155, 191, 106, 0.14);
   font-size: 15px;
 }
 
@@ -1345,7 +1375,7 @@ button.item-row:hover,
   gap: 14px;
   margin: 18px;
   padding-bottom: 14px;
-  border-bottom: 1px solid rgba(95, 255, 178, 0.14);
+  border-bottom: 1px solid rgba(155, 191, 106, 0.14);
 }
 
 .av-stage-code strong {
@@ -1366,13 +1396,13 @@ button.item-row:hover,
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 0;
-  border: 1px solid rgba(95, 255, 178, 0.2);
+  border: 1px solid rgba(155, 191, 106, 0.2);
   background: rgba(2, 7, 9, 0.74);
 }
 
 .av-active-actions .av-tactical-button {
   min-height: 72px;
-  border-color: rgba(95, 255, 178, 0.16);
+  border-color: rgba(155, 191, 106, 0.16);
   border-block: none;
   border-inline-start: none;
   clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
@@ -1496,7 +1526,6 @@ button.item-row:hover,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .shell::before,
   .av-map-marker,
   .av-progress-ring {
     animation: none !important;
@@ -1506,16 +1535,8 @@ button.item-row:hover,
 /* ============================================================
    AVDS reconstruction pass: command-stage layout and unified surfaces.
    This final layer intentionally owns the shell at every breakpoint.
+   (Layout tokens now defined once in tokens.css.)
    ============================================================ */
-
-:root {
-  --av-rail-width: 78px;
-  --av-content-width: 1540px;
-  --av-panel-blur: blur(18px);
-  --av-panel-fill: linear-gradient(145deg, rgba(8, 20, 24, 0.92), rgba(2, 7, 10, 0.78));
-  --av-corner: 10px;
-  --av-hud-height: 116px;
-}
 
 body {
   font-family: var(--font-sans);
@@ -1560,7 +1581,7 @@ body {
   padding: var(--space-2) 0;
   overflow-y: auto;
   border: 0;
-  border-inline-end: 1px solid rgba(95, 255, 178, 0.18);
+  border-inline-end: 1px solid rgba(155, 191, 106, 0.18);
   background: linear-gradient(180deg, rgba(3, 10, 13, 0.98), rgba(2, 6, 8, 0.94));
   box-shadow: 16px 0 32px rgba(0, 0, 0, 0.18);
 }
@@ -1581,8 +1602,8 @@ body {
 
 .game-nav-slot svg { width: var(--icon-md); height: var(--icon-md); }
 .game-nav-slot span { max-width: 66px; overflow: hidden; font-size: 9px; line-height: 1.15; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
-.game-nav-slot:hover { background: rgba(56, 242, 139, 0.08); color: var(--av-text); }
-.game-nav-slot.active { color: var(--av-green-soft); border-inline-start-color: var(--av-green); background: linear-gradient(90deg, rgba(56, 242, 139, 0.17), transparent); box-shadow: inset 0 0 24px rgba(56, 242, 139, 0.08); }
+.game-nav-slot:hover { background: rgba(155, 191, 106, 0.08); color: var(--av-text); }
+.game-nav-slot.active { color: var(--av-green-soft); border-inline-start-color: var(--av-green); background: linear-gradient(90deg, rgba(155, 191, 106, 0.17), transparent); box-shadow: inset 0 0 24px rgba(155, 191, 106, 0.08); }
 .game-nav-slot em { position: absolute; inset-block-start: 6px; inset-inline-end: 9px; }
 
 .page,
@@ -1610,90 +1631,77 @@ body {
   min-height: 82px;
   margin: var(--space-3) auto 0;
   padding: var(--space-3) var(--space-4);
-  border: 1px solid rgba(95, 255, 178, 0.26);
+  border: 1px solid rgba(155, 191, 106, 0.26);
   border-radius: var(--av-corner);
   background: linear-gradient(90deg, rgba(4, 15, 18, 0.96), rgba(3, 10, 14, 0.88));
   box-shadow: 0 16px 44px rgba(0, 0, 0, 0.28);
   backdrop-filter: var(--av-panel-blur);
 }
 .hud-cluster { min-width: 0; font-size: var(--type-hud); }
-.hud-stage { padding-inline-end: var(--space-3); border-inline-end: 1px solid rgba(95, 255, 178, 0.18); }
+.hud-stage { padding-inline-end: var(--space-3); border-inline-end: 1px solid rgba(155, 191, 106, 0.18); }
 .hud-kicker { color: var(--av-green-soft); font-size: var(--type-caption); }
 .hud-stage-title { overflow: hidden; color: var(--av-text); font-size: 0.9rem; text-overflow: ellipsis; white-space: nowrap; }
-.hud-ring { width: 46px; height: 46px; background: conic-gradient(var(--av-green) calc(var(--p) * 1%), rgba(95, 255, 178, 0.1) 0); }
+.hud-ring { width: 46px; height: 46px; background: conic-gradient(var(--av-green) calc(var(--p) * 1%), rgba(155, 191, 106, 0.1) 0); }
 .hud-ring::before { background: #061014; }
-.hud-report-cta { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: 42px; padding: 0 var(--space-3); border: 1px solid rgba(95, 255, 178, 0.42); color: var(--av-green-soft); font-size: var(--type-hud); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
-.hud-report-cta.pending { background: rgba(56, 242, 139, 0.15); box-shadow: var(--av-glow-green); }
+.hud-report-cta { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: 42px; padding: 0 var(--space-3); border: 1px solid rgba(155, 191, 106, 0.42); color: var(--av-green-soft); font-size: var(--type-hud); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.hud-report-cta.pending { background: rgba(155, 191, 106, 0.15); box-shadow: var(--av-glow-green); }
 
-.panel,
-.glass,
-.tac-card,
-.char-card,
-.archive-card,
-.report-form,
-.report-history,
-.report-verdict,
-.map-side,
-.chat-layout .band {
-  border: 1px solid rgba(95, 255, 178, 0.18);
-  border-radius: var(--av-corner);
-  background: var(--av-panel-fill);
-  box-shadow: var(--av-panel-shadow);
-  backdrop-filter: var(--av-panel-blur);
-}
-
+/* NOTE: this "reconstruction pass" section used to redefine .panel,
+   .band-title/.eyebrow, .btn-primary, and .chip AGAIN with the same
+   permanent-tactical treatment removed earlier in this file — since it
+   loads later, it was silently winning the cascade and undoing that
+   work (the exact bug class the Phase 1 migration plan was written to
+   fix, recurring at the component level instead of the token level).
+   Layout-only rules here are kept; color/shape declarations that
+   duplicated or fought the earlier neutral-vs-semantic split have been
+   removed so there is exactly one rule governing each property. */
 .panel,
 .tac-card,
 .char-card,
 .archive-card { overflow: clip; }
-.band { padding: var(--space-4) var(--space-5); border-color: rgba(95, 255, 178, 0.14); }
-.band-title, .av-eyebrow, .eyebrow { color: var(--av-green-soft); font-size: var(--type-caption); font-weight: 700; letter-spacing: 0.12em; }
+.band { padding: var(--space-4) var(--space-5); }
 
-.btn,
 .game-btn,
-.av-tactical-button {
+.av-tactical-button,
+.ui-btn {
   min-height: 42px;
-  border-radius: 2px;
   font-family: var(--font-display);
   font-size: var(--type-hud);
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
 }
-.btn-primary, .game-btn-primary, .av-tactical-button.primary { color: #021109; background: linear-gradient(100deg, var(--av-green), #69ffbe); box-shadow: 0 0 20px rgba(56, 242, 139, 0.2); }
-.btn-secondary, .game-btn-ghost, .av-tactical-button.secondary, .av-tactical-button.ghost { border-color: rgba(95, 255, 178, 0.38); background: rgba(4, 15, 18, 0.72); }
-.btn-danger, .av-tactical-button.danger { border-color: rgba(255, 75, 95, 0.5); background: rgba(255, 75, 95, 0.12); }
-.btn:hover:not(:disabled), .game-btn:hover:not(:disabled), .av-tactical-button:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.08); }
+.game-btn-ghost, .av-tactical-button.secondary, .av-tactical-button.ghost, .ui-btn-ghost { background: rgba(4, 15, 18, 0.72); }
+.av-tactical-button.danger, .ui-btn-danger { border-color: rgba(229, 107, 111, 0.5); background: rgba(229, 107, 111, 0.12); }
+.game-btn:hover:not(:disabled), .av-tactical-button:hover:not(:disabled), .ui-btn:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.08); }
 
-.chip, .status-chip, .av-status-chip, .av-resource-chip {
+.status-chip, .av-status-chip, .av-resource-chip {
   min-height: 26px;
-  border-radius: 2px;
-  border-color: rgba(95, 255, 178, 0.22);
-  background: rgba(5, 16, 19, 0.7);
   font-size: var(--type-caption);
 }
 
 .map-layout { min-height: calc(100dvh - var(--topbar-height)); padding: var(--space-4) clamp(var(--space-4), 2.5vw, var(--space-6)); }
 .map-board-wrap { min-height: min(68dvh, 760px); border-radius: var(--av-corner); }
 .map-side { align-self: stretch; overflow: auto; }
-.marker-pin.selected .marker-dot, .marker-pin.recommended .marker-dot { box-shadow: 0 0 0 5px rgba(56, 242, 139, 0.13), 0 0 26px rgba(56, 242, 139, 0.5); }
+.marker-pin.selected .marker-dot, .marker-pin.recommended .marker-dot { box-shadow: 0 0 0 5px rgba(155, 191, 106, 0.13), 0 0 26px rgba(155, 191, 106, 0.5); }
 
 .card-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr)); gap: var(--space-3); }
 .char-card { min-height: 170px; padding: var(--space-4); transition: transform var(--av-duration-normal) var(--av-ease-out), border-color var(--av-duration-normal) var(--av-ease-out); }
-.char-card:hover { transform: translateY(-2px); border-color: rgba(95, 255, 178, 0.48); }
+.char-card:hover { transform: translateY(-2px); border-color: rgba(155, 191, 106, 0.48); }
 
-.avatar { border-radius: 50%; border: 2px solid rgba(95, 255, 178, 0.55); background: #061014; box-shadow: 0 0 0 3px rgba(56, 242, 139, 0.08), inset 0 0 0 1px rgba(0,0,0,.65); }
-.avatar-img img { object-fit: cover; object-position: center 22%; image-rendering: auto; }
-.avatar-ph2 { background: radial-gradient(circle at 38% 25%, rgba(95, 255, 178, 0.22), transparent 35%), #0a1920 !important; }
+/* .avatar / .avatar-img / .avatar-ph2 intentionally not redefined here.
+   game.css:200-243 owns the single avatar definition (see Phase 1 plan —
+   this file used to silently win the cascade with a conflicting circular
+   green-ring treatment the Avatar.tsx component was never designed for). */
 
 .timeline-drawer { inset-inline-start: calc(var(--av-rail-width) + var(--space-4)); inset-inline-end: var(--space-4); max-width: var(--av-content-width); margin-inline: auto; }
-.timeline-drawer-handle { border: 1px solid rgba(95, 255, 178, 0.22); border-bottom: 0; background: rgba(3, 10, 14, 0.94); backdrop-filter: var(--av-panel-blur); }
+.timeline-drawer-handle { border: 1px solid rgba(155, 191, 106, 0.22); border-bottom: 0; background: rgba(3, 10, 14, 0.94); backdrop-filter: var(--av-panel-blur); }
 
 @media (max-width: 980px) {
   .shell { grid-template-rows: var(--topbar-height) minmax(0, 1fr) 74px; grid-template-areas: "topbar" "main" "mobilenav"; }
   .main { margin-inline-start: 0; padding-bottom: var(--space-2); }
   .game-topbar { padding-inline: var(--space-4); }
-  .game-bottom-nav { position: relative; inset: auto; grid-area: mobilenav; flex-direction: row; width: 100%; min-width: 0; padding: var(--space-2); overflow-x: auto; border-inline-end: 0; border-top: 1px solid rgba(95, 255, 178, 0.18); box-shadow: 0 -12px 32px rgba(0,0,0,.18); }
+  .game-bottom-nav { position: relative; inset: auto; grid-area: mobilenav; flex-direction: row; width: 100%; min-width: 0; padding: var(--space-2); overflow-x: auto; border-inline-end: 0; border-top: 1px solid rgba(155, 191, 106, 0.18); box-shadow: 0 -12px 32px rgba(0,0,0,.18); }
   .game-nav-slot { flex: 1 0 72px; min-height: 55px; }
   .mission-hud { position: relative; grid-template-columns: minmax(140px, 1fr) auto auto auto; width: calc(100% - var(--space-4)); margin-top: var(--space-2); }
   .mission-hud .hud-suspect, .mission-hud .hud-reward { display: none; }
@@ -1717,5 +1725,5 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .char-card, .btn, .game-btn, .av-tactical-button { transition: none !important; }
+  .char-card, .btn, .game-btn, .av-tactical-button, .ui-btn { transition: none !important; }
 }

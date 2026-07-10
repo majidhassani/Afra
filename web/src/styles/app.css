@@ -37,103 +37,11 @@
   line-height: 1.2;
 }
 
-/* AVDS must win over the legacy app-shell rules declared above. Keeping this
-   compact cascade here prevents the old dashboard grid from reclaiming the
-   desktop canvas after AVDS has been imported. */
-.shell {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: var(--topbar-height) minmax(0, 1fr);
-  grid-template-areas: "topbar" "main";
-  height: 100dvh;
-  min-height: 100dvh;
-  overflow: hidden;
-}
-
-.main {
-  width: 100%;
-  margin-inline-start: var(--av-rail-width);
-  padding-bottom: var(--space-6);
-  overflow-x: clip;
-}
-
-.game-topbar {
-  min-height: var(--topbar-height);
-  padding-inline-start: calc(var(--av-rail-width) + var(--space-5));
-  padding-inline-end: var(--space-5);
-}
-
-.game-bottom-nav {
-  position: fixed;
-  inset-block: var(--topbar-height) 0;
-  inset-inline-start: 0;
-  z-index: 8;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  width: var(--av-rail-width);
-  min-width: var(--av-rail-width);
-  padding: var(--space-2) 0;
-  overflow-y: auto;
-  border: 0;
-  border-inline-end: 1px solid rgba(95, 255, 178, 0.18);
-  background: linear-gradient(180deg, rgba(3, 10, 13, 0.98), rgba(2, 6, 8, 0.94));
-}
-
-.game-nav-slot,
-.mobilenav a {
-  display: grid;
-  flex: 0 0 auto;
-  place-items: center;
-  min-height: 58px;
-  padding: var(--space-2) var(--space-1);
-  border: 0;
-  border-inline-start: 2px solid transparent;
-  clip-path: none;
-}
-
-.game-nav-slot.active {
-  color: var(--av-green-soft);
-  border-inline-start-color: var(--av-green);
-  background: linear-gradient(90deg, rgba(56, 242, 139, 0.17), transparent);
-}
-
-.page,
-.map-layout,
-.report-terminal,
-.chat-layout {
-  width: min(100%, var(--av-content-width));
-  margin-inline: auto;
-}
-
-.page {
-  max-width: var(--av-content-width);
-  min-height: 100%;
-  padding: var(--space-5) clamp(var(--space-4), 2.5vw, var(--space-6));
-}
-
-@media (max-width: 980px) {
-  .shell {
-    grid-template-rows: var(--topbar-height) minmax(0, 1fr) 74px;
-    grid-template-areas: "topbar" "main" "mobilenav";
-  }
-
-  .main { width: 100%; margin-inline-start: 0; padding-bottom: var(--space-2); }
-  .game-topbar { padding-inline: var(--space-4); }
-  .game-bottom-nav {
-    position: relative;
-    inset: auto;
-    grid-area: mobilenav;
-    flex-direction: row;
-    width: 100%;
-    min-width: 0;
-    padding: var(--space-2);
-    overflow-x: auto;
-    border-inline-end: 0;
-    border-top: 1px solid rgba(95, 255, 178, 0.18);
-  }
-  .game-nav-slot { flex: 1 0 72px; min-height: 55px; }
-}
+/* The app shell / topbar / rail-nav grid is owned solely by avds.css's
+   reconstruction-pass rules now (avds.css, "AVDS reconstruction pass"
+   section) — this file used to carry two more copies of the same rules,
+   confirmed dead by cross-referencing AppShell.tsx (renders only
+   <GameTopBar>/<GameBottomNav>). See the Phase 1 migration plan. */
 
 .auth-form-wrap {
   display: flex;
@@ -165,57 +73,28 @@
   }
 }
 
-/* ---------- App shell ---------- */
+/* ---------- Page header ----------
+   Layout only (flex row); avds.css layers position/spacing/border-bottom
+   on top of this (the corner-bracket decoration it used to add there was
+   removed in the Cinematic Noir pass — see avds.css) — both files are
+   needed, neither is a full duplicate of the other. */
 
-.shell {
-  display: grid;
-  grid-template-columns: var(--sidenav-width) minmax(0, 1fr);
-  grid-template-rows: var(--topbar-height) minmax(0, 1fr);
-  grid-template-areas:
-    "nav topbar"
-    "nav main";
-  height: 100%;
-}
-
-.topbar {
-  grid-area: topbar;
+.page-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
-  padding: 0 16px;
-  border-bottom: 1px solid var(--border-subtle);
-  background: var(--bg-base);
-  min-width: 0;
+  margin-bottom: 20px;
 }
 
-.sidenav {
-  grid-area: nav;
-  background: var(--bg-panel);
-  border-inline-end: 1px solid var(--border-subtle);
-  display: flex;
-  flex-direction: column;
-  padding: 14px 10px;
-  gap: 2px;
-  overflow-y: auto;
+.page-header .subtitle {
+  color: var(--text-secondary);
+  margin-top: 4px;
+  max-width: 60ch;
 }
 
-.sidenav-brand {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  padding: 4px 10px 14px;
-}
-
-.sidenav-section {
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  padding: 14px 10px 5px;
-}
+/* ---------- Nav link (still used once: AppShell.tsx logout button) ---------- */
 
 .navlink {
   display: flex;
@@ -233,80 +112,8 @@
   color: var(--text-primary);
 }
 
-.navlink.active {
-  background: var(--bg-elevated);
-  color: var(--text-primary);
-}
-
 .navlink svg {
   flex-shrink: 0;
-}
-
-.main {
-  grid-area: main;
-  overflow-y: auto;
-  min-width: 0;
-}
-
-.page {
-  padding: 24px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.page-header .subtitle {
-  color: var(--text-secondary);
-  margin-top: 4px;
-  max-width: 60ch;
-}
-
-.mobilenav {
-  display: none;
-}
-
-@media (max-width: 860px) {
-  .shell {
-    grid-template-columns: 1fr;
-    grid-template-rows: var(--topbar-height) minmax(0, 1fr) 56px;
-    grid-template-areas:
-      "topbar"
-      "main"
-      "mobilenav";
-  }
-  .sidenav {
-    display: none;
-  }
-  .mobilenav {
-    display: flex;
-    align-items: stretch;
-    border-top: 1px solid var(--border-subtle);
-    background: var(--bg-panel);
-  }
-  .mobilenav a {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    font-size: 10px;
-    color: var(--text-faint);
-  }
-  .mobilenav a.active {
-    color: var(--text-primary);
-  }
-  .page {
-    padding: 16px;
-  }
 }
 
 /* ---------- Dashboard grid ---------- */
@@ -613,28 +420,8 @@ button.item-row:hover {
   max-height: 140px;
 }
 
-/* ---------- Avatar placeholder ---------- */
-
-.avatar-ph {
-  width: 42px;
-  height: 42px;
-  border-radius: var(--radius-md);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-faint);
-  font-weight: 600;
-  font-size: 15px;
-  flex-shrink: 0;
-}
-
-.avatar-ph.lg {
-  width: 64px;
-  height: 64px;
-  font-size: 22px;
-}
+/* .avatar-ph removed — verified zero .tsx references (the live Avatar
+   component uses .avatar/.avatar-img/.avatar-ph2 from game.css instead). */
 
 /* ---------- Meters ---------- */
 
@@ -811,32 +598,10 @@ code {
   overflow-wrap: anywhere;
 }
 
-/* The legacy selectors above are intentionally kept for feature coverage;
-   AVDS owns the final shell geometry. */
-.shell {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: var(--topbar-height) minmax(0, 1fr);
-  grid-template-areas: "topbar" "main";
-  height: 100dvh;
-  min-height: 100dvh;
-  overflow: hidden;
-}
-.main { width: calc(100% - var(--av-rail-width)); margin-inline-start: var(--av-rail-width); padding-bottom: var(--space-6); overflow-x: clip; }
-.game-topbar { min-height: var(--topbar-height); padding-inline-start: calc(var(--av-rail-width) + var(--space-5)); padding-inline-end: var(--space-5); }
-.game-bottom-nav { position: fixed; inset-block: var(--topbar-height) 0; inset-inline-start: 0; grid-area: auto; z-index: 8; display: flex; flex-direction: column; align-items: stretch; width: var(--av-rail-width); min-width: var(--av-rail-width); padding: var(--space-2) 0; overflow-y: auto; border: 0; border-inline-end: 1px solid rgba(95, 255, 178, 0.18); background: linear-gradient(180deg, rgba(3, 10, 13, 0.98), rgba(2, 6, 8, 0.94)); }
-.game-nav-slot, .mobilenav a { display: grid; flex: 0 0 auto; place-items: center; min-height: 58px; padding: var(--space-2) var(--space-1); border: 0; border-inline-start: 2px solid transparent; clip-path: none; }
-.game-nav-slot.active { color: var(--av-green-soft); border-inline-start-color: var(--av-green); background: linear-gradient(90deg, rgba(56, 242, 139, 0.17), transparent); }
-.page, .map-layout, .report-terminal, .chat-layout { width: min(100%, var(--av-content-width)); margin-inline: auto; }
-.page { max-width: var(--av-content-width); min-height: 100%; padding: var(--space-5) clamp(var(--space-4), 2.5vw, var(--space-6)); }
-/* Fixed overlays must never become implicit shell-grid rows. */
-.shell > .timeline-drawer,
-.shell > .game-effects,
-.shell > .game-bottom-nav { position: fixed !important; grid-area: auto !important; }
-@media (max-width: 980px) {
-  .shell { grid-template-rows: var(--topbar-height) minmax(0, 1fr) 74px; grid-template-areas: "topbar" "main" "mobilenav"; }
-  .main { width: 100%; margin-inline-start: 0; padding-bottom: var(--space-2); }
-  .game-topbar { padding-inline: var(--space-4); }
-  .shell > .game-bottom-nav { position: relative !important; inset: auto; grid-area: mobilenav !important; flex-direction: row; width: 100%; min-width: 0; padding: var(--space-2); overflow-x: auto; border-inline-end: 0; border-top: 1px solid rgba(95, 255, 178, 0.18); }
-  .game-nav-slot { flex: 1 0 72px; min-height: 55px; }
-}
+/* Third copy of the shell/rail-nav geometry removed — byte-identical intent
+   to avds.css's reconstruction-pass rules, which remain the sole owner.
+   Verified the "!important fixed overlay" safety net here was redundant:
+   .game-effects and .timeline-drawer already get `position: fixed` from
+   game.css with no conflicting override anywhere in the cascade, and
+   .game-bottom-nav gets it from avds.css's surviving rules — so nothing
+   could pull them into the shell's grid flow regardless. */

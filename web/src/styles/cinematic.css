@@ -320,246 +320,13 @@
   border-top: none;
 }
 
-/* ============================================================
-   MISSION COMMAND CENTER — cinematic HUD (03 AFTER)
-   ============================================================ */
-.cmd-hero {
-  position: relative;
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  min-height: 340px;
-  margin-bottom: 16px;
-  border: 1px solid var(--glass-border);
-  background:
-    linear-gradient(180deg, transparent 30%, var(--env-scrim) 92%),
-    var(--env-wash),
-    linear-gradient(140deg, #10141b, #0a0d12);
-  box-shadow: var(--shadow-float);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 14px;
-}
-/* Subtle animated scan sheen across the hero. */
-.cmd-hero::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(115deg, transparent 42%, rgba(255, 255, 255, 0.04) 50%, transparent 58%);
-  transform: translateX(-30%);
-  animation: cmd-sheen 9s ease-in-out infinite;
-  pointer-events: none;
-}
-@keyframes cmd-sheen {
-  0%, 70% { transform: translateX(-40%); opacity: 0; }
-  80% { opacity: 1; }
-  100% { transform: translateX(40%); opacity: 0; }
-}
-
-/* ---- Top resource strip (coins / region / clock) ---- */
-.cmd-topbar {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  z-index: 2;
-}
-.cmd-res {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 13px;
-  border-radius: 999px;
-  font-weight: 700;
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-  border: 1px solid var(--glass-border);
-  background: color-mix(in srgb, var(--bg-elevated) 72%, transparent);
-  backdrop-filter: blur(8px);
-}
-.cmd-res.coin { color: var(--accent-wallet); }
-.cmd-res.env { color: var(--env-accent); }
-.cmd-res .r-ico { opacity: 0.9; }
-/* Flatten the standalone coin pill when nested inside a resource chip. */
-.cmd-res .coin-balance {
-  padding: 0;
-  border: none;
-  background: transparent;
-  font-size: 13px;
-  font-weight: 700;
-  color: inherit;
-}
-.cmd-res .coin-balance .coin-dot {
-  display: none;
-}
-.cmd-res-spacer { flex: 1; }
-.cmd-region {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 14px;
-  border-radius: 10px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--env-accent);
-  border: 1px solid color-mix(in srgb, var(--env-accent) 40%, transparent);
-  background: color-mix(in srgb, var(--env-accent) 12%, transparent);
-}
-
-/* ---- Center: mission panel + tactical rail ---- */
-.cmd-body {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 14px;
-  flex: 1;
-}
-.cmd-mission {
-  max-width: 460px;
-  padding: 16px;
-  border-radius: var(--radius-lg);
-}
-.cmd-eyebrow {
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--env-accent);
-  margin-bottom: 4px;
-}
-.cmd-title {
-  font-size: clamp(20px, 3vw, 28px);
-  font-weight: 700;
-  line-height: 1.15;
-  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.6);
-}
-.cmd-objective {
-  color: var(--text-secondary);
-  margin-top: 6px;
-  font-size: 13.5px;
-}
-.cmd-meters {
-  display: flex;
-  gap: 18px;
-  flex-wrap: wrap;
-  margin-top: 14px;
-}
-.cmd-meter {
-  min-width: 120px;
-}
-.cmd-meter .m-label {
-  font-size: 10.5px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 5px;
-}
-.cmd-timer {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 14px;
-  padding: 8px 14px;
-  border-radius: 10px;
-  font-variant-numeric: tabular-nums;
-  font-weight: 700;
-  font-size: 15px;
-  letter-spacing: 0.04em;
-  color: var(--text-primary);
-  border: 1px solid var(--glass-border);
-  background: color-mix(in srgb, var(--bg-base) 55%, transparent);
-}
-.cmd-timer.danger {
-  color: var(--accent-danger);
-  border-color: color-mix(in srgb, var(--accent-danger) 45%, transparent);
-}
-
-/* ---- Right tactical rail (07 icon rail) ---- */
-.cmd-rail {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.cmd-rail a {
-  position: relative;
-  width: 46px;
-  height: 46px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-  color: var(--text-secondary);
-  border: 1px solid var(--glass-border);
-  background: color-mix(in srgb, var(--bg-elevated) 70%, transparent);
-  backdrop-filter: blur(8px);
-  transition: transform 140ms var(--ease), border-color 140ms var(--ease), color 140ms var(--ease);
-}
-.cmd-rail a:hover {
-  transform: translateY(-2px);
-  color: var(--env-accent);
-  border-color: var(--env-accent);
-  box-shadow: var(--env-glow);
-}
-.cmd-rail a .rail-badge {
-  position: absolute;
-  top: -4px;
-  inset-inline-end: -4px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #0a0d12;
-  background: var(--env-accent);
-}
-
-/* ---- Bottom action bar (03 AFTER buttons) ---- */
-.cmd-actions {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.cmd-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 13.5px;
-  color: var(--text-primary);
-  border: 1px solid var(--glass-border);
-  background: color-mix(in srgb, var(--bg-elevated) 74%, transparent);
-  backdrop-filter: blur(8px);
-  transition: transform 140ms var(--ease), border-color 140ms var(--ease), box-shadow 140ms var(--ease);
-}
-.cmd-action:hover {
-  transform: translateY(-1px);
-  border-color: var(--env-accent);
-  box-shadow: var(--env-glow);
-}
-.cmd-action.primary {
-  color: #0a0d12;
-  font-weight: 700;
-  border-color: transparent;
-  background: linear-gradient(180deg, var(--env-accent), color-mix(in srgb, var(--env-accent) 78%, #000));
-}
-
-/* Progress fill picks up the environment accent inside the hero. */
-.cmd-hero .obj-progress > span {
-  background: linear-gradient(90deg, var(--env-accent), var(--env-accent-2)) !important;
-}
+/* .cmd-hero / .cmd-topbar / .cmd-res / .cmd-region / .cmd-body / .cmd-mission
+   / .cmd-eyebrow / .cmd-title / .cmd-objective / .cmd-meters / .cmd-meter /
+   .cmd-timer / .cmd-rail / .cmd-actions / .cmd-action removed — a full
+   alternate mission-command-HUD implementation with zero references
+   anywhere in the .tsx source (verified by grep across the whole app).
+   The live mission HUD is MissionHUD.tsx + game.css's "Mission
+   command-center HUD" section. See the Phase 1 migration plan. */
 
 /* ============================================================
    Environment accent inheritance — while a mission is open, the
@@ -592,21 +359,9 @@
   border-color: color-mix(in srgb, var(--env-accent) 14%, var(--border-subtle));
 }
 
-/* ---- Mission Hub lobby: biome-lit hero + deploy tiles ---- */
-:root[data-env] .hub-hero {
-  border-color: color-mix(in srgb, var(--env-accent) 32%, transparent);
-  background:
-    radial-gradient(760px 340px at 100% 0%, color-mix(in srgb, var(--env-accent) 16%, transparent), transparent 62%),
-    var(--env-wash),
-    linear-gradient(150deg, rgba(20, 26, 34, 0.92), rgba(10, 13, 18, 0.96));
-}
-:root[data-env] .hub-hero .eyebrow {
-  color: var(--env-accent);
-}
-.hub-hero {
-  position: relative;
-  overflow: hidden;
-}
+/* .hub-hero removed — zero .tsx references (DashboardPage uses
+   .av-command-hero from avds.css instead). .type-grid/.type-tile below
+   ARE live (DashboardPage's mission-type tiles) — kept as-is. */
 /* Deploy tiles read as launchable operations, not menu buttons. */
 .type-grid {
   gap: 12px;
@@ -825,27 +580,7 @@
   }
 }
 
-@media (max-width: 720px) {
-  .cmd-hero {
-    min-height: 300px;
-  }
-  .cmd-body {
-    align-items: stretch;
-    flex-direction: column;
-  }
-  .cmd-rail {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-  .cmd-mission {
-    max-width: none;
-    padding: 12px 0 0;
-    background: transparent !important;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .cmd-hero::before,
   .env-backdrop {
     animation: none;
     transition: none;

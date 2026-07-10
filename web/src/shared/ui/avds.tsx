@@ -12,6 +12,7 @@ import {
   type LucideIcon,
   Zap,
 } from "lucide-react";
+import { Button, type ButtonVariant } from "./Button";
 
 export interface GameNavItem {
   to: string;
@@ -107,6 +108,21 @@ export function HudPanel({
   );
 }
 
+const tacticalButtonVariant: Record<
+  "primary" | "secondary" | "ghost" | "danger",
+  ButtonVariant
+> = {
+  primary: "tactical",
+  secondary: "ghost",
+  ghost: "ghost",
+  danger: "danger",
+};
+
+/**
+ * Thin wrapper around the canonical Button primitive (shared/ui/Button.tsx)
+ * — kept as its own component so every existing call site's props/className
+ * stay unchanged.
+ */
 export function TacticalButton({
   children,
   to,
@@ -124,18 +140,18 @@ export function TacticalButton({
   onClick?: () => void;
   className?: string;
 }) {
-  const cls = `av-tactical-button ${variant} ${className}`;
-  if (to) {
-    return (
-      <Link className={cls} to={to}>
-        {children}
-      </Link>
-    );
-  }
   return (
-    <button className={cls} type={type} disabled={disabled} onClick={onClick}>
+    <Button
+      variant={tacticalButtonVariant[variant]}
+      to={to}
+      type={type}
+      disabled={disabled}
+      onClick={onClick}
+      className={className}
+      legacyClassName={`av-tactical-button ${variant}`}
+    >
       {children}
-    </button>
+    </Button>
   );
 }
 

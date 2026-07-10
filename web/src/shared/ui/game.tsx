@@ -1,7 +1,18 @@
 import type { ReactNode } from "react";
 import { Loader2 } from "lucide-react";
+import { Button, type ButtonVariant } from "./Button";
 
-/** Primary game action button with tactical glow. */
+const gameButtonVariant: Record<"primary" | "mission" | "ghost", ButtonVariant> = {
+  primary: "tactical",
+  mission: "mission",
+  ghost: "ghost",
+};
+
+/**
+ * Primary game action button with tactical glow. Thin wrapper around the
+ * canonical Button primitive (shared/ui/Button.tsx) — kept as its own
+ * component so every existing call site's props/className stay unchanged.
+ */
 export function GameButton({
   children,
   variant = "primary",
@@ -20,15 +31,17 @@ export function GameButton({
   title?: string;
 }) {
   return (
-    <button
+    <Button
+      variant={gameButtonVariant[variant]}
+      size={size}
       type={type}
-      className={`game-btn game-btn-${variant}${size ? ` ${size}` : ""}`}
       disabled={disabled}
       onClick={onClick}
       title={title}
+      legacyClassName={`game-btn game-btn-${variant}`}
     >
       {children}
-    </button>
+    </Button>
   );
 }
 
