@@ -47,7 +47,13 @@ export function TimelinePage() {
         </h1>
         <div className="row" style={{ gap: 8 }}>
           <span
-            className={`chip ${streamStatus === "disconnected" ? "chip-danger" : "chip-mission"}`}
+            className={`chip ${
+              streamStatus === "disconnected"
+                ? "chip-danger"
+                : streamStatus === "polling"
+                  ? "chip-warning"
+                  : "chip-mission"
+            }`}
           >
             <Radio size={12} aria-hidden />
             {statusLabel}

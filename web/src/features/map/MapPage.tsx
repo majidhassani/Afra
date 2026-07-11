@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -10,6 +10,7 @@ import {
   Search,
   MessageCircle,
   Sparkles,
+  ChevronDown,
 } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
 import { mapApi } from "@/shared/api/endpoints";
@@ -32,6 +33,9 @@ export function MapPage() {
   const { t } = useI18n();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mapsUnavailable, setMapsUnavailable] = useState(false);
+  const [sheetExpanded, setSheetExpanded] = useState(false);
+  const sheetHandleRef = useRef<HTMLButtonElement>(null);
+  const dragStartY = useRef<number | null>(null);
   const useRealMap = hasGoogleMapsKey() && !mapsUnavailable;
 
   const map = useQuery({
@@ -43,8 +47,47 @@ export function MapPage() {
   const selected =
     map.data?.locations.find((m) => m.id === selectedId) ?? null;
 
+  // Selecting a marker on mobile should surface its detail immediately —
+  // the sheet expands automatically rather than requiring a second tap.
+  useEffect(() => {
+    if (selected) {
+      setSheetExpanded(true);
+      sheetHandleRef.current?.focus({ preventScroll: true });
+    }
+  }, [selected]);
+
+  useEffect(() => {
+    if (!sheetExpanded) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setSheetExpanded(false);
+        sheetHandleRef.current?.focus({ preventScroll: true });
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [sheetExpanded]);
+
+  const startSheetDrag = (event: PointerEvent<HTMLButtonElement>) => {
+    dragStartY.current = event.clientY;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+  const moveSheetDrag = (event: PointerEvent<HTMLButtonElement>) => {
+    if (dragStartY.current === null) return;
+    const distance = event.clientY - dragStartY.current;
+    if (distance < -32) setSheetExpanded(true);
+    if (distance > 32) setSheetExpanded(false);
+  };
+  const endSheetDrag = (event: PointerEvent<HTMLButtonElement>) => {
+    dragStartY.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+
   return (
     <div className="map-layout">
+      <h1 className="visually-hidden">{t("map.title")}</h1>
       <div
         className="map-board-wrap"
         role="application"
@@ -74,20 +117,51 @@ export function MapPage() {
         )}
       </div>
 
-      <aside className="map-side" aria-label={t("map.selectLocation")}>
-        {!selected && (
-          <>
-            <EmptyState title={t("map.selectLocation")} />
-            {missionId && (
-              <div style={{ padding: 16 }}>
-                <GuidancePanel missionId={missionId} screen="map" />
-              </div>
-            )}
-          </>
-        )}
-        {selected && missionId && (
-          <SelectedMarkerPanel missionId={missionId} marker={selected} />
-        )}
+      {/* Desktop: a persistent side panel (unchanged). Mobile: the same
+          markup becomes a bottom sheet — see .map-side's mobile rule in
+          app.css. `sheet-collapsed`/`sheet-expanded` only affect layout
+          below the map-board breakpoint; on desktop they're inert. */}
+      <aside
+        className={`map-side ${sheetExpanded ? "sheet-expanded" : "sheet-collapsed"}`}
+        aria-label={t("map.selectLocation")}
+      >
+        <button
+          ref={sheetHandleRef}
+          type="button"
+          className="map-side-handle"
+          onClick={() => setSheetExpanded((v) => !v)}
+          aria-expanded={sheetExpanded}
+          aria-controls="map-side-body"
+          onPointerDown={startSheetDrag}
+          onPointerMove={moveSheetDrag}
+          onPointerUp={endSheetDrag}
+          onPointerCancel={endSheetDrag}
+        >
+          <span className="map-side-grip" aria-hidden />
+          <span className="map-side-handle-label">
+            {selected ? selected.name : t("map.selectLocation")}
+          </span>
+          <ChevronDown
+            size={16}
+            aria-hidden
+            style={{ transform: sheetExpanded ? "rotate(180deg)" : undefined }}
+          />
+        </button>
+        <div id="map-side-body" className="map-side-body">
+          {!selected && (
+            <>
+              <EmptyState title={t("map.selectLocation")} />
+              {missionId && (
+                <div style={{ padding: 16 }}>
+                  <GuidancePanel missionId={missionId} screen="map" />
+                </div>
+              )}
+            </>
+          )}
+          {selected && missionId && (
+            <SelectedMarkerPanel missionId={missionId} marker={selected} />
+          )}
+        </div>
       </aside>
     </div>
   );
@@ -280,36 +354,33 @@ function SelectedMarkerPanel({
           {/* Location actions: inspect / talk / ask AI / view clues */}
           <div className="band" style={{ borderBottom: "none" }}>
             <div className="row" style={{ flexWrap: "wrap", gap: 8 }}>
-              <Link to={`/app/missions/${missionId}/locations/${marker.id}`}>
-                <GameButton variant="primary">
-                  <ExternalLink size={14} aria-hidden />
-                  {t("map.inspectArea")}
-                </GameButton>
-              </Link>
-              {firstCharacter && (
-                <Link
-                  to={`/app/missions/${missionId}/characters/${firstCharacter.id}`}
-                >
-                  <GameButton variant="ghost">
-                    <MessageCircle size={14} aria-hidden />
-                    {t("map.talk")}
-                  </GameButton>
-                </Link>
-              )}
-              <Link
-                to={`/app/missions/${missionId}/locations/${marker.id}?ask=1`}
+              <GameButton
+                to={`/app/missions/${missionId}/locations/${marker.id}`}
+                variant="primary"
               >
-                <GameButton variant="ghost">
-                  <Sparkles size={14} aria-hidden />
-                  {t("map.askAi")}
+                <ExternalLink size={14} aria-hidden />
+                {t("map.inspectArea")}
+              </GameButton>
+              {firstCharacter && (
+                <GameButton
+                  to={`/app/missions/${missionId}/characters/${firstCharacter.id}`}
+                  variant="ghost"
+                >
+                  <MessageCircle size={14} aria-hidden />
+                  {t("map.talk")}
                 </GameButton>
-              </Link>
-              <Link to={`/app/missions/${missionId}/clues`}>
-                <GameButton variant="ghost">
-                  <Search size={14} aria-hidden />
-                  {t("map.viewClues")}
-                </GameButton>
-              </Link>
+              )}
+              <GameButton
+                to={`/app/missions/${missionId}/locations/${marker.id}?ask=1`}
+                variant="ghost"
+              >
+                <Sparkles size={14} aria-hidden />
+                {t("map.askAi")}
+              </GameButton>
+              <GameButton to={`/app/missions/${missionId}/clues`} variant="ghost">
+                <Search size={14} aria-hidden />
+                {t("map.viewClues")}
+              </GameButton>
             </div>
           </div>
         </>

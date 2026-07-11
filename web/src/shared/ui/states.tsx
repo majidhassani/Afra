@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
-import { Link } from "react-router-dom";
 import { Inbox, AlertTriangle, RefreshCw, Coins } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
 import { errorKey } from "@/shared/api/client";
+import { Button } from "./Button";
 
 export function EmptyState({
   title,
@@ -45,16 +45,16 @@ export function ErrorState({
       {insufficient && <p className="faint">{t("error.insufficient.cta")}</p>}
       <div className="row" style={{ gap: 8 }}>
         {insufficient && (
-          <Link className="game-btn game-btn-primary sm" to="/app/wallet">
+          <Button to="/app/wallet" variant="tactical" size="sm">
             <Coins size={14} aria-hidden />
             {t("nav.wallet")}
-          </Link>
+          </Button>
         )}
         {onRetry && (
-          <button className="btn btn-secondary" onClick={onRetry}>
+          <Button variant="secondary" onClick={onRetry}>
             <RefreshCw size={14} aria-hidden />
             {t("common.retry")}
-          </button>
+          </Button>
         )}
       </div>
     </div>

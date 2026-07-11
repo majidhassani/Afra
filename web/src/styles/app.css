@@ -3,16 +3,33 @@
 @import "./cinematic.css";
 @import "./avds.css";
 
-/* ---------- Auth screens ---------- */
+/* ---------- Auth screens ----------
+   Glass-first redesign: .auth-side is deliberately Level 0 ("world"), not
+   Level 1/2 glass — it is the cinematic backdrop the player sees before
+   they've entered the app, so it gets ambient light motion (two drifting
+   radial glows, one slow rotation-linked sweep) rather than a blurred
+   glass panel. .auth-form itself stays intentionally un-glassed and
+   un-boxed: this is unchanged from the earlier decision (avoid
+   dashboard-card framing around the actual input fields, keep them
+   legible against the atmosphere) — the "full replace" brief asks glass
+   to be used with intent per the Level 0-3 hierarchy, not applied to
+   every surface indiscriminately, and a login form is exactly the kind
+   of critical-legibility content that should stay plain. */
 
 .auth-layout {
+  position: relative;
   min-height: 100%;
   display: grid;
   grid-template-columns: minmax(0, 5fr) minmax(0, 4fr);
 }
 
 .auth-side {
-  background: var(--bg-panel);
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(720px 480px at 22% 10%, rgba(125, 211, 199, 0.09), transparent 60%),
+    radial-gradient(640px 520px at 88% 94%, rgba(155, 191, 106, 0.06), transparent 60%),
+    var(--bg-panel);
   border-inline-end: 1px solid var(--border-subtle);
   padding: 48px;
   display: flex;
@@ -20,21 +37,109 @@
   justify-content: space-between;
 }
 
+/* Two independent drifting glows layered above the static gradients —
+   slow, ambient, never distracting; this is the "living world" cue the
+   brief asks for on the very first screen. Pure CSS, no JS, so it costs
+   nothing and can't fight React re-renders. */
+.auth-side::before,
+.auth-side::after {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 50%;
+  filter: blur(60px);
+}
+
+.auth-side::before {
+  width: 46%;
+  height: 46%;
+  inset-inline-start: -8%;
+  top: -8%;
+  background: radial-gradient(circle, rgba(125, 211, 199, 0.14), transparent 70%);
+  animation: auth-glow-drift-a 26s ease-in-out infinite;
+}
+
+.auth-side::after {
+  width: 40%;
+  height: 40%;
+  inset-inline-end: -6%;
+  bottom: -6%;
+  background: radial-gradient(circle, var(--accent-rare-dim, rgba(180, 158, 224, 0.12)), transparent 70%);
+  animation: auth-glow-drift-b 32s ease-in-out infinite;
+}
+
+@keyframes auth-glow-drift-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(6%, 10%) scale(1.15); }
+}
+
+@keyframes auth-glow-drift-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-8%, -6%) scale(1.1); }
+}
+
+.auth-side > * {
+  position: relative;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-side::before,
+  .auth-side::after {
+    animation: none;
+  }
+}
+
 .auth-brand {
-  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+/* Reuses the same diamond mark language as the in-app topbar brand
+   (avds.css .game-brand-mark) so the identity is consistent from the very
+   first screen a user sees through to every screen after login. */
+.auth-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  clip-path: polygon(50% 0, 100% 100%, 72% 100%, 50% 46%, 28% 100%, 0 100%);
+  background: linear-gradient(180deg, var(--accent-ai), var(--accent-teal));
+  color: #06110f;
+  font-weight: 900;
+  font-size: 13px;
 }
 
 .auth-tagline {
-  max-width: 380px;
+  position: relative;
+  max-width: 400px;
 }
 
+/* Sentence case here, deliberately — h1 is uppercase/tracked-out
+   app-wide (mission HUD titles), but the auth tagline is a full sentence
+   ("Run AI-native field missions. Every clue is earned.") and reads as
+   calmer, more editorial copy set in normal case, not shouted HUD text. */
 .auth-tagline h1 {
-  font-size: 30px;
+  font-family: var(--font-display);
+  font-size: 34px;
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.24;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: var(--text-primary);
+}
+
+.auth-side .faint {
+  font-size: 12px;
 }
 
 /* The app shell / topbar / rail-nav grid is owned solely by avds.css's
@@ -44,6 +149,7 @@
    <GameTopBar>/<GameBottomNav>). See the Phase 1 migration plan. */
 
 .auth-form-wrap {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -55,7 +161,68 @@
   max-width: 360px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
+  animation: auth-form-in 420ms var(--av-ease-out) both;
+}
+
+@keyframes auth-form-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.auth-form h2 {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  margin-bottom: 2px;
+}
+
+.auth-form .ui-btn {
+  margin-top: 4px;
+}
+
+/* Server-level error banner — distinct from the plain inline .field-error
+   text used per-field, so a failed login/register reads as a clear,
+   contained moment rather than another line of red text in the stack. */
+.auth-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(229, 107, 111, 0.3);
+  background: var(--accent-danger-dim);
+  color: var(--accent-danger);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.auth-error svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.auth-form > a.faint {
+  font-size: 13px;
+  transition: color var(--dur) var(--ease);
+}
+
+.auth-form > a.faint:hover {
+  color: var(--text-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-form {
+    animation: none;
+  }
 }
 
 @media (max-width: 860px) {
@@ -249,6 +416,15 @@ button.item-row:hover {
   overflow-y: auto;
 }
 
+/* Drag-handle bar — hidden on desktop. On mobile it is both a keyboard-safe
+   toggle and a pointer/touch drag target for the location bottom sheet. */
+.map-side-handle {
+  display: none;
+}
+.map-side-body {
+  min-height: 0;
+}
+
 @media (max-width: 1000px) {
   .map-layout {
     grid-template-columns: 1fr;
@@ -261,8 +437,70 @@ button.item-row:hover {
   }
   .map-side {
     border-inline-start: none;
-    border-top: 1px solid var(--border-subtle);
-    max-height: 46dvh;
+    border-top: none;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    background: var(--glass-2-bg);
+    backdrop-filter: var(--glass-2-blur);
+    -webkit-backdrop-filter: var(--glass-2-blur);
+    box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.28);
+    max-height: none;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .map-side-handle {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 16px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+    min-height: 48px;
+    touch-action: none;
+  }
+  .map-side-grip {
+    width: 34px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--glass-2-border);
+    position: absolute;
+    inset-inline-start: 50%;
+    top: 6px;
+    transform: translateX(-50%);
+  }
+  [dir="rtl"] .map-side-grip { transform: translateX(50%); }
+  .map-side-handle-label {
+    flex: 1;
+    text-align: start;
+    padding-top: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    unicode-bidi: plaintext;
+  }
+  .map-side-body {
+    overflow-y: auto;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 280ms var(--av-ease-out, var(--ease)),
+      opacity 180ms var(--ease);
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+  /* Collapsed: .map-side-body animates to 0 height, so only the always-
+     visible .map-side-handle remains — that's the "peek" (location name +
+     grip), no separate height constraint needed on the outer .map-side. */
+  .map-side.sheet-expanded .map-side-body {
+    max-height: 60dvh;
+    opacity: 1;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .map-side-body {
+      transition: none;
+    }
   }
 }
 
@@ -387,10 +625,16 @@ button.item-row:hover {
   unicode-bidi: plaintext;
 }
 
+/* Player and NPC bubbles previously differed only by side-alignment and a
+   near-identical neutral fill — easy to lose track of who said what once
+   the thread scrolls. The player's own line now carries a subtle tint of
+   the same accent used everywhere else in the app for "your transmitted
+   input" (AI/guidance composer, focus rings), so the two voices read apart
+   at a glance without introducing a new color to the palette. */
 .bubble.player {
   align-self: flex-end;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
+  background: linear-gradient(135deg, rgba(125, 211, 199, 0.16), rgba(125, 211, 199, 0.07));
+  border: 1px solid rgba(125, 211, 199, 0.26);
 }
 
 .bubble.npc {
@@ -412,6 +656,13 @@ button.item-row:hover {
   padding: 14px 24px;
   border-top: 1px solid var(--border-subtle);
   background: var(--bg-panel);
+  /* Pin to the scrollport bottom: .chat-layout's 100dvh height math can't
+     know about siblings above it inside .main (the mission HUD), which
+     pushed the composer below the fold. Sticky keeps it reachable no
+     matter what the page stacks above the chat. */
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
 }
 
 .chat-composer textarea {
@@ -477,11 +728,13 @@ button.item-row:hover {
 }
 
 .toast {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-strong);
+  background: var(--glass-3-bg);
+  backdrop-filter: var(--glass-3-blur);
+  -webkit-backdrop-filter: var(--glass-3-blur);
+  border: 1px solid var(--glass-2-border);
   border-radius: var(--radius-md);
   padding: 11px 14px;
-  box-shadow: var(--shadow-panel);
+  box-shadow: var(--glass-3-highlight), var(--shadow-panel);
   display: flex;
   gap: 9px;
   align-items: flex-start;
@@ -598,6 +851,54 @@ code {
   overflow-wrap: anywhere;
 }
 
+/* ============================================================
+   MOTION SYSTEM — page entrance + staggered grid reveal.
+   One rule, applied globally through the classes every screen already
+   shares (.page, and the grid containers used across mission types,
+   achievements, coin packs, the mission archive and card grids) — this
+   is deliberately NOT a per-screen animation because a coherent motion
+   language means every screen enters the same way, not a bespoke effect
+   invented per page. Reuses the existing `pop-in` keyframe (game.css)
+   rather than defining a competing one.
+   ============================================================ */
+.page {
+  animation: pop-in var(--dur-scene) var(--av-ease-out) both;
+}
+
+.type-grid > *,
+.achv-grid > *,
+.coin-pack-grid > *,
+.archive-grid > *,
+.card-grid > * {
+  animation: pop-in var(--av-duration-slow) var(--av-ease-out) both;
+  animation-delay: calc(var(--stagger-i, 0) * var(--stagger-unit));
+}
+/* CSS-only stagger index, capped at 12 — long lists settle together after
+   that rather than making someone wait out a multi-second cascade. */
+.type-grid > *:nth-child(1), .achv-grid > *:nth-child(1), .coin-pack-grid > *:nth-child(1), .archive-grid > *:nth-child(1), .card-grid > *:nth-child(1) { --stagger-i: 0; }
+.type-grid > *:nth-child(2), .achv-grid > *:nth-child(2), .coin-pack-grid > *:nth-child(2), .archive-grid > *:nth-child(2), .card-grid > *:nth-child(2) { --stagger-i: 1; }
+.type-grid > *:nth-child(3), .achv-grid > *:nth-child(3), .coin-pack-grid > *:nth-child(3), .archive-grid > *:nth-child(3), .card-grid > *:nth-child(3) { --stagger-i: 2; }
+.type-grid > *:nth-child(4), .achv-grid > *:nth-child(4), .coin-pack-grid > *:nth-child(4), .archive-grid > *:nth-child(4), .card-grid > *:nth-child(4) { --stagger-i: 3; }
+.type-grid > *:nth-child(5), .achv-grid > *:nth-child(5), .coin-pack-grid > *:nth-child(5), .archive-grid > *:nth-child(5), .card-grid > *:nth-child(5) { --stagger-i: 4; }
+.type-grid > *:nth-child(6), .achv-grid > *:nth-child(6), .coin-pack-grid > *:nth-child(6), .archive-grid > *:nth-child(6), .card-grid > *:nth-child(6) { --stagger-i: 5; }
+.type-grid > *:nth-child(7), .achv-grid > *:nth-child(7), .coin-pack-grid > *:nth-child(7), .archive-grid > *:nth-child(7), .card-grid > *:nth-child(7) { --stagger-i: 6; }
+.type-grid > *:nth-child(8), .achv-grid > *:nth-child(8), .coin-pack-grid > *:nth-child(8), .archive-grid > *:nth-child(8), .card-grid > *:nth-child(8) { --stagger-i: 7; }
+.type-grid > *:nth-child(9), .achv-grid > *:nth-child(9), .coin-pack-grid > *:nth-child(9), .archive-grid > *:nth-child(9), .card-grid > *:nth-child(9) { --stagger-i: 8; }
+.type-grid > *:nth-child(10), .achv-grid > *:nth-child(10), .coin-pack-grid > *:nth-child(10), .archive-grid > *:nth-child(10), .card-grid > *:nth-child(10) { --stagger-i: 9; }
+.type-grid > *:nth-child(11), .achv-grid > *:nth-child(11), .coin-pack-grid > *:nth-child(11), .archive-grid > *:nth-child(11), .card-grid > *:nth-child(11) { --stagger-i: 10; }
+.type-grid > *:nth-child(n+12), .achv-grid > *:nth-child(n+12), .coin-pack-grid > *:nth-child(n+12), .archive-grid > *:nth-child(n+12), .card-grid > *:nth-child(n+12) { --stagger-i: 11; }
+
+@media (prefers-reduced-motion: reduce) {
+  .page,
+  .type-grid > *,
+  .achv-grid > *,
+  .coin-pack-grid > *,
+  .archive-grid > *,
+  .card-grid > * {
+    animation: none;
+  }
+}
+
 /* Third copy of the shell/rail-nav geometry removed — byte-identical intent
    to avds.css's reconstruction-pass rules, which remain the sole owner.
    Verified the "!important fixed overlay" safety net here was redundant:
@@ -605,3 +906,171 @@ code {
    game.css with no conflicting override anywhere in the cascade, and
    .game-bottom-nav gets it from avds.css's surviving rules — so nothing
    could pull them into the shell's grid flow regardless. */
+
+/* ============================================================
+   ONBOARDING — first-time agent activation walkthrough
+   ============================================================ */
+.onboarding-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  overflow: auto;
+  background: rgba(5, 6, 9, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: fade-in var(--av-duration-normal) var(--ease) both;
+}
+
+.onboarding-card {
+  position: relative;
+  width: min(440px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  padding: var(--space-6) var(--space-5) var(--space-5);
+  text-align: center;
+  animation: pop-in var(--av-duration-slow) var(--ease-spring) both;
+}
+.onboarding-card:focus {
+  outline: none;
+}
+
+.onboarding-close {
+  position: absolute;
+  top: 14px;
+  inset-inline-end: 14px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--glass-2-border);
+  background: var(--glass-2-bg);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.onboarding-close:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+.onboarding-close:focus-visible {
+  outline: 2px solid var(--accent-ai);
+  outline-offset: 2px;
+}
+
+.onboarding-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: var(--space-3);
+  border-radius: 999px;
+  background: var(--accent-ai-dim);
+  color: var(--accent-ai);
+}
+
+.onboarding-card h2 {
+  margin-bottom: 10px;
+  font-size: 20px;
+}
+
+.onboarding-card p {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.onboarding-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: var(--space-5) 0 var(--space-4);
+}
+.onboarding-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--border-strong);
+  transition: background var(--dur) var(--ease), width var(--dur) var(--ease);
+}
+.onboarding-dots span.on {
+  width: 18px;
+  background: var(--accent-ai);
+}
+
+.onboarding-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.onboarding-skip {
+  background: none;
+  border: none;
+  padding: 8px 4px;
+  color: var(--text-faint);
+  font-size: 13px;
+  cursor: pointer;
+  min-height: 44px;
+}
+.onboarding-skip:hover {
+  color: var(--text-secondary);
+}
+
+.onboarding-back,
+.onboarding-next {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.onboarding-back {
+  background: var(--glass-2-bg);
+  border: 1px solid var(--glass-2-border);
+  color: var(--text-secondary);
+}
+.onboarding-next {
+  background: linear-gradient(180deg, var(--accent-ai), var(--accent-teal));
+  border: 1px solid transparent;
+  color: #04110a;
+}
+.onboarding-next:hover,
+.onboarding-back:hover {
+  filter: brightness(1.08);
+}
+.onboarding-skip:focus-visible,
+.onboarding-back:focus-visible,
+.onboarding-next:focus-visible {
+  outline: 2px solid var(--accent-ai);
+  outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .onboarding-card {
+    padding: var(--space-5) var(--space-4) var(--space-4);
+  }
+  .onboarding-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .onboarding-actions > .row {
+    justify-content: stretch;
+  }
+  .onboarding-actions > .row > * {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-scrim,
+  .onboarding-card {
+    animation: none;
+  }
+}

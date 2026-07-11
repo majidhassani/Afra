@@ -21,6 +21,8 @@ export function GameButton({
   disabled,
   onClick,
   title,
+  to,
+  ariaLabel,
 }: {
   children: ReactNode;
   variant?: "primary" | "mission" | "ghost";
@@ -29,6 +31,11 @@ export function GameButton({
   disabled?: boolean;
   onClick?: () => void;
   title?: string;
+  /** Renders as a link (via Button's own `to` support) instead of a <button>.
+   * Use this rather than wrapping <GameButton> in an outer <Link> — nesting
+   * a <button> inside an <a> is invalid HTML and breaks keyboard/AT focus. */
+  to?: string;
+  ariaLabel?: string;
 }) {
   return (
     <Button
@@ -38,6 +45,8 @@ export function GameButton({
       disabled={disabled}
       onClick={onClick}
       title={title}
+      to={to}
+      ariaLabel={ariaLabel}
       legacyClassName={`game-btn game-btn-${variant}`}
     >
       {children}
@@ -127,4 +136,27 @@ export function WalletBalance({ balance }: { balance: number | undefined }) {
       {balance ?? "—"}
     </span>
   );
+}
+
+/**
+ * Canonical color for a TimelineItem's `importance` field.
+ *
+ * Found during the full-repo audit: three different places derived a color
+ * from the same "high" | "medium" | "low" importance value, and each picked
+ * a different mapping — TimelineLog.tsx used cyan/green, ScrollableTimeline's
+ * CSS used red/cyan, and MissionDashboardPage's inline TimelineRail mapping
+ * used red/gold/green. Same data field, three contradictory meanings
+ * depending which timeline you were looking at. This is the single source of
+ * truth now: gold = high priority (matches the "high-priority evidence"
+ * meaning gold already carries elsewhere), cyan = medium/notable, green =
+ * low/routine. Red is intentionally not used here — it stays reserved for
+ * genuinely dangerous/failed events, which already get their own icon
+ * (CircleX) rather than borrowing the importance color.
+ */
+export function importanceTone(
+  importance: "high" | "medium" | "low" | string,
+): "gold" | "cyan" | "green" {
+  if (importance === "high") return "gold";
+  if (importance === "medium") return "cyan";
+  return "green";
 }

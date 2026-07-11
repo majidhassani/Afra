@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Star,
@@ -15,6 +15,7 @@ import {
 import { useI18n, type TranslationKey } from "@/shared/i18n";
 import { missionsApi } from "@/shared/api/endpoints";
 import { ErrorState, SkeletonRows } from "@/shared/ui/states";
+import { Button } from "@/shared/ui/Button";
 import { StageTracker } from "@/features/game/StageTracker";
 import { useGameplayStatus } from "@/features/game/useGameplayStatus";
 import type { MissionResult } from "@/shared/types/api";
@@ -81,9 +82,9 @@ export function MissionResultPage() {
       <div className="page">
         <ErrorState error={query.error} onRetry={() => query.refetch()} />
         <div style={{ marginTop: 16 }}>
-          <Link to={`/app/missions/${missionId}`} className="btn btn-secondary">
+          <Button to={`/app/missions/${missionId}`} variant="secondary">
             {t("mission.result.backToMission")}
-          </Link>
+          </Button>
         </div>
       </div>
     );
@@ -206,14 +207,14 @@ function ResultReport({
       </div>
 
       <div className="row" style={{ gap: 10, flexWrap: "wrap", marginTop: 8 }}>
-        <Link to="/app/dashboard" className="game-btn game-btn-primary">
+        <Button to="/app/dashboard" variant="tactical">
           <Home size={15} aria-hidden />
           {t("mission.result.backToHub")}
-        </Link>
-        <Link to="/app/history" className="game-btn game-btn-ghost">
+        </Button>
+        <Button to="/app/history" variant="ghost">
           <History size={15} aria-hidden />
           {t("mission.result.viewHistory")}
-        </Link>
+        </Button>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import { useCallback, useRef, useState, type DragEvent } from "react";
 import { ImagePlus, X } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
 import type { ImagePayload } from "@/shared/types/api";
+import { Button } from "./Button";
 
 const ACCEPTED = ["image/png", "image/jpeg", "image/webp"];
 const MAX_BYTES = 4 * 1024 * 1024;
@@ -108,16 +109,16 @@ export function ImageAttachButton({ onFiles, disabled }: ImageAttachButtonProps)
           e.target.value = "";
         }}
       />
-      <button
-        type="button"
-        className="btn btn-ghost btn-icon"
-        aria-label={t("images.attach")}
+      <Button
+        variant="subtle"
+        className="btn-icon"
+        ariaLabel={t("images.attach")}
         title={t("images.attach")}
         disabled={disabled}
         onClick={() => inputRef.current?.click()}
       >
         <ImagePlus size={15} aria-hidden />
-      </button>
+      </Button>
     </>
   );
 }
@@ -141,14 +142,14 @@ export function AttachmentStrip({ attachments, onRemove, error }: AttachmentStri
             alt={a.name}
             style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 6 }}
           />
-          <button
-            type="button"
-            className="btn btn-ghost btn-icon"
-            aria-label={t("common.delete")}
+          <Button
+            variant="subtle"
+            className="btn-icon"
+            ariaLabel={t("common.delete")}
             onClick={() => onRemove(i)}
           >
             <X size={12} aria-hidden />
-          </button>
+          </Button>
         </span>
       ))}
       {error && (

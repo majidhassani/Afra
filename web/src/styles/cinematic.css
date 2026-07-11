@@ -170,11 +170,16 @@
 @media (prefers-reduced-motion: reduce) {
   .env-atmosphere { animation: none !important; }
 }
-/* Keep app content above the backdrop + atmosphere + weather layers. */
-.shell > *:not(.env-backdrop):not(.env-atmosphere):not(.env-weather):not(.board-backdrop) {
-  position: relative;
-  z-index: 1;
-}
+/* Content-above-backdrop layering is declared per component, NOT via a
+   global `.shell > *` child selector. The old
+   `.shell > *:not(.env-backdrop):not(...)…` rule here had specificity
+   (0,5,0) and silently forced `position: relative` onto every direct
+   shell child — flattening the fixed rail (.game-bottom-nav), the
+   onboarding overlay (.onboarding-scrim), the timeline drawer and the
+   effects layer into grid flow, which broke the whole app shell.
+   Each in-flow child owns its stacking explicitly: .game-topbar (z:4),
+   .main (z:1); fixed overlays keep their own z (8/60/90/200) above the
+   fixed z:0 env layers. */
 
 /* AI-generated scenario board art: layered between the biome wash and the
    atmosphere so weather/night modifiers still read on top of it. */
@@ -391,13 +396,28 @@
 /* ============================================================
    AI = MISSION CONTROL (structured transmission, not chat)
    ============================================================ */
+/* Level-3 "critical AI" glass — an AI guidance response is exactly the
+   kind of mission-critical, AI-authored moment the glass-3--ai treatment
+   exists for (see game.css's canonical .glass-3/.glass-3--ai rules); this
+   rule reproduces the same tokens directly rather than requiring every
+   GuidancePanel call site to also add the utility classes in JSX. */
 .mc-briefing {
+  position: relative;
   border-radius: var(--radius-lg);
-  border: 1px solid color-mix(in srgb, var(--accent-ai) 40%, transparent);
+  border: 1px solid rgba(125, 211, 199, 0.35);
   background:
-    linear-gradient(180deg, rgba(125, 211, 199, 0.06), transparent 60%),
-    var(--bg-elevated);
+    linear-gradient(180deg, rgba(125, 211, 199, 0.07), transparent 60%),
+    var(--glass-3-bg);
+  backdrop-filter: var(--glass-3-blur);
+  -webkit-backdrop-filter: var(--glass-3-blur);
+  box-shadow: var(--glass-3-highlight), var(--glow-ai);
   overflow: hidden;
+  animation: pop-in var(--dur-scene, 420ms) var(--av-ease-out) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mc-briefing {
+    animation: none;
+  }
 }
 .mc-head {
   display: flex;
@@ -534,10 +554,12 @@
   gap: 4px;
   padding: 16px;
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-panel);
+  border: 1px solid var(--glass-2-border);
+  background: var(--glass-2-bg);
+  backdrop-filter: var(--glass-2-blur);
+  -webkit-backdrop-filter: var(--glass-2-blur);
   overflow: hidden;
-  transition: transform 160ms var(--ease), border-color 160ms var(--ease);
+  transition: transform 160ms var(--ease), border-color 160ms var(--ease), background 160ms var(--ease);
 }
 .achv-tile:hover {
   transform: translateY(-2px);

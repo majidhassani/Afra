@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Clock3, MapPin, Plus, Rocket } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
@@ -35,10 +34,10 @@ export function MissionsListPage() {
           <h1>{t("missions.title")}</h1>
           <p className="subtitle">{t("missions.empty.body")}</p>
         </div>
-        <Link className="av-tactical-button primary" to="/app/missions/new">
+        <TacticalButton to="/app/missions/new" variant="primary">
           <Plus size={15} aria-hidden />
           {t("dash.newMission")}
-        </Link>
+        </TacticalButton>
       </header>
 
       <div className="av-filter-rail" aria-label="Mission filters">
@@ -66,18 +65,18 @@ export function MissionsListPage() {
             title={t("missions.empty")}
             body={t("missions.empty.body")}
             action={
-              <Link className="av-tactical-button secondary" to="/app/missions/new">
+              <TacticalButton to="/app/missions/new" variant="secondary">
                 <Plus size={14} aria-hidden />
                 {t("dash.newMission")}
-              </Link>
+              </TacticalButton>
             }
           />
         )}
-        {filtered.map((mission, index) => (
+        {filtered.map((mission) => (
           <MissionDossierCard
             key={mission.id}
             selected={selected?.id === mission.id}
-            tone={index % 5 === 1 ? "gold" : index % 5 === 2 ? "cyan" : index % 5 === 4 ? "red" : "green"}
+            tone={missionTone(mission.status)}
             title={mission.title || t(`type.${mission.type}` as TranslationKey)}
             meta={t(`type.${mission.type}` as TranslationKey)}
             summary={mission.summary}
@@ -127,6 +126,17 @@ export function MissionsListPage() {
       )}
     </div>
   );
+}
+
+// Case-file accent, driven by mission status — not decoration. Mirrors the
+// semantic contract used by badges.tsx's statusChip map: cyan = AI still
+// working the case (generating/ready), green = active/completed (safe,
+// on-track), red = failed (danger). Gold is deliberately never used here —
+// it is reserved for wallet/reward value, not mission state.
+function missionTone(status: Mission["status"]): "green" | "cyan" | "red" {
+  if (status === "failed") return "red";
+  if (status === "generating" || status === "ready") return "cyan";
+  return "green";
 }
 
 function missionProgress(mission: Mission) {

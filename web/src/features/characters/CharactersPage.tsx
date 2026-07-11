@@ -63,7 +63,10 @@ export function CharactersPage() {
                 <div className="char-card-name">{c.name}</div>
                 <div className="sub">{c.role}</div>
               </div>
-              <span className={`status-chip cat-${c.category}`}>{c.category}</span>
+              <span className={`status-chip cat-${c.category}`}>
+                {/* De-slug machine categories (person_of_interest) for display. */}
+                {c.category.replace(/_/g, " ")}
+              </span>
             </div>
             <div className="char-card-meters">
               <div className="char-meter">

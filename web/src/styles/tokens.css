@@ -1,23 +1,59 @@
-/* AgentVerse design tokens — cinematic tactical mission command center. */
+/* Afra design tokens — premium cinematic GLASS system.
+   ============================================================
+   This file is the single source of truth for the app's visual material.
+   Everything below is organized as one canonical glass hierarchy (Level
+   0-3) plus one semantic accent set — no second/competing token system
+   should be introduced anywhere else in the CSS. See GLASS SURFACES below
+   for how the four levels are meant to be used. */
 :root {
-  /* Surfaces (deep, atmospheric) */
-  --bg-base: #090b0f;
+  /* Surfaces (deep, atmospheric — Level 0, the "world" underneath the glass) */
+  --bg-base: #07080b;
   --bg-panel: #12151b;
   --bg-elevated: #1a1f27;
   --bg-hover: #232935;
 
-  /* Glass panels + glow */
-  --glass-bg: rgba(20, 24, 32, 0.72);
-  --glass-border: rgba(125, 211, 199, 0.14);
-  --glow-ai: 0 0 0 1px rgba(125, 211, 199, 0.25), 0 0 24px -6px rgba(125, 211, 199, 0.45);
-  --glow-mission: 0 0 0 1px rgba(155, 191, 106, 0.25), 0 0 22px -6px rgba(155, 191, 106, 0.4);
-  --glow-danger: 0 0 0 1px rgba(229, 107, 111, 0.3), 0 0 22px -6px rgba(229, 107, 111, 0.5);
+  /* ---------------------------------------------------------------------
+     GLASS SURFACES — one canonical hierarchy, four levels.
+     Level 1 (ambient)     — shell chrome, nav, large passive containers.
+                              Low opacity, heavy blur, near-invisible border.
+     Level 2 (interactive) — cards, panels, list rows, inputs, buttons.
+                              Clearer fill, medium blur, visible hover/focus.
+     Level 3 (critical)    — mission objective, decisions, danger alerts,
+                              AI analysis, result reveals. Strongest
+                              contrast + a semantic accent border/glow.
+     Every one of these is a real backdrop-filter blur over whatever sits
+     behind it (env backdrop, board art, or a parent surface) — that's what
+     makes it read as glass rather than a flat tinted panel.
+     --------------------------------------------------------------------- */
+  --glass-1-bg: rgba(12, 15, 20, 0.52);
+  --glass-1-border: rgba(245, 243, 238, 0.08);
+  --glass-1-blur: blur(22px);
+
+  --glass-2-bg: rgba(22, 26, 34, 0.66);
+  --glass-2-bg-hover: rgba(28, 33, 43, 0.74);
+  --glass-2-border: rgba(245, 243, 238, 0.1);
+  --glass-2-border-hover: rgba(245, 243, 238, 0.18);
+  --glass-2-blur: blur(16px);
+  --glass-2-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+  --glass-3-bg: rgba(16, 19, 26, 0.78);
+  --glass-3-blur: blur(24px);
+  --glass-3-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+  /* Back-compat aliases — game.css/avds.css/app.css reference these names
+     across dozens of rules; pointing them at the new Level-2 glass means
+     every existing `.panel`/`.glass` surface upgrades automatically. */
+  --glass-bg: var(--glass-2-bg);
+  --glass-border: var(--glass-2-border);
+  --glow-ai: 0 0 0 1px rgba(125, 211, 199, 0.28), 0 0 28px -6px rgba(125, 211, 199, 0.5);
+  --glow-mission: 0 0 0 1px rgba(155, 191, 106, 0.28), 0 0 26px -6px rgba(155, 191, 106, 0.45);
+  --glow-danger: 0 0 0 1px rgba(229, 107, 111, 0.32), 0 0 26px -6px rgba(229, 107, 111, 0.55);
 
   /* Signature atmospheric gradient wash for backgrounds */
   --wash:
-    radial-gradient(1100px 620px at 14% -8%, rgba(125, 211, 199, 0.09), transparent 60%),
-    radial-gradient(900px 560px at 92% 4%, rgba(168, 155, 255, 0.08), transparent 55%),
-    radial-gradient(1000px 700px at 60% 108%, rgba(155, 191, 106, 0.06), transparent 60%);
+    radial-gradient(1100px 620px at 14% -8%, rgba(125, 211, 199, 0.1), transparent 60%),
+    radial-gradient(900px 560px at 92% 4%, rgba(168, 155, 255, 0.09), transparent 55%),
+    radial-gradient(1000px 700px at 60% 108%, rgba(155, 191, 106, 0.07), transparent 60%);
 
   /* Text */
   --text-primary: #f5f3ee;
@@ -28,15 +64,29 @@
   --border-subtle: #2c3036;
   --border-strong: #3d424a;
 
-  /* Accents */
+  /* ---------------------------------------------------------------------
+     SEMANTIC ACCENTS — one meaning each, used only where that meaning
+     applies. Never decorate a screen with an accent it doesn't need.
+     cyan   — AI, intelligence, navigation, analysis
+     teal   — active interaction / selected state (distinct from AI-cyan)
+     olive  — success, safety, completed objectives
+     gold   — reward, high-value evidence, priority, genuine value
+     red    — danger, failure, irreversible action
+     orange — warning, time pressure
+     lavender — mystery, rare or unusual information
+     --------------------------------------------------------------------- */
   --accent-ai: #7dd3c7;
   --accent-ai-dim: rgba(125, 211, 199, 0.12);
+  --accent-teal: #5bb3a6;
+  --accent-teal-dim: rgba(91, 179, 166, 0.14);
   --accent-mission: #9bbf6a;
   --accent-mission-dim: rgba(155, 191, 106, 0.12);
   --accent-wallet: #e3b35f;
   --accent-wallet-dim: rgba(227, 179, 95, 0.12);
   --accent-danger: #e56b6f;
   --accent-danger-dim: rgba(229, 107, 111, 0.12);
+  --accent-warning: #dd8a3d;
+  --accent-warning-dim: rgba(221, 138, 61, 0.14);
   --accent-rare: #a89bff;
   --accent-rare-dim: rgba(168, 155, 255, 0.12);
 
@@ -90,16 +140,29 @@
   --content-width: 1540px;
   --hud-height: 116px;
   --corner: 10px;
-  --panel-blur: blur(18px);
-  --panel-fill: linear-gradient(145deg, rgba(18, 21, 27, 0.92), rgba(9, 11, 15, 0.82));
+  --panel-blur: var(--glass-2-blur);
+  --panel-fill: linear-gradient(145deg, rgba(24, 28, 37, 0.86), rgba(11, 13, 18, 0.78));
 
-  /* Motion (AVDS motion values) */
+  /* ---------------------------------------------------------------------
+     MOTION SYSTEM — one coherent language, not decoration-per-component.
+     Durations scale with what's changing (micro state < panel < scene);
+     easings are the two shapes every animation in the app should use.
+     `--stagger-unit` drives CSS-only staggered reveals on grids/lists via
+     `animation-delay: calc(var(--stagger-i, 0) * var(--stagger-unit))`.
+     prefers-reduced-motion collapses all of it to ~0 at the root below —
+     individual rules should not need their own reduced-motion guard for
+     duration/delay, only for scale/blur/parallax effects that need to be
+     removed outright rather than just sped up.
+     --------------------------------------------------------------------- */
   --ease: cubic-bezier(0.3, 0.7, 0.3, 1);
   --dur: 160ms;
   --av-duration-fast: 120ms;
   --av-duration-normal: 220ms;
   --av-duration-slow: 420ms;
   --av-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-scene: 560ms;
+  --stagger-unit: 45ms;
 
   /* ---------------------------------------------------------------------
      Legacy AVDS primitive aliases.
@@ -117,7 +180,7 @@
   --av-cyan: var(--accent-ai);
   --av-gold: var(--accent-wallet);
   --av-red: var(--accent-danger);
-  --av-orange: var(--accent-wallet);
+  --av-orange: var(--accent-warning);
   --av-text: var(--text-primary);
   --av-text-muted: var(--text-secondary);
   --av-line: rgba(155, 191, 106, 0.24);
@@ -147,5 +210,7 @@
     --av-duration-fast: 1ms;
     --av-duration-normal: 1ms;
     --av-duration-slow: 1ms;
+    --dur-scene: 1ms;
+    --stagger-unit: 0ms;
   }
 }

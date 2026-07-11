@@ -18,6 +18,7 @@ import { ErrorState, SkeletonRows } from "@/shared/ui/states";
 import { CostBadge } from "@/shared/ui/badges";
 import { Analyzing } from "@/shared/ui/game";
 import { Avatar } from "@/shared/ui/Avatar";
+import { Button } from "@/shared/ui/Button";
 import { GuidancePanel } from "@/features/guidance/GuidancePanel";
 import { ActionTimePreview } from "@/features/game/ActionTimePreview";
 import { announceTimeUpdate } from "@/features/game/gameEvents";
@@ -131,15 +132,16 @@ export function LocationPage() {
               {actions.map((action) => {
                 const Icon = actionIcons[action] ?? Play;
                 return (
-                  <button
+                  <Button
                     key={action}
-                    className="game-btn game-btn-ghost sm"
+                    variant="ghost"
+                    size="sm"
                     disabled={runAction.isPending}
                     onClick={() => setPendingAction(action)}
                   >
                     <Icon size={14} aria-hidden />
                     {actionLabel(t, action)}
-                  </button>
+                  </Button>
                 );
               })}
             </div>

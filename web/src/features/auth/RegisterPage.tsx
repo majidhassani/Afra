@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { UserPlus } from "lucide-react";
+import { UserPlus, AlertTriangle } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
 import { authApi } from "@/shared/api/endpoints";
 import { errorKey } from "@/shared/api/client";
+import { Button } from "@/shared/ui/Button";
 import { useAuthStore } from "./authStore";
 import { AuthLayout } from "./AuthLayout";
 
@@ -57,6 +58,7 @@ export function RegisterPage() {
             className="input"
             value={displayName}
             maxLength={60}
+            autoFocus
             onChange={(e) => setDisplayName(e.target.value)}
             required
           />
@@ -97,14 +99,15 @@ export function RegisterPage() {
           )}
         </div>
         {serverError && (
-          <p className="field-error" role="alert">
+          <p className="auth-error" role="alert">
+            <AlertTriangle size={14} aria-hidden />
             {serverError}
           </p>
         )}
-        <button className="btn btn-primary" type="submit" disabled={submitting}>
+        <Button type="submit" loading={submitting} fullWidth>
           <UserPlus size={15} aria-hidden />
           {t("auth.register.cta")}
-        </button>
+        </Button>
         <Link to="/login" className="faint">
           {t("auth.toLogin")}
         </Link>

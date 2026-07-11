@@ -18,6 +18,7 @@ import { toast } from "@/shared/ui/toast";
 import { assetUrl } from "@/shared/lib/assetUrl";
 import { ErrorState, SkeletonRows } from "@/shared/ui/states";
 import { CostBadge, Meter } from "@/shared/ui/badges";
+import { Button } from "@/shared/ui/Button";
 import { GuidancePanel } from "@/features/guidance/GuidancePanel";
 import {
   announceStageUpdate,
@@ -166,21 +167,22 @@ export function ClueDetailPage() {
             )}
             <span className="row faint" style={{ gap: 6 }}>
               {t("clues.reliability")}
-              <Meter value={data.reliability} color="var(--accent-wallet)" />
+              {/* Cyan (AI confidence), not gold — see CluesPage.tsx for
+                  the same fix and rationale. */}
+              <Meter value={data.reliability} color="var(--accent-ai)" />
               <span className="mono-num">{data.reliability}%</span>
             </span>
           </div>
         </div>
         {data.status !== "confirmed" && (
-          <button
-            className="btn btn-primary"
-            disabled={confirm.isPending}
+          <Button
+            loading={confirm.isPending}
             onClick={() => confirm.mutate()}
             title={t("clues.confirm.hint")}
           >
             <Unlock size={14} aria-hidden />
             {t("clues.confirm")}
-          </button>
+          </Button>
         )}
       </header>
 
@@ -200,17 +202,18 @@ export function ClueDetailPage() {
               <div className="evidence-figure">
                 <ScanSearch size={30} aria-hidden />
                 <span>{data.type.replace(/_/g, " ")}</span>
-                <button
-                  className="btn btn-ghost sm"
+                <Button
+                  variant="subtle"
+                  size="sm"
                   style={{ marginTop: 10 }}
-                  disabled={generateImage.isPending}
+                  loading={generateImage.isPending}
                   onClick={() => generateImage.mutate()}
                 >
                   <ImagePlus size={13} aria-hidden />
                   {generateImage.isPending
                     ? t("clues.image.generating")
                     : t("clues.image.generate")}
-                </button>
+                </Button>
               </div>
             )}
             <p style={{ unicodeBidi: "plaintext" }}>{data.detailed_description}</p>
@@ -231,14 +234,14 @@ export function ClueDetailPage() {
                 onChange={(e) => setQuestion(e.target.value)}
               />
               <div className="row">
-                <button
-                  className="btn btn-secondary"
-                  disabled={inspect.isPending}
+                <Button
+                  variant="secondary"
+                  loading={inspect.isPending}
                   onClick={() => inspect.mutate()}
                 >
                   <Microscope size={14} aria-hidden />
                   {t("clues.inspect")}
-                </button>
+                </Button>
                 {pricing.data?.clue_inspect !== undefined && (
                   <CostBadge coins={pricing.data.clue_inspect} />
                 )}
@@ -273,14 +276,14 @@ export function ClueDetailPage() {
           <div className="band" style={{ borderBottom: "none" }}>
             <div className="band-title">{t("clues.explain")}</div>
             <div className="row">
-              <button
-                className="btn btn-secondary"
-                disabled={explain.isPending}
+              <Button
+                variant="secondary"
+                loading={explain.isPending}
                 onClick={() => explain.mutate()}
               >
                 <Lightbulb size={14} aria-hidden />
                 {t("clues.explain")}
-              </button>
+              </Button>
               {pricing.data?.clue_explain !== undefined && (
                 <CostBadge coins={pricing.data.clue_explain} />
               )}

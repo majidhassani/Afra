@@ -1,13 +1,14 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { Plus, Pencil, Trash2, X, AlertTriangle } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
 import { journalApi } from "@/shared/api/endpoints";
 import { errorKey } from "@/shared/api/client";
 import { EmptyState, ErrorState, SkeletonRows } from "@/shared/ui/states";
 import { GuidancePanel } from "@/features/guidance/GuidancePanel";
 import { toast } from "@/shared/ui/toast";
+import { Button } from "@/shared/ui/Button";
 import type { JournalNote } from "@/shared/types/api";
 
 export function JournalPage() {
@@ -17,6 +18,23 @@ export function JournalPage() {
   const [editing, setEditing] = useState<JournalNote | "new" | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  // Tap-to-confirm delete (mirrors WalletPage.tsx's pendingPackId pattern) —
+  // avoids a native window.confirm() dialog, which breaks the cinematic
+  // presentation and can't be styled/localized/RTL-mirrored.
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const pendingDeleteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pendingDeleteTimer.current) clearTimeout(pendingDeleteTimer.current);
+    };
+  }, []);
+
+  const armDelete = (noteId: string) => {
+    setPendingDeleteId(noteId);
+    if (pendingDeleteTimer.current) clearTimeout(pendingDeleteTimer.current);
+    pendingDeleteTimer.current = setTimeout(() => setPendingDeleteId(null), 3000);
+  };
 
   const notes = useQuery({
     queryKey: ["mission", missionId, "journal"],
@@ -47,6 +65,7 @@ export function JournalPage() {
       toast("success", t("journal.deleted"));
       void invalidate();
     },
+    onSettled: () => setPendingDeleteId(null),
   });
 
   const openEditor = (note: JournalNote | "new") => {
@@ -64,10 +83,10 @@ export function JournalPage() {
     <div className="page">
       <header className="page-header">
         <h1>{t("journal.title")}</h1>
-        <button className="btn btn-primary" onClick={() => openEditor("new")}>
+        <Button onClick={() => openEditor("new")}>
           <Plus size={15} aria-hidden />
           {t("journal.new")}
-        </button>
+        </Button>
       </header>
 
       <div className="dash-grid">
@@ -76,14 +95,14 @@ export function JournalPage() {
             <form className="panel stack" style={{ padding: 16 }} onSubmit={onSubmit}>
               <div className="spread">
                 <h3>{editing === "new" ? t("journal.new") : t("common.edit")}</h3>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-icon"
-                  aria-label={t("common.close")}
+                <Button
+                  variant="subtle"
+                  className="btn-icon"
+                  ariaLabel={t("common.close")}
                   onClick={() => setEditing(null)}
                 >
                   <X size={15} aria-hidden />
-                </button>
+                </Button>
               </div>
               <input
                 className="input"
@@ -109,20 +128,20 @@ export function JournalPage() {
                 </p>
               )}
               <div className="row">
-                <button
-                  className="btn btn-primary"
+                <Button
                   type="submit"
-                  disabled={save.isPending || !content.trim()}
+                  loading={save.isPending}
+                  disabled={!content.trim()}
                 >
                   {t("common.save")}
-                </button>
-                <button
-                  className="btn btn-ghost"
+                </Button>
+                <Button
+                  variant="subtle"
                   type="button"
                   onClick={() => setEditing(null)}
                 >
                   {t("common.cancel")}
-                </button>
+                </Button>
               </div>
             </form>
           )}
@@ -153,27 +172,44 @@ export function JournalPage() {
                       {new Date(note.updated_at).toLocaleString()}
                     </span>
                   </div>
-                  <button
-                    className="btn btn-ghost btn-icon"
-                    aria-label={t("common.edit")}
+                  <Button
+                    variant="subtle"
+                    className="btn-icon"
+                    ariaLabel={t("common.edit")}
                     title={t("common.edit")}
                     onClick={() => openEditor(note)}
                   >
                     <Pencil size={14} aria-hidden />
-                  </button>
-                  <button
-                    className="btn btn-ghost btn-icon"
-                    aria-label={t("common.delete")}
-                    title={t("common.delete")}
+                  </Button>
+                  <Button
+                    variant={pendingDeleteId === note.id ? "danger" : "subtle"}
+                    className="btn-icon"
+                    ariaLabel={
+                      pendingDeleteId === note.id
+                        ? t("journal.confirmDelete")
+                        : t("common.delete")
+                    }
+                    title={
+                      pendingDeleteId === note.id
+                        ? t("journal.confirmDelete")
+                        : t("common.delete")
+                    }
+                    loading={remove.isPending && pendingDeleteId === note.id}
                     disabled={remove.isPending}
                     onClick={() => {
-                      if (window.confirm(t("journal.confirmDelete"))) {
+                      if (pendingDeleteId === note.id) {
                         remove.mutate(note.id);
+                      } else {
+                        armDelete(note.id);
                       }
                     }}
                   >
-                    <Trash2 size={14} aria-hidden />
-                  </button>
+                    {pendingDeleteId === note.id ? (
+                      <AlertTriangle size={14} aria-hidden />
+                    ) : (
+                      <Trash2 size={14} aria-hidden />
+                    )}
+                  </Button>
                 </div>
               ))}
             </div>

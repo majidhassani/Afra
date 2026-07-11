@@ -108,6 +108,7 @@ h3,
 .eyebrow,
 .av-eyebrow,
 .game-brand-name,
+.auth-brand,
 .game-nav-slot span,
 .btn,
 .game-btn,
@@ -117,6 +118,15 @@ h3,
   text-transform: uppercase;
 }
 
+.chat-character-title {
+  overflow: hidden;
+  font-size: 17px;
+  letter-spacing: 0;
+  text-overflow: ellipsis;
+  text-transform: none;
+  white-space: nowrap;
+}
+
 [dir="rtl"] h1,
 [dir="rtl"] h2,
 [dir="rtl"] h3,
@@ -124,6 +134,7 @@ h3,
 [dir="rtl"] .eyebrow,
 [dir="rtl"] .av-eyebrow,
 [dir="rtl"] .game-brand-name,
+[dir="rtl"] .auth-brand,
 [dir="rtl"] .game-nav-slot span,
 [dir="rtl"] .btn,
 [dir="rtl"] .game-btn,
@@ -159,6 +170,13 @@ h3 {
   display: none;
 }
 
+/* Nav chrome is visible on every single screen — Wallet and Settings just
+   as much as an active mission — so it stays neutral Level-1 glass here.
+   The old permanent olive-green wash baked a "gameplay tactical" tint into
+   surfaces that have nothing to do with gameplay state; green is reserved
+   for success/safety/completed-objective signals elsewhere in the app.
+   "You are here" now reads in teal (the app's active/selected accent),
+   not green, per the app's semantic accent contract. */
 .game-topbar {
   grid-area: topbar;
   position: relative;
@@ -169,11 +187,10 @@ h3 {
   gap: 16px;
   min-width: 0;
   padding: 12px clamp(14px, 2vw, 28px);
-  border-bottom: 1px solid rgba(155, 191, 106, 0.18);
-  background:
-    linear-gradient(180deg, rgba(2, 5, 8, 0.88), rgba(4, 10, 13, 0.7)),
-    linear-gradient(90deg, rgba(155, 191, 106, 0.08), transparent 36%, rgba(125, 211, 199, 0.06));
-  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--glass-1-border);
+  background: var(--glass-1-bg);
+  backdrop-filter: var(--glass-1-blur);
+  -webkit-backdrop-filter: var(--glass-1-blur);
 }
 
 .game-brand {
@@ -183,13 +200,17 @@ h3 {
   min-width: 0;
 }
 
+/* Brand color now matches the auth screens' cyan→teal identity mark
+   (Phase 2) instead of gameplay green — the two previously disagreed on
+   what color "Afra" itself is, which read as two different products
+   depending which screen you were on. */
 .game-brand-mark {
   width: 44px;
   height: 44px;
   display: grid;
   place-items: center;
   clip-path: polygon(50% 0, 100% 100%, 72% 100%, 50% 46%, 28% 100%, 0 100%);
-  background: linear-gradient(180deg, var(--av-green-soft), var(--av-green));
+  background: linear-gradient(180deg, var(--accent-ai), var(--accent-teal));
   color: #04110a;
   font-weight: 900;
   text-shadow: none;
@@ -208,7 +229,7 @@ h3 {
 }
 
 .game-brand-status {
-  color: var(--av-green-soft);
+  color: var(--accent-teal);
   font-size: 11px;
   letter-spacing: 0.13em;
 }
@@ -220,7 +241,7 @@ h3 {
   height: 6px;
   margin-inline-end: 7px;
   border-radius: 50%;
-  background: var(--av-green);
+  background: var(--accent-mission);
   box-shadow: 0 0 10px rgba(155, 191, 106, 0.8);
 }
 
@@ -287,11 +308,10 @@ h3 {
   min-width: 0;
   overflow-x: auto;
   padding: 10px clamp(12px, 2vw, 28px);
-  border-top: 1px solid rgba(155, 191, 106, 0.22);
-  background:
-    linear-gradient(180deg, rgba(3, 9, 12, 0.72), rgba(2, 5, 8, 0.92)),
-    linear-gradient(90deg, transparent, rgba(155, 191, 106, 0.08), transparent);
-  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--glass-1-border);
+  background: var(--glass-1-bg);
+  backdrop-filter: var(--glass-1-blur);
+  -webkit-backdrop-filter: var(--glass-1-blur);
   scrollbar-width: thin;
 }
 
@@ -307,9 +327,9 @@ h3 {
   gap: 6px;
   padding: 8px 12px;
   color: rgba(245, 243, 238, 0.68);
-  border: 1px solid rgba(155, 191, 106, 0.12);
+  border: 1px solid var(--glass-2-border);
   border-inline-end: none;
-  background: rgba(5, 12, 15, 0.52);
+  background: var(--glass-2-bg);
   clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
   font-size: 12px;
   letter-spacing: 0.08em;
@@ -317,19 +337,22 @@ h3 {
 
 .game-nav-slot:last-child,
 .mobilenav a:last-child {
-  border-inline-end: 1px solid rgba(155, 191, 106, 0.12);
+  border-inline-end: 1px solid var(--glass-2-border);
 }
 
+/* Active/hover reads in teal — the app's dedicated "you are here / this is
+   selected" accent — never olive-green, which means something else
+   (success, safety, a completed objective) everywhere else in the app. */
 .game-nav-slot.active,
 .game-nav-slot:hover,
 .mobilenav a.active,
 .mobilenav a:hover {
-  color: var(--av-green-soft);
-  border-color: rgba(155, 191, 106, 0.46);
+  color: var(--accent-teal);
+  border-color: rgba(91, 179, 166, 0.46);
   background:
-    radial-gradient(circle at 50% 0, rgba(155, 191, 106, 0.22), transparent 60%),
-    rgba(9, 24, 23, 0.74);
-  box-shadow: inset 0 1px 0 rgba(155, 191, 106, 0.35), 0 0 22px rgba(155, 191, 106, 0.14);
+    radial-gradient(circle at 50% 0, var(--accent-teal-dim), transparent 60%),
+    var(--glass-2-bg-hover);
+  box-shadow: inset 0 1px 0 rgba(91, 179, 166, 0.35), 0 0 22px rgba(91, 179, 166, 0.14);
 }
 
 .game-nav-slot em {
@@ -466,7 +489,7 @@ button.item-row:hover,
 /* .ui-btn* are the canonical classes emitted by the new Button primitive
    (shared/ui/Button.tsx). GameButton and TacticalButton are now thin
    wrappers around Button and additionally emit their own historical
-   .game-btn*/.av-tactical-button* class names for safety — every rule
+   .game-btn / .av-tactical-button class names for safety — every rule
    below lists both so either wrapper (or new code using Button directly)
    renders identically. */
 .game-btn,
@@ -476,20 +499,82 @@ button.item-row:hover,
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 42px;
+  min-height: 44px;
   padding: 9px 16px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
   letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease), opacity var(--dur) var(--ease);
 }
 
-/* Restrained neutral action — Button's own "default" variant (new call
-   sites only; GameButton/TacticalButton never use this one, they already
-   have their own primary treatment below). */
+.ui-btn-full {
+  width: 100%;
+}
+
+/* Generic small-size modifier for the canonical Button's `size="sm"` prop
+   — mirrors .game-btn.sm's values. (Bare `.btn.sm` had no matching rule
+   anywhere before this; any call site combining className="btn ... sm"
+   directly was a harmless no-op. Button's `size` prop now actually does
+   something, for every variant, consistently.) */
+.ui-btn.sm {
+  min-height: 44px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.ui-btn:disabled,
+.ui-btn[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+.ui-btn-spinner {
+  flex: 0 0 auto;
+}
+
+/* Button's "default" variant deliberately mirrors base.css's .btn-primary
+   exactly (same solid high-contrast fill) rather than inventing a new
+   look — call sites migrating from className="btn btn-primary" to
+   <Button variant="default"> should render pixel-identical, so the API
+   cleanup and the visual redesign are two separate, separately-verifiable
+   changes rather than one entangled one. */
 .ui-btn-default {
+  background: var(--text-primary);
+  color: var(--bg-base);
+  border-color: transparent;
+}
+
+.ui-btn-default:hover:not(:disabled) {
+  background: #ffffff;
+}
+
+/* Mirrors base.css's .btn-secondary exactly, for the same migration-safety
+   reason as .ui-btn-default above. */
+.ui-btn-secondary {
   background: var(--bg-elevated);
+  border-color: var(--border-subtle);
   color: var(--text-primary);
+}
+
+.ui-btn-secondary:hover:not(:disabled) {
+  background: var(--bg-hover);
   border-color: var(--border-strong);
+}
+
+/* Mirrors base.css's .btn-ghost exactly (text-only, no fill) — distinct
+   from GameButton/TacticalButton's own "ghost" (a filled low-contrast
+   chip), see the ButtonVariant doc comment in Button.tsx. */
+.ui-btn-subtle {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-secondary);
+}
+
+.ui-btn-subtle:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: transparent;
 }
 
 /* Mission-context buttons keep the angular tactical cut and accent glow —
@@ -547,6 +632,15 @@ button.item-row:hover,
 .av-tactical-button:hover:not(:disabled),
 .ui-btn:hover:not(:disabled) {
   transform: translateY(-1px);
+}
+
+/* Everything except .ui-btn-default/.ui-btn-secondary/.ui-btn-subtle gets
+   the border-brightens-on-hover treatment too — those three intentionally
+   manage their own border color (borderless or already-handled above), so
+   popping a generic border in on hover there would fight their own rule. */
+.game-btn:hover:not(:disabled),
+.av-tactical-button:hover:not(:disabled),
+.ui-btn:hover:not(:disabled):not(.ui-btn-default):not(.ui-btn-secondary):not(.ui-btn-subtle) {
   border-color: var(--border-strong);
 }
 
@@ -878,6 +972,35 @@ button.item-row:hover,
   border: 1px solid rgba(155, 191, 106, 0.24);
   background: rgba(2, 7, 9, 0.72);
 }
+/* When this preview is a real link to the map (MissionDashboardPage always
+   passes `to` now) it needs to look and behave like one — the dots inside
+   are decorative, not real markers, so the affordance has to come from the
+   panel itself, not from anything drawn on the "map". */
+.av-mission-map-panel.is-link {
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.av-mission-map-panel.is-link:hover,
+.av-mission-map-panel.is-link:focus-visible {
+  border-color: rgba(155, 191, 106, 0.5);
+  transform: translateY(-1px);
+}
+.av-map-cta {
+  position: absolute;
+  inset-inline-end: 12px;
+  bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--accent-mission);
+  background: var(--accent-mission-dim);
+  border: 1px solid rgba(155, 191, 106, 0.3);
+}
 
 .av-map-header {
   display: flex;
@@ -1023,12 +1146,12 @@ button.item-row:hover,
   color: var(--av-red);
 }
 
-/* Ordinary form fields (login, settings, report forms) — restrained
-   default chrome instead of the angular sci-fi border/0-radius treatment
-   that used to apply to every input in the app regardless of context. */
-.input,
-.textarea,
-.select,
+/* Bare .input/.textarea/.select are base.css's — Login, Register, Settings
+   and every ordinary form use them directly and base.css already gives
+   them a correct, restrained, non-tactical treatment. This file only adds
+   the one thing that's genuinely report-form-specific: a slightly raised
+   fill so the field reads against its own panel background, since
+   .report-form itself already sits on a dark panel fill. */
 .report-form textarea,
 .report-form select {
   border-radius: var(--radius-md);
@@ -1037,9 +1160,6 @@ button.item-row:hover,
   color: var(--av-text);
 }
 
-.input:focus,
-.textarea:focus,
-.select:focus,
 .report-form textarea:focus,
 .report-form select:focus {
   border-color: var(--accent-ai);
@@ -1098,9 +1218,14 @@ button.item-row:hover,
   box-shadow: 0 0 12px rgba(155, 191, 106, 0.42);
 }
 
+/* .map-layout's height/padding used to be set here too, conflicting with
+   the later "reconstruction pass" rule below (same bug class documented
+   at that section: a second same-specificity rule loading later in this
+   file silently won for `padding`, while `min-height` there — being a
+   different property than `height` here — combined with it instead of
+   replacing it, quietly cancelling out the -88px this rule intended.
+   Layout sizing now lives in exactly one place; only `gap` stays here. */
 .map-layout {
-  height: calc(100dvh - var(--topbar-height) - 88px);
-  padding: 18px;
   gap: 16px;
 }
 
@@ -1130,13 +1255,16 @@ button.item-row:hover,
   color: var(--av-text);
 }
 
-.chat-composer,
-.timeline-drawer,
-.time-preview-sheet,
-.toast {
-  border-color: rgba(155, 191, 106, 0.22);
-  background: rgba(3, 9, 12, 0.9);
-}
+/* .chat-composer and .toast already have their own winning definitions in
+   app.css's directly-written rules (an @import's content is always beaten
+   by the importing file's own subsequent rules, so this block never
+   reached them). .timeline-drawer is a bare positioning wrapper — its
+   visible surface lives on .timeline-drawer-handle/-body, which already
+   resolve through the shared --glass-bg/--glass-border tokens. And
+   .time-preview-sheet now gets a proper Level-3 glass treatment directly
+   in game.css — this block was silently re-flattening it back to a near-
+   solid fill, the same cascade-shadowing bug class documented elsewhere
+   in this file, just recurring on a bottom sheet instead of a button. */
 
 .data-table th,
 .data-table td {
@@ -1187,19 +1315,10 @@ button.item-row:hover,
     repeating-radial-gradient(ellipse at 50% 52%, transparent 0 78px, rgba(155, 191, 106, 0.055) 79px 80px, transparent 81px 150px);
 }
 
-.av-command-hero::after {
-  content: "A";
-  position: absolute;
-  inset-block-start: 6%;
-  inset-inline: 0;
-  z-index: -1;
-  color: rgba(155, 191, 106, 0.045);
-  font-family: var(--av-font-display);
-  font-size: clamp(280px, 48vw, 640px);
-  font-weight: 900;
-  line-height: 1;
-  text-align: center;
-}
+/* Giant "A" watermark pseudo-text removed (font-size up to 640px). Even
+   clipped by the hero's overflow:hidden it was a layout-scale hazard the
+   moment any ancestor geometry broke, and at 48vw it dominated the page.
+   The hero keeps its ::before gradient/ring treatment for depth. */
 
 .av-command-meta {
   position: relative;
@@ -1312,6 +1431,72 @@ button.item-row:hover,
   display: grid;
   gap: 16px;
   margin-bottom: 16px;
+  position: relative;
+  transition: filter var(--dur-scene, 420ms) var(--ease);
+}
+/* Atmosphere reacts to the mission's real world_state — a danger flag or
+   critical urgency (both live backend fields, see WorldStateBanner in
+   MissionDashboardPage.tsx) intensifies the command center itself, not
+   just the small banner above it. Subtle: a faint red wash, not a strobe. */
+.av-active-hud.danger::before,
+.av-active-hud.critical::before {
+  content: "";
+  position: absolute;
+  inset: -12px;
+  z-index: -1;
+  border-radius: var(--radius-xl);
+  background: radial-gradient(900px 260px at 50% 0%, rgba(229, 107, 111, 0.08), transparent 65%);
+  pointer-events: none;
+}
+.av-active-hud.critical::before {
+  background: radial-gradient(900px 300px at 50% 0%, rgba(229, 107, 111, 0.14), transparent 65%);
+  animation: hud-danger-pulse 3.2s ease-in-out infinite;
+}
+@keyframes hud-danger-pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .av-active-hud.critical::before { animation: none; }
+}
+
+/* World-state atmosphere strip — weather / time-of-day / urgency / phase,
+   all real fields from the backend's WorldState snapshot. Deliberately
+   small and quiet; it's ambient context, not another HUD row competing for
+   attention. */
+.world-state-strip {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 6px 4px 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.wss-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.wss-urgency.warning { color: var(--accent-warning); }
+.wss-urgency.danger { color: var(--accent-danger); }
+.wss-urgency.calm { color: var(--accent-mission); }
+.wss-phase {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 10.5px;
+}
+.wss-events {
+  color: var(--accent-rare);
+  unicode-bidi: plaintext;
+}
+@media (max-width: 720px) {
+  .world-state-strip {
+    gap: 10px;
+    font-size: 11.5px;
+  }
+  .wss-phase { display: none; }
 }
 
 .av-active-resources {
@@ -1323,16 +1508,35 @@ button.item-row:hover,
 
 .av-active-grid {
   display: grid;
-  grid-template-columns: minmax(260px, 0.82fr) minmax(360px, 1.65fr) minmax(260px, 0.86fr);
+  grid-template-columns: minmax(360px, 1.05fr) minmax(360px, 1.45fr) minmax(260px, 0.85fr);
   gap: 16px;
-  align-items: stretch;
+  align-items: start;
 }
 
-.av-active-brief,
+@media (max-width: 1180px) {
+  .av-active-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .av-active-timeline {
+    min-height: auto;
+  }
+}
+
 .av-active-timeline {
   min-height: 430px;
   display: flex;
   flex-direction: column;
+}
+
+.mission-summary-card {
+  display: flex;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  flex-direction: column;
+  align-self: start;
+  overflow: visible;
 }
 
 .av-active-brief .av-hud-head h2 {
@@ -1358,13 +1562,40 @@ button.item-row:hover,
   margin: 0 18px 18px;
 }
 
+.mission-summary-card__status-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mission-stat {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.025);
+  text-align: start;
+}
+
+.mission-stat--status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .av-active-stats {
   position: relative;
   z-index: 1;
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  margin: auto 18px 18px;
+  margin: 0 18px 18px;
+}
+
+.mission-summary-card__meta {
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .av-stage-code {
@@ -1489,6 +1720,15 @@ button.item-row:hover,
     text-indent: 0.16em;
   }
 
+  /* On phones the full-height hero pushed the active mission, mission-type
+     grid and recent-operations list off screen on every visit. Shrink the
+     floor (not the ceiling) so the hero still breathes on tablets but
+     yields real estate back to the actionable content below on small
+     viewports. */
+  .av-command-hero {
+    min-height: clamp(360px, 52dvh, 700px);
+  }
+
   .av-active-grid {
     grid-template-columns: 1fr;
   }
@@ -1504,6 +1744,9 @@ button.item-row:hover,
 }
 
 @media (max-width: 620px) {
+  .mission-summary-card__status-grid {
+    grid-template-columns: 1fr;
+  }
   .game-top-actions {
     display: none;
   }
@@ -1556,7 +1799,11 @@ body {
 
 .main {
   grid-area: main;
-  width: 100%;
+  /* width: auto, NOT 100% — the grid track is full-viewport wide and
+     margin-inline-start already reserves the fixed rail's lane; 100% +
+     margin overflowed the track by the rail width, clipping content at
+     the far viewport edge (hero meta chips) in both RTL and LTR. */
+  width: auto;
   margin-inline-start: var(--av-rail-width);
   padding-bottom: var(--space-6);
   overflow-x: clip;
@@ -1581,10 +1828,21 @@ body {
   padding: var(--space-2) 0;
   overflow-y: auto;
   border: 0;
-  border-inline-end: 1px solid rgba(155, 191, 106, 0.18);
-  background: linear-gradient(180deg, rgba(3, 10, 13, 0.98), rgba(2, 6, 8, 0.94));
+  border-inline-end: 1px solid var(--glass-1-border);
+  background: var(--glass-1-bg);
+  backdrop-filter: var(--glass-1-blur);
+  -webkit-backdrop-filter: var(--glass-1-blur);
   box-shadow: 16px 0 32px rgba(0, 0, 0, 0.18);
 }
+
+.game-desktop-nav { display: flex; flex: 1; min-height: 0; flex-direction: column; overflow-y: auto; }
+.game-mobile-nav { display: none; }
+.game-nav-group { display: flex; flex-direction: column; padding-block: var(--space-2); border-bottom: 1px solid var(--border-subtle); }
+.game-nav-group:last-child { margin-top: auto; border-bottom: 0; }
+.game-nav-group-label { padding: 4px 8px; color: var(--text-tertiary); font-size: 8px; font-weight: 700; letter-spacing: .12em; text-align: center; text-transform: uppercase; }
+.game-more-button { font: inherit; background: transparent; cursor: pointer; }
+
+.game-sheet-layer { display: none; }
 
 .game-nav-slot,
 .mobilenav a {
@@ -1602,8 +1860,8 @@ body {
 
 .game-nav-slot svg { width: var(--icon-md); height: var(--icon-md); }
 .game-nav-slot span { max-width: 66px; overflow: hidden; font-size: 9px; line-height: 1.15; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
-.game-nav-slot:hover { background: rgba(155, 191, 106, 0.08); color: var(--av-text); }
-.game-nav-slot.active { color: var(--av-green-soft); border-inline-start-color: var(--av-green); background: linear-gradient(90deg, rgba(155, 191, 106, 0.17), transparent); box-shadow: inset 0 0 24px rgba(155, 191, 106, 0.08); }
+.game-nav-slot:hover { background: var(--accent-teal-dim); color: var(--av-text); }
+.game-nav-slot.active { color: var(--accent-teal); border-inline-start-color: var(--accent-teal); background: linear-gradient(90deg, var(--accent-teal-dim), transparent); box-shadow: inset 0 0 24px rgba(91, 179, 166, 0.1); }
 .game-nav-slot em { position: absolute; inset-block-start: 6px; inset-inline-end: 9px; }
 
 .page,
@@ -1698,11 +1956,34 @@ body {
 .timeline-drawer-handle { border: 1px solid rgba(155, 191, 106, 0.22); border-bottom: 0; background: rgba(3, 10, 14, 0.94); backdrop-filter: var(--av-panel-blur); }
 
 @media (max-width: 980px) {
-  .shell { grid-template-rows: var(--topbar-height) minmax(0, 1fr) 74px; grid-template-areas: "topbar" "main" "mobilenav"; }
+  .shell { grid-template-rows: var(--topbar-height) minmax(0, 1fr) calc(78px + env(safe-area-inset-bottom)); grid-template-areas: "topbar" "main" "mobilenav"; }
   .main { margin-inline-start: 0; padding-bottom: var(--space-2); }
   .game-topbar { padding-inline: var(--space-4); }
-  .game-bottom-nav { position: relative; inset: auto; grid-area: mobilenav; flex-direction: row; width: 100%; min-width: 0; padding: var(--space-2); overflow-x: auto; border-inline-end: 0; border-top: 1px solid rgba(155, 191, 106, 0.18); box-shadow: 0 -12px 32px rgba(0,0,0,.18); }
-  .game-nav-slot { flex: 1 0 72px; min-height: 55px; }
+  .game-bottom-nav { position: relative; inset: auto; grid-area: mobilenav; width: calc(100% - 16px); min-width: 0; margin: 0 8px max(8px, env(safe-area-inset-bottom)); padding: 5px; overflow: visible; border: 1px solid var(--glass-2-border); border-radius: 20px; background: var(--glass-2-bg); box-shadow: 0 -8px 30px rgba(0,0,0,.25), 0 10px 36px rgba(0,0,0,.3); backdrop-filter: blur(20px) saturate(1.18); -webkit-backdrop-filter: blur(20px) saturate(1.18); }
+  .game-desktop-nav { display: none; }
+  .game-mobile-nav { display: grid; width: 100%; grid-template-columns: repeat(5, minmax(0, 1fr)); animation: av-nav-mode-in 260ms var(--av-ease-out) both; }
+  .game-mobile-nav .game-nav-slot { min-width: 0; min-height: 58px; padding: 6px 2px; border: 0; border-radius: 15px; }
+  .game-mobile-nav .game-nav-slot span { max-width: 100%; font-size: 10px; }
+  .game-mobile-nav .game-nav-slot.active { border: 0; background: linear-gradient(180deg, rgba(125,211,199,.16), rgba(125,211,199,.04)); box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
+  .game-mobile-nav .game-nav-slot.active::after { content: ""; position: absolute; inset-inline: 28%; bottom: 3px; height: 2px; border-radius: 2px; background: var(--accent-teal); box-shadow: 0 0 8px rgba(125,211,199,.45); }
+  @keyframes av-nav-mode-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .game-sheet-layer { position: fixed; inset: 0; z-index: 40; display: block; }
+  .game-sheet-backdrop { position: absolute; inset: 0; width: 100%; border: 0; background: rgba(0,3,6,.58); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+  .game-more-sheet { --sheet-drag: 0px; position: absolute; inset-inline: 0; bottom: var(--kb-inset, 0px); max-height: calc(100dvh - var(--topbar-height) - env(safe-area-inset-top)); padding-bottom: max(18px, env(safe-area-inset-bottom)); overflow: hidden; border: 1px solid rgba(255,255,255,.12); border-bottom: 0; border-radius: 26px 26px 0 0; background: rgba(10,17,22,.88); box-shadow: 0 -24px 70px rgba(0,0,0,.48); backdrop-filter: blur(28px) saturate(1.3); -webkit-backdrop-filter: blur(28px) saturate(1.3); transform: translateY(var(--sheet-drag)); transition: height 260ms var(--av-ease-out), transform 120ms linear; }
+  .game-more-sheet.collapsed { height: min(58dvh, 520px); }
+  .game-more-sheet.expanded { height: calc(100dvh - var(--topbar-height) - env(safe-area-inset-top)); }
+  .game-sheet-handle { display: grid; width: 100%; height: 32px; place-items: center; border: 0; background: transparent; touch-action: none; cursor: grab; }
+  .game-sheet-handle span { width: 42px; height: 4px; border-radius: 999px; background: rgba(255,255,255,.3); }
+  .game-sheet-header { display: flex; align-items: center; justify-content: space-between; padding: 0 20px 14px; border-bottom: 1px solid var(--border-subtle); }
+  .game-sheet-header strong { font-family: var(--font-display); font-size: 18px; }
+  .game-sheet-header button { width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgba(255,255,255,.06); color: var(--text-primary); font-size: 25px; }
+  .game-sheet-content { height: calc(100% - 78px); padding: 18px; overflow-y: auto; overscroll-behavior: contain; }
+  .game-sheet-content section + section { margin-top: 20px; }
+  .game-sheet-content h2 { margin: 0 0 9px; color: var(--text-tertiary); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
+  .game-sheet-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .game-sheet-grid .game-nav-slot { min-width: 0; min-height: 76px; border: 1px solid var(--border-subtle); border-radius: 16px; background: rgba(255,255,255,.035); }
+  .game-sheet-grid .game-nav-slot.active { color: var(--accent-teal); border-color: rgba(125,211,199,.3); background: rgba(125,211,199,.09); }
   .mission-hud { position: relative; grid-template-columns: minmax(140px, 1fr) auto auto auto; width: calc(100% - var(--space-4)); margin-top: var(--space-2); }
   .mission-hud .hud-suspect, .mission-hud .hud-reward { display: none; }
   .map-layout { padding: var(--space-3); }
@@ -1725,5 +2006,6 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .char-card, .btn, .game-btn, .av-tactical-button, .ui-btn { transition: none !important; }
+  .char-card, .btn, .game-btn, .av-tactical-button, .ui-btn, .game-more-sheet { transition: none !important; }
+  .game-mobile-nav { animation: none !important; }
 }

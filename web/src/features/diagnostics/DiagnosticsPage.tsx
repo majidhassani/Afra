@@ -5,6 +5,7 @@ import { healthApi } from "@/shared/api/endpoints";
 import { env } from "@/shared/config/env";
 import { lastApiError } from "@/shared/api/client";
 import { useAuthStore } from "@/features/auth/authStore";
+import { Button } from "@/shared/ui/Button";
 
 function StatusChip({ ok, label }: { ok: boolean | undefined; label: string }) {
   return (
@@ -98,8 +99,8 @@ export function DiagnosticsPage() {
     <div className="page" style={{ maxWidth: 720 }}>
       <header className="page-header">
         <h1>{t("diag.title")}</h1>
-        <button
-          className="btn btn-secondary"
+        <Button
+          variant="secondary"
           onClick={() => {
             void health.refetch();
             void ready.refetch();
@@ -107,7 +108,7 @@ export function DiagnosticsPage() {
         >
           <RefreshCw size={14} aria-hidden />
           {t("diag.check")}
-        </button>
+        </Button>
       </header>
 
       <div className="panel item-list">

@@ -7,6 +7,7 @@ import { guidanceApi } from "@/shared/api/endpoints";
 import { errorKey } from "@/shared/api/client";
 import { CostBadge } from "@/shared/ui/badges";
 import { Analyzing } from "@/shared/ui/game";
+import { Button } from "@/shared/ui/Button";
 import type { GuidanceContext, GuidanceResult } from "@/shared/types/api";
 import type { TranslationKey } from "@/shared/i18n/en";
 
@@ -111,14 +112,16 @@ export function GuidancePanel({
         />
         <div className="spread">
           <span className="faint">{t("guidance.disclaimer")}</span>
-          <button
-            className="game-btn game-btn-ghost sm"
+          <Button
+            variant="ghost"
+            size="sm"
             type="submit"
-            disabled={mutation.isPending || !message.trim()}
+            loading={mutation.isPending}
+            disabled={!message.trim()}
           >
             <SendHorizonal size={14} className="rtl-flip" aria-hidden />
             {t("guidance.ask")}
-          </button>
+          </Button>
         </div>
       </form>
 

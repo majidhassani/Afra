@@ -21,18 +21,28 @@ import {
   Trophy,
   Sparkles,
   AlertTriangle,
+  Sun,
+  Sunset,
+  Moon,
+  CloudRain,
+  CloudSnow,
+  CloudLightning,
+  CloudFog,
+  ShieldAlert,
 } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
 import { missionsApi } from "@/shared/api/endpoints";
 import { ErrorState, SkeletonRows, EmptyState } from "@/shared/ui/states";
 import { MissionStatusBadge, DifficultyBadge } from "@/shared/ui/badges";
 import { Avatar } from "@/shared/ui/Avatar";
+import { Button } from "@/shared/ui/Button";
 import {
   GameButton,
   RiskMeter,
   ObjectiveProgress,
   LoadingScreen,
   WalletBalance,
+  importanceTone,
 } from "@/shared/ui/game";
 import {
   HudPanel,
@@ -52,7 +62,7 @@ import { StageTracker } from "@/features/game/StageTracker";
 import { useGameplayStatus } from "@/features/game/useGameplayStatus";
 import { deriveHud } from "./hud";
 import { toast } from "@/shared/ui/toast";
-import type { MissionResult, Objective } from "@/shared/types/api";
+import type { MissionResult, Objective, WorldState } from "@/shared/types/api";
 import type { TranslationKey } from "@/shared/i18n/en";
 
 export function MissionDashboardPage() {
@@ -180,17 +190,23 @@ export function MissionDashboardPage() {
         <div className="state-box" style={{ minHeight: "50dvh" }}>
           <CircleX size={28} color="var(--accent-danger)" aria-hidden />
           <div className="state-title">{t("missions.generationFailed")}</div>
-          <Link className="btn btn-secondary" to="/app/missions/new">
+          <Button to="/app/missions/new" variant="secondary">
             {t("dash.newMission")}
-          </Link>
+          </Button>
         </div>
       </div>
     );
   }
 
+  const world = data.world_state;
+
   return (
     <div className="page">
-      <section className="av-active-hud" aria-label={mission.title}>
+      {world && <WorldStateBanner world={world} />}
+      <section
+        className={`av-active-hud${world?.danger ? " danger" : ""}${world?.urgency === "critical" ? " critical" : ""}`}
+        aria-label={mission.title}
+      >
         <div className="av-active-resources">
           <ResourceChip
             icon={<Coins size={14} aria-hidden />}
@@ -214,22 +230,22 @@ export function MissionDashboardPage() {
 
         <div className="av-active-grid">
           <HudPanel
-            className="av-active-brief"
+            className="av-active-brief mission-summary-card"
             eyebrow={t(`type.${mission.type}` as TranslationKey)}
             title={mission.title}
           >
-            <div className="av-active-objective" style={{ unicodeBidi: "plaintext" }}>
+            <div className="av-active-objective mission-summary-card__objective" style={{ unicodeBidi: "plaintext" }}>
               {primaryObjective ? primaryObjective.title : t("hud.noObjective")}
             </div>
-            <div className="av-active-meters">
-              <div>
+            <div className="av-active-meters mission-summary-card__status-grid">
+              <div className="mission-stat mission-stat--progress">
                 <div className="spread">
                   <span className="av-eyebrow">{t("hud.progress")}</span>
                   <span className="mono-num">{progress}%</span>
                 </div>
                 <ObjectiveProgress value={progress} />
               </div>
-              <div>
+              <div className={`mission-stat mission-stat--risk ${riskBand}`}>
                 <div className="spread">
                   <span className="av-eyebrow">{t("hud.risk")}</span>
                   <span
@@ -248,8 +264,12 @@ export function MissionDashboardPage() {
                 </div>
                 <RiskMeter value={risk} />
               </div>
+              <div className="mission-stat mission-stat--status">
+                <span className="av-eyebrow">{t("hud.status")}</span>
+                <MissionStatusBadge status={mission.status} />
+              </div>
             </div>
-            <div className="av-active-stats">
+            <div className="av-active-stats mission-summary-card__meta">
               <StatusChip tone="green">{t("mission.clues")}: {clues.length}</StatusChip>
               <StatusChip tone="cyan">{t("mission.characters")}: {characters.length}</StatusChip>
               <StatusChip tone="gold">{t("mission.locations")}: {locations.length}</StatusChip>
@@ -260,6 +280,8 @@ export function MissionDashboardPage() {
             title={mission.region || t("map.title")}
             subtitle={recommendedLocation?.name || primaryObjective?.title}
             markers={Math.max(3, Math.min(5, locations.length || 5))}
+            to={`/app/missions/${mission.id}/map`}
+            linkLabel={t("hud.openMap")}
           />
 
           <HudPanel className="av-active-timeline" eyebrow={t("mission.currentTime")} title={mission.current_time}>
@@ -275,12 +297,10 @@ export function MissionDashboardPage() {
                 time: item.mission_time,
                 title: item.title,
                 body: item.description,
-                tone:
-                  item.importance === "high"
-                    ? "red"
-                    : item.importance === "medium"
-                      ? "gold"
-                      : "green",
+                // Same canonical importance scale used everywhere else now
+                // (see shared/ui/game.tsx's importanceTone()) — this used
+                // to be a third, different high/medium/low color mapping.
+                tone: importanceTone(item.importance),
               }))}
             />
           </HudPanel>
@@ -347,11 +367,9 @@ export function MissionDashboardPage() {
             <div className="band-title">{t("mission.result.title")}</div>
             <p className="muted">{t("mission.result.completed")}</p>
           </div>
-          <Link to={`/app/missions/${mission.id}/result`}>
-            <GameButton variant="mission" size="sm">
-              {t("mission.result.viewReport")}
-            </GameButton>
-          </Link>
+          <GameButton to={`/app/missions/${mission.id}/result`} variant="mission" size="sm">
+            {t("mission.result.viewReport")}
+          </GameButton>
         </section>
       )}
 
@@ -400,7 +418,13 @@ export function MissionDashboardPage() {
             </section>
           )}
 
-          <section className="panel" aria-label={t("mission.finish.title")}>
+          {/* Level-3 glass only once the decision is actually available —
+              a panel that visually "arms itself" when the player can act,
+              rather than always looking equally important. */}
+          <section
+            className={data.can_complete ? "glass-3 glass-3--mission" : "panel"}
+            aria-label={t("mission.finish.title")}
+          >
             <div className="band" style={{ borderBottom: "none" }}>
               <div className="band-title">{t("mission.finish.title")}</div>
               {data.can_complete ? (
@@ -583,6 +607,71 @@ export function MissionDashboardPage() {
           onClose={() => setResultModal(null)}
         />
       )}
+    </div>
+  );
+}
+
+const weatherIcon: Record<string, typeof Sun> = {
+  clear: Sun,
+  rain: CloudRain,
+  snow: CloudSnow,
+  storm: CloudLightning,
+  fog: CloudFog,
+};
+
+const timeOfDayIcon: Record<string, typeof Sun> = {
+  day: Sun,
+  dusk: Sunset,
+  night: Moon,
+};
+
+/**
+ * Atmosphere strip — the backend already computes a full living-world
+ * snapshot (weather, time-of-day, danger, urgency, world phase, active
+ * events) on every dashboard read, but no screen ever rendered it. This is
+ * real data, not invented: WorldState comes straight through
+ * MissionDashboard.world_state. Renders nothing if the field is absent
+ * (older missions / degraded backend), so it never fabricates atmosphere
+ * that isn't actually there.
+ */
+function WorldStateBanner({ world }: { world: WorldState }) {
+  const { t } = useI18n();
+  const WeatherIcon = weatherIcon[world.weather] ?? Sun;
+  const TimeIcon = timeOfDayIcon[world.time_of_day] ?? Sun;
+  const urgencyTone =
+    world.urgency === "critical" ? "danger" : world.urgency === "rising" ? "warning" : "calm";
+
+  return (
+    <div className={`world-state-strip tone-${urgencyTone}`} role="note">
+      <span className="wss-item" title={t(`world.weather.${world.weather}` as TranslationKey)}>
+        <WeatherIcon size={14} aria-hidden />
+        {t(`world.weather.${world.weather}` as TranslationKey)}
+      </span>
+      <span className="wss-item" title={t(`world.timeOfDay.${world.time_of_day}` as TranslationKey)}>
+        <TimeIcon size={14} aria-hidden />
+        {t(`world.timeOfDay.${world.time_of_day}` as TranslationKey)}
+      </span>
+      {(world.danger || world.urgency !== "calm") && (
+        <span className={`wss-item wss-urgency ${urgencyTone}`}>
+          <ShieldAlert size={14} aria-hidden />
+          {t(`world.urgency.${world.urgency}` as TranslationKey)}
+        </span>
+      )}
+      <span className="wss-item wss-phase faint">
+        {t(`world.phase.${world.world_phase}` as TranslationKey)}
+      </span>
+      {(() => {
+        // Machine slugs like "weather_rain" duplicate the localized weather
+        // chip above — drop them, and de-slug whatever remains so raw
+        // underscores never reach the screen.
+        const events = world.active_events
+          .filter((e) => !e.startsWith("weather_"))
+          .slice(0, 2)
+          .map((e) => e.replace(/_/g, " "));
+        return events.length > 0 ? (
+          <span className="wss-item wss-events">{events.join(" · ")}</span>
+        ) : null;
+      })()}
     </div>
   );
 }

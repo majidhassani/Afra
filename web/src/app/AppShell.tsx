@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 import { Outlet, useMatch, useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  LayoutDashboard,
+  Home,
   Rocket,
   Wallet,
   UserRound,
@@ -21,15 +21,16 @@ import {
 } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
 import { useAuthStore, getRefreshToken } from "@/features/auth/authStore";
-import { authApi, gameplayApi } from "@/shared/api/endpoints";
+import { authApi, gameplayApi, missionsApi } from "@/shared/api/endpoints";
 import {
   useEnvironmentTheme,
   environmentFor,
   useWorldModifiers,
 } from "@/shared/theme/environment";
 import { LanguageSwitcher } from "@/shared/ui/LanguageSwitcher";
+import { Onboarding } from "@/shared/ui/Onboarding";
 import { WalletChip, HealthIndicator } from "@/shared/ui/badges";
-import { GameBottomNav, GameTopBar, type GameNavItem } from "@/shared/ui/avds";
+import { GameBottomNav, GameTopBar, type GameNavGroup, type GameNavItem } from "@/shared/ui/avds";
 import { useKeyboardInset } from "@/shared/ui/useKeyboardInset";
 import { env } from "@/shared/config/env";
 import { useGameplayStatus } from "@/features/game/useGameplayStatus";
@@ -48,10 +49,14 @@ export function AppShell() {
     missionMatch?.params.missionId === "new"
       ? undefined
       : missionMatch?.params.missionId;
-
   // The gameplay-status query is the shell's single source of truth: it
   // themes the backdrop, feeds the always-on HUD, and carries the board art.
   const gameplay = useGameplayStatus(missionId);
+  const missions = useQuery({ queryKey: ["missions"], queryFn: missionsApi.list });
+  const activeMission = missions.data?.find((mission) => mission.status === "active" || mission.status === "ready" || mission.status === "generating");
+  const routeMissionFinished = gameplay.data?.mission.status === "completed" || gameplay.data?.mission.status === "failed" || gameplay.data?.mission.status === "archived";
+  const activeMissionId = routeMissionFinished && activeMission?.id === missionId ? undefined : activeMission?.id;
+  const navigationMode = activeMissionId ? "mission" : "exploration";
   useEnvironmentTheme(
     missionId && gameplay.data ? environmentFor(gameplay.data.mission) : null,
   );
@@ -91,50 +96,51 @@ export function AppShell() {
     navigate("/login");
   };
 
-  const mainNav: GameNavItem[] = [
-    { to: "/app/dashboard", icon: LayoutDashboard, label: t("nav.dashboard") },
+  const explorationPrimary: GameNavItem[] = [
+    { to: "/app/dashboard", icon: Home, label: t("nav.hq") },
     { to: "/app/missions", icon: Rocket, label: t("nav.missions"), end: false },
-    { to: "/app/wallet", icon: Wallet, label: t("nav.wallet") },
+    { to: "/app/missions/new", icon: Sparkles, label: t("nav.ai") },
+    { to: "/app/profile", icon: UserRound, label: t("nav.profile") },
   ];
 
-  const missionNav: GameNavItem[] = missionId
+  const missionNav: GameNavItem[] = activeMissionId
     ? [
-        { to: `/app/missions/${missionId}`, icon: Rocket, label: t("nav.overview") },
-        { to: `/app/missions/${missionId}/map`, icon: Map, label: t("nav.map") },
+        { to: `/app/missions/${activeMissionId}`, icon: Rocket, label: t("nav.mission") },
+        { to: `/app/missions/${activeMissionId}/map`, icon: Map, label: t("nav.map") },
         {
-          to: `/app/missions/${missionId}/ai`,
+          to: `/app/missions/${activeMissionId}/ai`,
           icon: Sparkles,
           label: t("nav.ai"),
         },
         {
-          to: `/app/missions/${missionId}/characters`,
+          to: `/app/missions/${activeMissionId}/characters`,
           icon: Users,
           label: t("nav.characters"),
           end: false,
         },
         {
-          to: `/app/missions/${missionId}/clues`,
+          to: `/app/missions/${activeMissionId}/clues`,
           icon: Search,
-          label: t("nav.clues"),
+          label: t("nav.evidence"),
           end: false,
         },
         {
-          to: `/app/missions/${missionId}/journal`,
+          to: `/app/missions/${activeMissionId}/journal`,
           icon: NotebookPen,
           label: t("nav.journal"),
         },
         {
-          to: `/app/missions/${missionId}/report`,
+          to: `/app/missions/${activeMissionId}/report`,
           icon: FileText,
           label: t("nav.report"),
         },
         {
-          to: `/app/missions/${missionId}/timeline`,
+          to: `/app/missions/${activeMissionId}/timeline`,
           icon: Radio,
           label: t("nav.timeline"),
         },
         {
-          to: `/app/missions/${missionId}/time`,
+          to: `/app/missions/${activeMissionId}/time`,
           icon: Clock3,
           label: t("nav.time"),
         },
@@ -150,19 +156,27 @@ export function AppShell() {
       : []),
   ];
 
-  const tacticalNav: GameNavItem[] = missionId
+  const missionPrimary = [missionNav[0], missionNav[1], missionNav[3], missionNav[4]].filter((item): item is GameNavItem => Boolean(item));
+  const secondaryGroups: GameNavGroup[] = navigationMode === "mission"
     ? [
-        missionNav[0],
-        missionNav[1],
-        missionNav[2],
-        missionNav[3],
-        missionNav[4],
-        missionNav[6],
-        missionNav[7],
-        accountNav[0],
-        mainNav[2],
-      ].filter((item): item is GameNavItem => Boolean(item))
-    : [...mainNav, accountNav[0], accountNav[1], accountNav[2]];
+        { label: t("nav.gameplay"), items: [missionNav[2], missionNav[5], missionNav[6], missionNav[7], missionNav[8]].filter((item): item is GameNavItem => Boolean(item)) },
+        { label: t("nav.utility"), items: [mainNavWallet(), accountNav[0], accountNav[1]] },
+        { label: t("nav.settingsGroup"), items: accountNav.slice(2) },
+      ]
+    : [
+        { label: t("nav.utility"), items: [mainNavWallet(), accountNav[1]] },
+        { label: t("nav.settingsGroup"), items: accountNav.slice(2) },
+      ];
+  const desktopGroups: GameNavGroup[] = navigationMode === "mission"
+    ? [
+        { label: t("nav.gameplay"), items: [...missionPrimary, missionNav[2], missionNav[5], missionNav[6], missionNav[7], missionNav[8]].filter((item): item is GameNavItem => Boolean(item)) },
+        ...secondaryGroups.slice(1),
+      ]
+    : [{ label: t("nav.gameplay"), items: explorationPrimary }, ...secondaryGroups];
+
+  function mainNavWallet(): GameNavItem {
+    return { to: "/app/wallet", icon: Wallet, label: t("nav.wallet") };
+  }
 
   return (
     <div className="shell">
@@ -220,7 +234,11 @@ export function AppShell() {
         />
       )}
 
-      <GameBottomNav items={tacticalNav} />
+      <GameBottomNav primaryItems={navigationMode === "mission" ? missionPrimary : explorationPrimary} secondaryGroups={secondaryGroups} desktopGroups={desktopGroups} moreLabel={t("nav.more")} closeLabel={t("common.close")} mode={navigationMode} />
+
+      {/* First-time walkthrough — only outside an active mission, so it
+          never interrupts real gameplay context (e.g. a refresh mid-clue). */}
+      <Onboarding eligible={!missionId} />
     </div>
   );
 }

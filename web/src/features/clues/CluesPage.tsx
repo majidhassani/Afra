@@ -61,7 +61,11 @@ export function CluesPage() {
               </span>
               <span className="row faint" style={{ gap: 6 }}>
                 {t("clues.reliability")}
-                <Meter value={clue.reliability} color="var(--accent-wallet)" />
+                {/* Cyan, not gold — reliability is an AI-assessed
+                    confidence score (same family as character trust_level
+                    in CharactersPage.tsx), not a monetary value. Gold is
+                    reserved for wallet/reward amounts. */}
+                <Meter value={clue.reliability} color="var(--accent-ai)" />
               </span>
             </Link>
           ))}

@@ -6,6 +6,7 @@ import { useI18n } from "@/shared/i18n";
 import { missionsApi, walletApi } from "@/shared/api/endpoints";
 import { errorKey } from "@/shared/api/client";
 import { CostBadge } from "@/shared/ui/badges";
+import { Button } from "@/shared/ui/Button";
 import type {
   Difficulty,
   Language,
@@ -84,7 +85,10 @@ export function NewMissionPage() {
         )}
       </header>
 
-      <form className="stack" style={{ gap: 20 }} onSubmit={onSubmit}>
+      {/* Case-intake framing: the whole form sits inside a single Level-2
+          glass panel so it reads as one "open a new case file" surface
+          rather than a bare, dashboard-style settings form. */}
+      <form className="panel stack" style={{ gap: 20 }} onSubmit={onSubmit}>
         <fieldset className="field" style={{ border: "none", padding: 0, margin: 0 }}>
           <legend className="field-label" style={{ marginBottom: 6 }}>
             {t("missions.new.type")}
@@ -168,14 +172,10 @@ export function NewMissionPage() {
         )}
 
         <div>
-          <button
-            className="btn btn-primary"
-            type="submit"
-            disabled={create.isPending || insufficient}
-          >
+          <Button type="submit" loading={create.isPending} disabled={insufficient}>
             <Rocket size={15} aria-hidden />
             {create.isPending ? t("common.loading") : t("missions.new.cta")}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

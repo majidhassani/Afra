@@ -1,5 +1,5 @@
-import type { CSSProperties, ReactNode } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from "react";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import {
   Activity,
   AlertTriangle,
@@ -8,6 +8,8 @@ import {
   Coins,
   Crosshair,
   Loader2,
+  Map,
+  MoreHorizontal,
   Radio,
   type LucideIcon,
   Zap,
@@ -21,6 +23,8 @@ export interface GameNavItem {
   end?: boolean;
   badge?: string | number;
 }
+
+export interface GameNavGroup { label: string; items: GameNavItem[]; }
 
 export function GameTopBar({
   brand,
@@ -62,23 +66,56 @@ export function GameTopBar({
   );
 }
 
-export function GameBottomNav({ items }: { items: GameNavItem[] }) {
+export function GameBottomNav({ primaryItems, secondaryGroups, desktopGroups, moreLabel, closeLabel, mode }: { primaryItems: GameNavItem[]; secondaryGroups: GameNavGroup[]; desktopGroups: GameNavGroup[]; moreLabel: string; closeLabel: string; mode: "exploration" | "mission"; }) {
+  const [sheet, setSheet] = useState<"closed" | "collapsed" | "expanded">("closed");
+  const [dragOffset, setDragOffset] = useState(0);
+  const dragStart = useRef(0);
+  const moreButton = useRef<HTMLButtonElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
+  const isSheetOpen = sheet !== "closed";
+
+  useEffect(() => setSheet("closed"), [location.pathname, mode]);
+  useEffect(() => {
+    if (!isSheetOpen) return;
+    const trigger = moreButton.current;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    sheetRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSheet("closed");
+      if (event.key !== "Tab" || !sheetRef.current) return;
+      const focusable = Array.from(sheetRef.current.querySelectorAll<HTMLElement>('a[href], button:not([disabled])'));
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => { document.body.style.overflow = previousOverflow; document.removeEventListener("keydown", onKeyDown); trigger?.focus(); };
+  }, [isSheetOpen]);
+
+  const startDrag = (event: PointerEvent<HTMLButtonElement>) => { dragStart.current = event.clientY; event.currentTarget.setPointerCapture(event.pointerId); };
+  const moveDrag = (event: PointerEvent<HTMLButtonElement>) => { if (event.currentTarget.hasPointerCapture(event.pointerId)) setDragOffset(event.clientY - dragStart.current); };
+  const endDrag = (event: PointerEvent<HTMLButtonElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+    if (dragOffset < -44) setSheet("expanded"); else if (dragOffset > 100 && sheet === "collapsed") setSheet("closed"); else if (dragOffset > 44) setSheet("collapsed");
+    setDragOffset(0);
+  };
   return (
-    <nav className="game-bottom-nav" aria-label="Mission navigation">
-      {items.map((item) => (
-        <NavLink
-          key={item.to}
-          to={item.to}
-          end={item.end !== false}
-          className={({ isActive }) => `game-nav-slot${isActive ? " active" : ""}`}
-        >
-          <item.icon size={21} aria-hidden />
-          <span>{item.label}</span>
-          {item.badge !== undefined && <em>{item.badge}</em>}
-        </NavLink>
-      ))}
-    </nav>
+    <>
+      <nav className="game-bottom-nav" aria-label={mode === "mission" ? "Mission navigation" : "Exploration navigation"} data-mode={mode}>
+        <div className="game-desktop-nav">{desktopGroups.map((group) => <div className="game-nav-group" key={group.label}><span className="game-nav-group-label">{group.label}</span>{group.items.map((item) => <GameNavLink item={item} key={item.to} />)}</div>)}</div>
+        <div className="game-mobile-nav" key={mode}>{primaryItems.map((item) => <GameNavLink item={item} key={item.to} />)}<button ref={moreButton} className={`game-nav-slot game-more-button${sheet !== "closed" ? " active" : ""}`} type="button" aria-haspopup="dialog" aria-expanded={sheet !== "closed"} onClick={() => setSheet("collapsed")}><MoreHorizontal size={21} aria-hidden /><span>{moreLabel}</span></button></div>
+      </nav>
+      {sheet !== "closed" && <div className="game-sheet-layer"><button className="game-sheet-backdrop" type="button" aria-label={closeLabel} onClick={() => setSheet("closed")} /><div ref={sheetRef} className={`game-more-sheet ${sheet}`} style={{ "--sheet-drag": `${Math.max(-24, dragOffset)}px` } as CSSProperties} role="dialog" aria-modal="true" aria-label={moreLabel} tabIndex={-1}><button className="game-sheet-handle" type="button" aria-label={moreLabel} onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onDoubleClick={() => setSheet(sheet === "expanded" ? "collapsed" : "expanded")}><span aria-hidden /></button><div className="game-sheet-header"><strong>{moreLabel}</strong><button type="button" onClick={() => setSheet("closed")} aria-label={closeLabel}>×</button></div><div className="game-sheet-content">{secondaryGroups.map((group) => <section key={group.label}><h2>{group.label}</h2><div className="game-sheet-grid">{group.items.map((item) => <GameNavLink item={item} key={item.to} />)}</div></section>)}</div></div></div>}
+    </>
   );
+}
+
+function GameNavLink({ item }: { item: GameNavItem }) {
+  return <NavLink to={item.to} end={item.end !== false} className={({ isActive }) => `game-nav-slot${isActive ? " active" : ""}`}><item.icon size={21} aria-hidden /><span>{item.label}</span>{item.badge !== undefined && <em>{item.badge}</em>}</NavLink>;
 }
 
 export function HudPanel({
@@ -292,14 +329,21 @@ export function MissionMapPanel({
   subtitle,
   markers = 5,
   children,
+  to,
+  linkLabel,
 }: {
   title?: ReactNode;
   subtitle?: ReactNode;
   markers?: number;
   children?: ReactNode;
+  /** When set, the whole panel becomes a link to the real map (this preview
+   * is atmospheric chrome — the dots aren't real locations — so it should
+   * always lead somewhere real rather than being a dead-end decoration). */
+  to?: string;
+  linkLabel?: string;
 }) {
-  return (
-    <div className="av-mission-map-panel">
+  const content = (
+    <>
       <div className="av-map-header">
         <span>
           <Crosshair size={14} aria-hidden />
@@ -317,9 +361,24 @@ export function MissionMapPanel({
           <ChevronRight size={18} aria-hidden />
         </span>
         {children}
+        {to && (
+          <span className="av-map-cta">
+            <Map size={13} aria-hidden />
+            {linkLabel}
+          </span>
+        )}
       </div>
-    </div>
+    </>
   );
+
+  if (to) {
+    return (
+      <Link className="av-mission-map-panel is-link" to={to} aria-label={linkLabel}>
+        {content}
+      </Link>
+    );
+  }
+  return <div className="av-mission-map-panel">{content}</div>;
 }
 
 export function SelectedMissionBar({

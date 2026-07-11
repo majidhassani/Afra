@@ -16,6 +16,7 @@ import {
   useImageAttachments,
   useImageDrop,
 } from "@/shared/ui/imageUpload";
+import { Button } from "@/shared/ui/Button";
 import type { ChatResult, ImagePayload } from "@/shared/types/api";
 
 interface ThreadEntry {
@@ -151,13 +152,14 @@ export function CharacterChatPage() {
     <div className="chat-layout">
       <div className="band" style={{ padding: "12px 24px" }}>
         <div className="row" style={{ gap: 12 }}>
-          <Link
+          <Button
             to={`/app/missions/${missionId}/characters`}
-            aria-label={t("common.back")}
-            className="btn btn-ghost btn-icon"
+            ariaLabel={t("common.back")}
+            variant="subtle"
+            className="btn-icon"
           >
             <ArrowLeft size={16} className="rtl-flip" aria-hidden />
-          </Link>
+          </Button>
           <div className="portrait-wrap">
             <Avatar
               name={character.name}
@@ -177,7 +179,7 @@ export function CharacterChatPage() {
             </button>
           </div>
           <div className="grow" style={{ minWidth: 0 }}>
-            <h2>{character.name}</h2>
+            <h1 className="chat-character-title">{character.name}</h1>
             <p className="sub muted">
               {character.role} · {character.category}
             </p>
@@ -208,11 +210,20 @@ export function CharacterChatPage() {
           <div key={entry.id} className={`bubble ${entry.sender}`}>
             {entry.imagePreviews && entry.imagePreviews.length > 0 && (
               <span className="row" style={{ flexWrap: "wrap", gap: 6 }}>
-                {entry.imagePreviews.map((src) => (
+                {entry.imagePreviews.map((src, i) => (
                   <img
                     key={src}
                     src={src}
-                    alt=""
+                    // Real content, not decoration — a screen reader with
+                    // alt="" would silently drop this attachment entirely.
+                    alt={
+                      entry.imagePreviews!.length > 1
+                        ? t("chars.chat.attachmentOf", {
+                            index: i + 1,
+                            count: entry.imagePreviews!.length,
+                          })
+                        : t("chars.chat.attachment")
+                    }
                     style={{
                       width: 96,
                       height: 96,
@@ -302,14 +313,14 @@ export function CharacterChatPage() {
               }
             }}
           />
-          <button
-            className="btn btn-primary"
+          <Button
             type="submit"
-            disabled={send.isPending || !draft.trim()}
-            aria-label={t("common.send")}
+            loading={send.isPending}
+            disabled={!draft.trim()}
+            ariaLabel={t("common.send")}
           >
             <SendHorizonal size={15} className="rtl-flip" aria-hidden />
-          </button>
+          </Button>
         </form>
       </div>
     </div>

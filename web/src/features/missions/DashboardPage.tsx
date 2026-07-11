@@ -12,6 +12,7 @@ import {
   Handshake,
   Stethoscope,
   ShieldCheck,
+  Plus,
 } from "lucide-react";
 import { useI18n } from "@/shared/i18n";
 import { missionsApi, profileApi, walletApi } from "@/shared/api/endpoints";
@@ -109,6 +110,12 @@ export function DashboardPage() {
             <EmptyState
               title={t("dash.noActiveMission")}
               body={t("dash.noActiveMission.body")}
+              action={
+                <TacticalButton to="/app/missions/new" variant="secondary">
+                  <Plus size={14} aria-hidden />
+                  {t("dash.newMission")}
+                </TacticalButton>
+              }
             />
           </div>
         )}
@@ -161,6 +168,8 @@ export function DashboardPage() {
       <MissionMapPanel
         title={active?.region || t("nav.map")}
         subtitle={active?.title || t("dash.noActiveMission")}
+        to={active ? `/app/missions/${active.id}/map` : undefined}
+        linkLabel={t("hud.openMap")}
       />
 
       {/* Recent operations */}

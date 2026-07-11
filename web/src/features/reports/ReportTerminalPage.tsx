@@ -93,9 +93,11 @@ export function ReportTerminalPage() {
           {REPORT_TYPES.map((rt) => (
             <button
               key={rt}
+              type="button"
               className={`report-type-chip${type === rt ? " on" : ""}${
                 pendingType === rt ? " pending" : ""
               }`}
+              aria-pressed={type === rt}
               onClick={() => setType(rt)}
             >
               {t(`report.type.${rt}`)}
@@ -108,11 +110,13 @@ export function ReportTerminalPage() {
         </label>
         <textarea
           id="report-summary"
+          className="textarea"
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
           placeholder={t("report.summaryPlaceholder")}
           rows={4}
           maxLength={4000}
+          style={{ unicodeBidi: "plaintext" }}
         />
 
         {(type === "clue_report" || type === "suspect_report") && (
@@ -125,10 +129,12 @@ export function ReportTerminalPage() {
               {clues.map((c) => (
                 <button
                   key={c.id}
+                  type="button"
                   className={`report-evidence${linked.includes(c.id) ? " on" : ""}`}
+                  aria-pressed={linked.includes(c.id)}
                   onClick={() => toggleClue(c.id)}
                 >
-                  <span className={`evidence-status ${c.status ?? "discovered"}`} />
+                  <span className={`evidence-status ${c.status ?? "discovered"}`} aria-hidden />
                   {c.title}
                 </button>
               ))}
@@ -143,6 +149,7 @@ export function ReportTerminalPage() {
             </label>
             <select
               id="report-suspect"
+              className="select"
               value={suspectId}
               onChange={(e) => setSuspectId(e.target.value)}
             >

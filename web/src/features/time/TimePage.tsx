@@ -7,6 +7,7 @@ import { timeApi, walletApi } from "@/shared/api/endpoints";
 import { errorKey } from "@/shared/api/client";
 import { ErrorState, SkeletonRows } from "@/shared/ui/states";
 import { CostBadge } from "@/shared/ui/badges";
+import { GameButton } from "@/shared/ui/game";
 import { GuidancePanel } from "@/features/guidance/GuidancePanel";
 import type { TimeAdvanceResult, TimeUnit } from "@/shared/types/api";
 import type { TranslationKey } from "@/shared/i18n/en";
@@ -114,14 +115,14 @@ export function TimePage() {
                 <div className="field">
                   <span className="field-label">&nbsp;</span>
                   <div className="row">
-                    <button
-                      className="btn btn-primary"
+                    <GameButton
+                      variant="mission"
                       disabled={advance.isPending}
                       onClick={() => advance.mutate()}
                     >
                       <FastForward size={14} aria-hidden />
                       {t("time.advance")}
-                    </button>
+                    </GameButton>
                     {pricing.data?.advance_time !== undefined && (
                       <CostBadge coins={pricing.data.advance_time} />
                     )}

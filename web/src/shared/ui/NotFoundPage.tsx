@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
 import { useI18n } from "@/shared/i18n";
+import { Button } from "./Button";
 
 export function NotFoundPage() {
   const { t } = useI18n();
@@ -7,9 +7,9 @@ export function NotFoundPage() {
     <div className="state-box" style={{ minHeight: "60dvh" }}>
       <div className="state-title">{t("common.notFound")}</div>
       <p className="faint">{t("common.notFound.body")}</p>
-      <Link className="btn btn-secondary" to="/app/dashboard">
+      <Button to="/app/dashboard" variant="secondary">
         {t("nav.dashboard")}
-      </Link>
+      </Button>
     </div>
   );
 }

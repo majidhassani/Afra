@@ -19,6 +19,7 @@ import { errorKey } from "@/shared/api/client";
 import { ErrorState, SkeletonRows, EmptyState } from "@/shared/ui/states";
 import { Avatar } from "@/shared/ui/Avatar";
 import { toast } from "@/shared/ui/toast";
+import { Button } from "@/shared/ui/Button";
 import type { TranslationKey } from "@/shared/i18n/en";
 
 interface Badge {
@@ -93,7 +94,10 @@ export function ProfilePage() {
     { key: "profile.aiInteractions", value: profile.total_ai_interactions, icon: Sparkles, tone: "rare" },
     { key: "profile.locationsVisited", value: profile.total_locations_visited, icon: MapPin, tone: "mission" },
     { key: "profile.coinsSpent", value: stats.data.total_coins_spent, icon: Coins, tone: "danger" },
-    { key: "profile.coinsEarned", value: stats.data.total_coins_earned, icon: Coins, tone: "mission" },
+    // Gold, not mission-green — matches the wallet ledger's "gold = earned
+    // value" convention (Phase 3) so coin gain reads the same color
+    // wherever it appears in the app.
+    { key: "profile.coinsEarned", value: stats.data.total_coins_earned, icon: Coins, tone: "wallet" },
   ];
 
   return (
@@ -133,8 +137,8 @@ export function ProfilePage() {
           )}
         </div>
         {!editing && (
-          <button
-            className="btn btn-secondary"
+          <Button
+            variant="secondary"
             onClick={() => {
               setName(profile.display_name);
               setEditing(true);
@@ -142,7 +146,7 @@ export function ProfilePage() {
           >
             <Pencil size={14} aria-hidden />
             {t("common.edit")}
-          </button>
+          </Button>
         )}
       </section>
 
@@ -161,23 +165,16 @@ export function ProfilePage() {
               className="input"
               value={name}
               maxLength={60}
+              autoFocus
               onChange={(e) => setName(e.target.value)}
             />
           </div>
-          <button
-            className="btn btn-primary"
-            type="submit"
-            disabled={save.isPending || !name.trim()}
-          >
+          <Button type="submit" loading={save.isPending} disabled={!name.trim()}>
             {t("common.save")}
-          </button>
-          <button
-            className="btn btn-ghost"
-            type="button"
-            onClick={() => setEditing(false)}
-          >
+          </Button>
+          <Button variant="subtle" type="button" onClick={() => setEditing(false)}>
             {t("common.cancel")}
-          </button>
+          </Button>
           {save.isError && (
             <p className="field-error" role="alert">
               {t(errorKey(save.error))}
@@ -186,8 +183,13 @@ export function ProfilePage() {
         </form>
       )}
 
-      <div className="band-title" style={{ margin: "18px 0 10px" }}>
-        {t("profile.achievements")}
+      <div className="spread" style={{ margin: "18px 0 10px" }}>
+        <div className="band-title" style={{ margin: 0 }}>
+          {t("profile.achievements")}
+        </div>
+        <Button to="/app/history" variant="subtle" size="sm">
+          {t("profile.viewHistory")}
+        </Button>
       </div>
       <div className="achv-grid">
         {achievements.map((a) => (
@@ -309,15 +311,10 @@ function AvatarGeneratorSection({ seed }: { seed: string }) {
             ))}
           </select>
         </div>
-        <button
-          className="btn btn-primary"
-          type="button"
-          disabled={generate.isPending}
-          onClick={() => generate.mutate()}
-        >
+        <Button type="button" loading={generate.isPending} onClick={() => generate.mutate()}>
           <Sparkles size={14} aria-hidden />
           {generate.isPending ? t("avatar.generating") : t("avatar.generate")}
-        </button>
+        </Button>
         {generate.isError && (
           <p className="field-error" role="alert">
             {t(errorKey(generate.error))}

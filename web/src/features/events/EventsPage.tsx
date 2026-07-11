@@ -68,7 +68,13 @@ export function EventsPage() {
       <header className="page-header">
         <h1>{t("events.title")}</h1>
         <span
-          className={`chip ${streamStatus === "disconnected" ? "chip-danger" : "chip-mission"}`}
+          className={`chip ${
+            streamStatus === "disconnected"
+              ? "chip-danger"
+              : streamStatus === "polling"
+                ? "chip-warning"
+                : "chip-mission"
+          }`}
         >
           <Radio size={12} aria-hidden />
           {statusLabel}

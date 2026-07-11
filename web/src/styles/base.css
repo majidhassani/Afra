@@ -148,6 +148,7 @@ button:disabled {
     background var(--dur) var(--ease),
     border-color var(--dur) var(--ease);
   white-space: nowrap;
+  min-height: 44px;
 }
 
 .btn-primary {
@@ -190,6 +191,8 @@ button:disabled {
 }
 
 .btn-icon {
+  min-width: 44px;
+  min-height: 44px;
   padding: 8px;
 }
 
@@ -233,6 +236,14 @@ button:disabled {
   background: var(--accent-rare-dim);
   border-color: transparent;
 }
+/* Orange — time-pressure / degraded-but-not-failed states (e.g. a polling
+   fallback connection, an expiring offer). Distinct from chip-danger (red,
+   reserved for actual failure) per the accent color-strategy contract. */
+.chip-warning {
+  color: var(--accent-warning);
+  background: var(--accent-warning-dim);
+  border-color: transparent;
+}
 
 /* ---------- Panels / bands ---------- */
 
@@ -268,6 +279,7 @@ button:disabled {
 }
 
 .segmented button {
+  min-height: 44px;
   padding: 6px 12px;
   border-radius: 6px;
   font-size: 12.5px;

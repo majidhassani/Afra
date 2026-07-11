@@ -26,10 +26,9 @@ body {
   background-size: 64px 64px;
   mask-image: radial-gradient(ellipse at 50% 30%, #000 30%, transparent 85%);
 }
-.shell > * {
-  position: relative;
-  z-index: 1;
-}
+/* No global `.shell > *` position/z-index override here — it pulled
+   fixed-position shell children (rail, overlays, onboarding) into grid
+   flow. Stacking is declared per component; see cinematic.css note. */
 
 /* ---------- HUD sidenav / topbar ---------- */
 
@@ -57,33 +56,74 @@ body {
 }
 
 .topbar {
-  background: rgba(9, 11, 15, 0.7);
-  backdrop-filter: blur(10px);
+  background: var(--glass-1-bg);
+  border-color: var(--glass-1-border);
+  backdrop-filter: var(--glass-1-blur);
+  -webkit-backdrop-filter: var(--glass-1-blur);
 }
 
-/* ---------- Glass panels + glowing cards ---------- */
-
+/* ---------- Canonical glass surfaces (Level 1 / 2 / 3) ----------
+   `.panel` is the app's one canonical Level-2 "interactive glass"
+   surface — every card, list container and form group in the app
+   already renders through this single class (that's the Phase 1-3
+   consolidation work paying off here: upgrading the material once,
+   here, upgrades every screen that uses it). Do not add a second,
+   competing panel treatment elsewhere — extend this one. */
 .panel {
-  background: var(--glass-bg);
-  border-color: var(--border-subtle);
-  backdrop-filter: blur(6px);
+  background: var(--glass-2-bg);
+  border-color: var(--glass-2-border);
+  backdrop-filter: var(--glass-2-blur);
+  -webkit-backdrop-filter: var(--glass-2-blur);
+  box-shadow: var(--glass-2-highlight), var(--shadow-panel);
+  transition: background var(--av-duration-normal) var(--ease),
+    border-color var(--av-duration-normal) var(--ease);
+}
+.panel:hover {
+  background: var(--glass-2-bg-hover);
 }
 
+/* `.glass` is the explicit Level-1 "ambient" utility — large passive
+   containers and overlays that should feel like a thin pane of glass
+   over the world rather than a distinct interactive surface. */
 .glass {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  background: var(--glass-1-bg);
+  border: 1px solid var(--glass-1-border);
   border-radius: var(--radius-lg);
-  backdrop-filter: blur(10px);
+  backdrop-filter: var(--glass-1-blur);
+  -webkit-backdrop-filter: var(--glass-1-blur);
   box-shadow: var(--shadow-panel);
 }
+
+/* Level-3 "critical glass" — the strongest, most focused surface in the
+   hierarchy, reserved for moments the player must not miss: the primary
+   mission objective, a decision that can't be undone, a danger alert, an
+   AI analysis result, a mission outcome reveal. Pair with a semantic
+   accent border via one of the `.glass-3--*` modifiers below rather than
+   inventing a new one-off treatment per screen. */
+.glass-3 {
+  position: relative;
+  overflow: hidden;
+  background: var(--glass-3-bg);
+  border: 1px solid var(--glass-2-border);
+  border-radius: var(--radius-xl);
+  backdrop-filter: var(--glass-3-blur);
+  -webkit-backdrop-filter: var(--glass-3-blur);
+  box-shadow: var(--glass-3-highlight), var(--shadow-float);
+}
+.glass-3--ai { border-color: rgba(125, 211, 199, 0.35); box-shadow: var(--glass-3-highlight), var(--glow-ai); }
+.glass-3--mission { border-color: rgba(155, 191, 106, 0.35); box-shadow: var(--glass-3-highlight), var(--glow-mission); }
+.glass-3--danger { border-color: rgba(229, 107, 111, 0.4); box-shadow: var(--glass-3-highlight), var(--glow-danger); }
+.glass-3--reward { border-color: rgba(227, 179, 95, 0.4); box-shadow: var(--glass-3-highlight), 0 0 0 1px rgba(227, 179, 95, 0.3), 0 0 28px -6px rgba(227, 179, 95, 0.5); }
 
 .tac-card {
   position: relative;
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border-subtle);
-  background:
-    linear-gradient(160deg, rgba(30, 36, 46, 0.6), rgba(16, 19, 25, 0.85));
+  border: 1px solid var(--glass-2-border);
+  background: var(--glass-2-bg);
+  backdrop-filter: var(--glass-2-blur);
+  -webkit-backdrop-filter: var(--glass-2-blur);
   overflow: hidden;
+  transition: border-color var(--av-duration-normal) var(--ease), transform var(--av-duration-normal) var(--ease);
 }
 .tac-card::before {
   /* corner tick, tactical HUD flavor */
@@ -286,8 +326,14 @@ body {
   font-weight: 600;
   font-size: 15px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* Wrap to two lines instead of nowrap-ellipsis: with the avatar and the
+     category chip beside it, single-line left only ~4 visible characters
+     of long names ("…oli"). */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow-wrap: anywhere;
 }
 .char-card-meters {
   display: flex;
@@ -322,10 +368,12 @@ body {
   gap: 12px;
   padding: 16px;
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-panel);
+  border: 1px solid var(--glass-2-border);
+  background: var(--glass-2-bg);
+  backdrop-filter: var(--glass-2-blur);
+  -webkit-backdrop-filter: var(--glass-2-blur);
   color: inherit;
-  transition: border-color 160ms var(--ease), transform 160ms var(--ease);
+  transition: border-color 160ms var(--ease), transform 160ms var(--ease), background 160ms var(--ease);
 }
 .archive-card:hover {
   border-color: var(--border-strong);
@@ -409,20 +457,26 @@ body {
   gap: 14px;
   padding: 16px 18px;
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border-strong);
-  background: var(--bg-elevated);
+  border: 1px solid var(--glass-2-border);
+  background: var(--glass-2-bg);
+  backdrop-filter: var(--glass-2-blur);
+  -webkit-backdrop-filter: var(--glass-2-blur);
   color: inherit;
   cursor: pointer;
   transition: border-color 160ms var(--ease), transform 160ms var(--ease);
 }
 .wallet-reward-card:hover:not(:disabled) {
-  border-color: var(--accent-mission);
+  border-color: var(--accent-wallet);
   transform: translateY(-1px);
 }
 .wallet-reward-card:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
+/* Claiming the daily reward is genuine earned value, same family as the
+   balance card and coin packs — it previously borrowed the mission-success
+   green, which is reserved for gameplay-state signals elsewhere in the app
+   and reads as an unrelated color once you're inside the wallet. */
 .wallet-reward-card .wr-icon {
   width: 42px;
   height: 42px;
@@ -430,8 +484,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(155, 191, 106, 0.14);
-  color: var(--accent-mission);
+  background: var(--accent-wallet-dim);
+  color: var(--accent-wallet);
   flex-shrink: 0;
 }
 
@@ -449,8 +503,10 @@ body {
   gap: 4px;
   padding: 22px 16px 16px;
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border-strong);
-  background: var(--bg-elevated);
+  border: 1px solid var(--glass-2-border);
+  background: var(--glass-2-bg);
+  backdrop-filter: var(--glass-2-blur);
+  -webkit-backdrop-filter: var(--glass-2-blur);
   color: inherit;
   cursor: pointer;
   transition: border-color 160ms var(--ease), transform 160ms var(--ease),
@@ -513,6 +569,20 @@ body {
   box-shadow: 0 0 0 1px rgba(168, 155, 255, 0.3), 0 0 22px -6px rgba(168, 155, 255, 0.5);
 }
 
+/* Second-tap purchase confirmation — the pack the next tap will actually
+   charge gets an unmistakable gold outline and its CTA chip swaps to a
+   confirming treatment, so "tap again" reads as a state change, not just
+   a label swap that's easy to miss. */
+.coin-pack.confirm {
+  border-color: var(--accent-wallet);
+  box-shadow: 0 0 0 1px var(--accent-wallet), 0 0 24px -6px rgba(227, 179, 95, 0.55);
+}
+.coin-pack.confirm .cp-cta {
+  border-color: var(--accent-wallet);
+  color: var(--accent-wallet);
+  background: var(--accent-wallet-dim);
+}
+
 .txn-dir {
   width: 30px;
   height: 30px;
@@ -522,9 +592,14 @@ body {
   justify-content: center;
   flex-shrink: 0;
 }
+/* Incoming credit is earned/purchased value — gold, matching the balance
+   card and reward card. Outgoing spend stays the universal danger red.
+   (Previously "in" used mission-success green, which is a gameplay-state
+   color and doesn't belong in a financial ledger — pairing gold+red here
+   also reads less like a crypto ticker than green+red would.) */
 .txn-dir.in {
-  background: var(--accent-mission-dim);
-  color: var(--accent-mission);
+  background: var(--accent-wallet-dim);
+  color: var(--accent-wallet);
 }
 .txn-dir.out {
   background: var(--accent-danger-dim);
@@ -747,6 +822,7 @@ body {
   margin-bottom: 10px;
 }
 .suggest-chip {
+  min-height: 44px;
   padding: 6px 11px;
   border-radius: 999px;
   border: 1px solid var(--border-subtle);
@@ -787,19 +863,35 @@ body {
   letter-spacing: 0.04em;
   font-size: 12px;
 }
-/* Generated evidence image. */
+/* Generated evidence image — a faint gold frame (reward/high-value accent,
+   not decorative) marks this as a real, examined piece of evidence rather
+   than an ordinary content image. Subtle hover lift invites inspection. */
 .evidence-photo {
   margin: 0 0 14px;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--accent-wallet-dim, var(--border-strong));
   background: var(--bg-base);
+  box-shadow: 0 0 0 1px rgba(212, 175, 100, 0.06), var(--shadow-panel);
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.evidence-photo:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 1px rgba(212, 175, 100, 0.12), var(--shadow-panel-lg, var(--shadow-panel));
 }
 .evidence-photo img {
   display: block;
   width: 100%;
   max-height: 320px;
   object-fit: cover;
+}
+@media (prefers-reduced-motion: reduce) {
+  .evidence-photo {
+    transition: none;
+  }
+  .evidence-photo:hover {
+    transform: none;
+  }
 }
 
 /* Character portrait with an inline generate button. */
@@ -811,8 +903,8 @@ body {
   position: absolute;
   inset-block-end: -4px;
   inset-inline-end: -4px;
-  width: 24px;
-  height: 24px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -974,14 +1066,21 @@ body {
   color: var(--text-secondary);
   z-index: 1;
 }
+/* Canonical importance scale (see shared/ui/game.tsx's importanceTone() for
+   the full rationale) — gold = high priority, cyan = medium/notable, the
+   default (no imp-* modifier) muted tone = low/routine. This used to be
+   cyan/green here, red/cyan in ScrollableTimeline's CSS, and red/gold/green
+   in MissionDashboardPage's inline mapping — three different colors for the
+   same "high" value depending which timeline you looked at. Now all three
+   agree. */
 .tl-item.imp-high .tl-dot {
-  border-color: var(--accent-ai);
-  color: var(--accent-ai);
-  box-shadow: var(--glow-ai);
+  border-color: var(--accent-wallet);
+  color: var(--accent-wallet);
+  box-shadow: 0 0 0 1px rgba(227, 179, 95, 0.28), 0 0 20px -6px rgba(227, 179, 95, 0.5);
 }
 .tl-item.imp-medium .tl-dot {
-  border-color: var(--accent-mission);
-  color: var(--accent-mission);
+  border-color: var(--accent-ai);
+  color: var(--accent-ai);
 }
 .tl-body {
   min-width: 0;
@@ -1014,12 +1113,12 @@ body {
   color: var(--text-faint);
 }
 .tl-imp.imp-high {
-  color: var(--accent-ai);
-  border-color: rgba(125, 211, 199, 0.3);
+  color: var(--accent-wallet);
+  border-color: rgba(227, 179, 95, 0.3);
 }
 .tl-imp.imp-medium {
-  color: var(--accent-mission);
-  border-color: rgba(155, 191, 106, 0.3);
+  color: var(--accent-ai);
+  border-color: rgba(125, 211, 199, 0.3);
 }
 .tl-title {
   font-size: 13.5px;
@@ -1105,8 +1204,11 @@ body {
   border-radius: var(--radius-lg, 14px);
   border: 1px solid rgba(125, 211, 199, 0.35);
   background:
-    linear-gradient(120deg, rgba(125, 211, 199, 0.09), transparent 55%),
-    var(--bg-elevated);
+    linear-gradient(120deg, rgba(125, 211, 199, 0.1), transparent 55%),
+    var(--glass-2-bg);
+  backdrop-filter: var(--glass-2-blur);
+  -webkit-backdrop-filter: var(--glass-2-blur);
+  box-shadow: var(--glow-ai);
   color: inherit;
   text-decoration: none;
   transition: border-color 160ms var(--ease), transform 160ms var(--ease);
@@ -1230,7 +1332,7 @@ body {
     padding: 9px 14px;
   }
   .btn {
-    min-height: 42px;
+    min-height: 44px;
   }
 
   .page {
@@ -1265,16 +1367,6 @@ body {
     z-index: 2;
     padding-bottom: env(safe-area-inset-bottom);
   }
-  .map-side::before {
-    content: "";
-    display: block;
-    width: 40px;
-    height: 4px;
-    border-radius: 999px;
-    background: var(--border-strong);
-    margin: 10px auto 2px;
-  }
-
   .marker-dot {
     width: 36px;
     height: 36px;
@@ -1309,25 +1401,33 @@ body {
   animation: fade-in 200ms var(--ease);
   overflow-y: auto;
 }
+/* Same Level-3 glass treatment as the standalone .result-report .result-banner
+   above — this is the in-mission modal shown the instant a mission ends,
+   so the two surfaces (modal now, page on revisit) should read as the
+   same moment, not two different design systems. */
 .result-card {
   position: relative;
   width: min(460px, 100%);
   max-height: 100%;
   overflow-y: auto;
   border-radius: var(--radius-xl);
-  border: 1px solid var(--glass-border);
+  border: 1px solid rgba(125, 211, 199, 0.3);
   background:
     radial-gradient(600px 240px at 50% -10%, rgba(125, 211, 199, 0.14), transparent 60%),
-    linear-gradient(160deg, rgba(26, 31, 39, 0.96), rgba(12, 15, 20, 0.98));
-  box-shadow: var(--shadow-float);
+    var(--glass-3-bg);
+  backdrop-filter: var(--glass-3-blur);
+  -webkit-backdrop-filter: var(--glass-3-blur);
+  box-shadow: var(--glass-3-highlight), var(--shadow-float);
   padding: 28px 22px 22px;
   text-align: center;
-  animation: pop-in 260ms var(--ease);
+  animation: pop-in var(--dur-scene, 260ms) var(--av-ease-out, var(--ease));
 }
 .result-card.loss {
+  border-color: rgba(229, 107, 111, 0.35);
   background:
     radial-gradient(600px 240px at 50% -10%, rgba(229, 107, 111, 0.14), transparent 60%),
-    linear-gradient(160deg, rgba(26, 31, 39, 0.96), rgba(12, 15, 20, 0.98));
+    var(--glass-3-bg);
+  box-shadow: var(--glass-3-highlight), var(--shadow-float);
 }
 .result-close {
   position: absolute;
@@ -1353,7 +1453,15 @@ body {
   background: var(--accent-mission-dim);
   box-shadow: var(--glow-mission);
 }
-.result-card.loss .result-crest {
+/* Bug fix: this was previously scoped to `.result-card.loss` only, which
+   is the in-mission modal's wrapper class. MissionResultPage.tsx (the
+   standalone, reviewable results page) wraps the same shared
+   .result-crest markup in `.result-report.loss` instead — a different
+   class name for the same "failed mission" state — so the crest badge
+   was silently staying success-green on a failure screen there. Both
+   wrapper classes are covered now. */
+.result-card.loss .result-crest,
+.result-report.loss .result-crest {
   color: var(--accent-danger);
   background: var(--accent-danger-dim);
   box-shadow: var(--glow-danger);
@@ -1403,19 +1511,34 @@ body {
   flex-direction: column;
   gap: 18px;
 }
+/* Mission completion is a critical, once-per-mission moment — Level-3
+   glass, tinted by outcome (mission-green glow for a win, danger-red for
+   a loss) rather than the flat panel fill this used to have. */
 .result-report .result-banner {
+  position: relative;
   text-align: center;
   padding: 28px 24px;
   border-radius: var(--radius-xl);
-  border: 1px solid var(--glass-border);
+  border: 1px solid rgba(155, 191, 106, 0.35);
   background:
-    radial-gradient(600px 260px at 50% -10%, rgba(155, 191, 106, 0.14), transparent 60%),
-    var(--bg-panel);
+    radial-gradient(600px 260px at 50% -10%, rgba(155, 191, 106, 0.16), transparent 60%),
+    var(--glass-3-bg);
+  backdrop-filter: var(--glass-3-blur);
+  -webkit-backdrop-filter: var(--glass-3-blur);
+  box-shadow: var(--glass-3-highlight), var(--glow-mission);
+  animation: pop-in var(--dur-scene, 420ms) var(--av-ease-out) both;
 }
 .result-report.loss .result-banner {
+  border-color: rgba(229, 107, 111, 0.4);
   background:
-    radial-gradient(600px 260px at 50% -10%, rgba(229, 107, 111, 0.14), transparent 60%),
-    var(--bg-panel);
+    radial-gradient(600px 260px at 50% -10%, rgba(229, 107, 111, 0.16), transparent 60%),
+    var(--glass-3-bg);
+  box-shadow: var(--glass-3-highlight), var(--glow-danger);
+}
+@media (prefers-reduced-motion: reduce) {
+  .result-report .result-banner {
+    animation: none;
+  }
 }
 .result-report .result-banner > * {
   display: flex;
@@ -1755,6 +1878,9 @@ body {
   backdrop-filter: blur(4px);
   animation: toast-in 220ms var(--av-ease-out);
 }
+/* A suspect reveal is a Level-3 "critical glass" moment — strongest blur
+   in the hierarchy, danger accent border + glow, so it reads as the single
+   most important thing on screen when it appears. */
 .suspect-reveal-card {
   position: relative;
   display: flex;
@@ -1764,8 +1890,10 @@ body {
   padding: 28px 34px;
   border-radius: var(--radius-xl);
   border: 1px solid rgba(229, 107, 111, 0.45);
-  background: var(--bg-panel);
-  box-shadow: var(--glow-danger), var(--shadow-float);
+  background: var(--glass-3-bg);
+  backdrop-filter: var(--glass-3-blur);
+  -webkit-backdrop-filter: var(--glass-3-blur);
+  box-shadow: var(--glass-3-highlight), var(--glow-danger), var(--shadow-float);
   overflow: hidden;
   max-width: min(420px, 90vw);
   text-align: center;
@@ -1806,15 +1934,34 @@ body {
   backdrop-filter: blur(3px);
 }
 .time-preview-sheet {
+  position: relative;
   width: min(480px, 100vw);
   margin-bottom: 0;
-  padding: 18px 20px calc(18px + env(safe-area-inset-bottom, 0px));
+  padding: 26px 20px calc(18px + env(safe-area-inset-bottom, 0px));
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-  background: var(--bg-panel);
-  border: 1px solid var(--border-subtle);
+  background: var(--glass-3-bg);
+  backdrop-filter: var(--glass-3-blur);
+  -webkit-backdrop-filter: var(--glass-3-blur);
+  border: 1px solid var(--glass-2-border);
   border-bottom: none;
-  box-shadow: var(--shadow-float);
+  box-shadow: var(--glass-3-highlight), var(--shadow-float);
   animation: sheet-up 240ms var(--av-ease-out);
+}
+/* CSS-only drag-handle affordance — visually signals "this sheet moves"
+   even where a real drag gesture isn't wired up. */
+.time-preview-sheet::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border-strong);
+}
+[dir="rtl"] .time-preview-sheet::before {
+  transform: translateX(50%);
 }
 @keyframes sheet-up {
   from { transform: translateY(24px); opacity: 0; }
@@ -1855,16 +2002,20 @@ body {
   gap: 8px;
   margin: 0 auto;
   padding: 7px 18px;
+  min-height: 44px;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--glass-1-border);
   border-bottom: none;
-  background: var(--glass-bg);
-  backdrop-filter: blur(10px);
+  background: var(--glass-1-bg);
+  backdrop-filter: var(--glass-1-blur, blur(10px));
+  -webkit-backdrop-filter: var(--glass-1-blur, blur(10px));
   color: var(--text-secondary);
   font-size: 12px;
   cursor: pointer;
+  transition: color var(--dur) var(--ease);
 }
-.timeline-drawer-handle:hover { color: var(--text-primary); }
+.timeline-drawer-handle:hover,
+.timeline-drawer-handle:focus-visible { color: var(--text-primary); }
 .timeline-now {
   color: var(--accent-ai);
   font-variant-numeric: tabular-nums;
@@ -1873,13 +2024,22 @@ body {
   pointer-events: auto;
   max-height: 42vh;
   overflow-y: auto;
-  background: var(--glass-bg);
-  backdrop-filter: blur(14px);
-  border-top: 1px solid var(--glass-border);
+  background: var(--glass-2-bg);
+  backdrop-filter: var(--glass-2-blur, blur(14px));
+  -webkit-backdrop-filter: var(--glass-2-blur, blur(14px));
+  border-top: 1px solid var(--glass-2-border);
   padding: 10px 18px calc(10px + env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column;
   gap: 2px;
+  animation: timeline-drawer-in 220ms var(--av-ease-out, var(--ease)) both;
+}
+@keyframes timeline-drawer-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .timeline-drawer-body { animation: none; }
 }
 .timeline-row {
   display: flex;
@@ -1898,7 +2058,10 @@ body {
   flex-shrink: 0;
   transform: translateY(-1px);
 }
-.timeline-row.imp-high .timeline-dot { background: var(--accent-danger); }
+/* Same canonical gold/cyan importance scale as TimelineLog.tsx — see
+   shared/ui/game.tsx's importanceTone() comment. This used to be
+   red/cyan here specifically, contradicting both other timelines. */
+.timeline-row.imp-high .timeline-dot { background: var(--accent-wallet); }
 .timeline-row.imp-medium .timeline-dot { background: var(--accent-ai); }
 .timeline-row-title { color: var(--text-primary); }
 .timeline-row-desc { color: var(--text-secondary); font-size: 12px; }

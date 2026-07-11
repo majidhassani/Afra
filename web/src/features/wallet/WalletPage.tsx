@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Coins,
@@ -15,6 +15,7 @@ import { ApiError, errorKey } from "@/shared/api/client";
 import { EmptyState, ErrorState, SkeletonRows } from "@/shared/ui/states";
 import { WalletBalance } from "@/shared/ui/game";
 import { toast } from "@/shared/ui/toast";
+import { Button } from "@/shared/ui/Button";
 import { env } from "@/shared/config/env";
 import type { CoinPack } from "@/shared/types/api";
 import type { TranslationKey } from "@/shared/i18n/en";
@@ -37,6 +38,21 @@ const packTier: Record<string, string> = {
 export function WalletPage() {
   const { t } = useI18n();
   const queryClient = useQueryClient();
+  // Coin packs charge real money (or a simulated receipt in demo mode) — the
+  // store used to fire the purchase on the very first tap. This now requires
+  // a second tap on the same pack within a few seconds, mirroring the
+  // "tap again to confirm" pattern used for time-costing actions elsewhere
+  // in the app, so a purchase can't happen from a single stray tap.
+  const [pendingPackId, setPendingPackId] = useState<string | null>(null);
+  const pendingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (pendingTimer.current) clearTimeout(pendingTimer.current);
+  }, []);
+  const armPack = (id: string) => {
+    setPendingPackId(id);
+    if (pendingTimer.current) clearTimeout(pendingTimer.current);
+    pendingTimer.current = setTimeout(() => setPendingPackId(null), 4000);
+  };
 
   const wallet = useQuery({ queryKey: ["wallet"], queryFn: walletApi.get });
   const config = useQuery({
@@ -84,6 +100,7 @@ export function WalletPage() {
       invalidate();
     },
     onError: (err) => toast("error", t(errorKey(err))),
+    onSettled: () => setPendingPackId(null),
   });
 
   const demoEnabled = config.data?.demo_purchases ?? false;
@@ -144,23 +161,47 @@ export function WalletPage() {
           </div>
         )}
         <div className="coin-pack-grid">
-          {coinPacks.map((pack) => (
-            <button
-              key={pack.product_id}
-              className={`coin-pack tier-${packTier[pack.product_id] ?? "common"}`}
-              disabled={buyPack.isPending || !demoEnabled}
-              onClick={() => buyPack.mutate(pack)}
-            >
-              <span className="cp-shine" aria-hidden />
-              <Coins size={26} className="cp-coin" aria-hidden />
-              <span className="cp-amount mono-num">{pack.coins}</span>
-              <span className="cp-label">{t("wallet.coins")}</span>
-              <span className="cp-cta">
-                <Sparkles size={12} aria-hidden />
-                {demoEnabled ? t("wallet.getPack") : t("wallet.storeSoon")}
-              </span>
-            </button>
-          ))}
+          {coinPacks.map((pack) => {
+            const confirming = pendingPackId === pack.product_id;
+            return (
+              <button
+                key={pack.product_id}
+                className={`coin-pack tier-${packTier[pack.product_id] ?? "common"}${confirming ? " confirm" : ""}`}
+                disabled={buyPack.isPending || !demoEnabled}
+                aria-label={
+                  demoEnabled
+                    ? `${t("wallet.getPack")}: ${pack.coins} ${t("wallet.coins")}${confirming ? ` — ${t("wallet.confirmPurchase")}` : ""}`
+                    : t("wallet.storeSoon")
+                }
+                onClick={() => {
+                  if (confirming) {
+                    if (pendingTimer.current) clearTimeout(pendingTimer.current);
+                    setPendingPackId(null);
+                    buyPack.mutate(pack);
+                  } else {
+                    armPack(pack.product_id);
+                  }
+                }}
+              >
+                <span className="cp-shine" aria-hidden />
+                <Coins size={26} className="cp-coin" aria-hidden />
+                <span className="cp-amount mono-num">{pack.coins}</span>
+                <span className="cp-label">{t("wallet.coins")}</span>
+                <span className="cp-cta">
+                  {confirming ? (
+                    <ShieldCheck size={12} aria-hidden />
+                  ) : (
+                    <Sparkles size={12} aria-hidden />
+                  )}
+                  {!demoEnabled
+                    ? t("wallet.storeSoon")
+                    : confirming
+                      ? t("wallet.confirmPurchase")
+                      : t("wallet.getPack")}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </section>
 
@@ -205,7 +246,10 @@ export function WalletPage() {
             />
           )}
           {transactions.isSuccess && transactions.data.length === 0 && (
-            <EmptyState title={t("common.empty.title")} />
+            <EmptyState
+              title={t("wallet.transactions.empty")}
+              body={t("wallet.transactions.empty.body")}
+            />
           )}
           {transactions.isSuccess && transactions.data.length > 0 && (
             <div className="item-list">
@@ -331,14 +375,15 @@ function ReceiptTestForm({ onDone }: { onDone: () => void }) {
             onChange={(e) => setReceipt(e.target.value)}
           />
         </div>
-        <button
-          className="btn btn-secondary"
+        <Button
+          variant="secondary"
           type="submit"
-          disabled={verify.isPending || !receipt.trim()}
+          loading={verify.isPending}
+          disabled={!receipt.trim()}
         >
           <ShieldCheck size={14} aria-hidden />
           {t("wallet.purchase")}
-        </button>
+        </Button>
       </form>
     </section>
   );

@@ -8,7 +8,12 @@ export function AuthLayout({ children }: { children: ReactNode }) {
     <div className="auth-layout">
       <aside className="auth-side">
         <div className="spread">
-          <span className="auth-brand">{t("common.appName")}</span>
+          <span className="auth-brand">
+            <span className="auth-brand-mark" aria-hidden>
+              {t("common.appName").charAt(0)}
+            </span>
+            {t("common.appName")}
+          </span>
           <LanguageSwitcher />
         </div>
         <div className="auth-tagline">
