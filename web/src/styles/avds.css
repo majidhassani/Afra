@@ -1579,7 +1579,7 @@ button.item-row:hover,
 .mission-stat--status {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: start;
   justify-content: space-between;
   gap: 12px;
 }
@@ -1594,6 +1594,7 @@ button.item-row:hover,
 }
 
 .mission-summary-card__meta {
+  width: calc(100% - 36px);
   flex-wrap: wrap;
   gap: 8px;
 }
